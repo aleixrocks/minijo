@@ -1,0 +1,65 @@
+{
+
+var google_ads = new Array();
+var google_ad;
+var google_radlinks = new Array();
+var google_radlink;
+var google_info = new Object();
+google_ad = new Object(); 
+google_ad.n = 1; 
+google_ad.type = "text"; 
+google_ad.bidtype = "CPC"; 
+google_ad.targeting_type = "contextual"; 
+google_ad.url = "http://googleads.g.doubleclick.net/aclk?sa=l&amp;ai=BQjD5qCNCTrSYHYma0AWH8eG3CMncyv8BuYHkvRfAjbcB0KVMEAEYASCfiM4SKAQ4AFD-4ZbEA2DVvdOCvAigAZ2Ahv8DsgEPd3d3LnRhcmluZ2EubmV0ugEKMzM2eDI4MF9qc8gBAdoBX2h0dHA6Ly93d3cudGFyaW5nYS5uZXQvcG9zdHMvbGludXgvMzI0OTk4MC9TYWNhbmRvLUNsYXZlLVdlcC1Fbi1SZWRlcy1XaWZpLUNvbi1VYnVudHUtOV8wNC5odG1sgAIBqQKwCpL9_hS4PqgDAegD4gXoAwXoAyD1AwAAAIA&amp;num=1&amp;ggladgrp=18404837372100759538&amp;gglcreat=3912223173280228252&amp;sig=AOD64_0I356qIIifCibpk7f43osb4vqHwA&amp;client=ca-pub-5717128494977839&amp;adurl=http://beslasalle.salleurl.edu/master-gestion-tecnologias-informacion-online%3Futm_source%3Dxv003%26utm_medium%3Dcpc%26utm_campaign%3D2011"; 
+google_ad.visible_url = "www.salleurl.edu"; 
+google_ad.line1 = "M\x26#225;ster en Gesti\x26#243;n de"; 
+google_ad.line2 = "las Tecnolog\x26#237;as de la Informaci\x26#243;n"; 
+google_ad.line3 = "La Salle M\x26#225;sters OnLine y Barcelona"; 
+google_ad.regionname = ""; 
+google_ads[0] = google_ad; 
+google_ad = new Object(); 
+google_ad.n = 2; 
+google_ad.type = "text"; 
+google_ad.bidtype = "CPC"; 
+google_ad.targeting_type = "contextual"; 
+google_ad.url = "http://googleads.g.doubleclick.net/aclk?sa=L&amp;ai=By1sQqCNCTrSYHYma0AWH8eG3COTntrwCjMbX-TfAjbcBgIKSyQYQAhgCIJ-IzhIoBDgAULb_guL______wFg1b3TgrwIsgEPd3d3LnRhcmluZ2EubmV0ugEKMzM2eDI4MF9qc8gBAdoBX2h0dHA6Ly93d3cudGFyaW5nYS5uZXQvcG9zdHMvbGludXgvMzI0OTk4MC9TYWNhbmRvLUNsYXZlLVdlcC1Fbi1SZWRlcy1XaWZpLUNvbi1VYnVudHUtOV8wNC5odG1sqQKB9vHjg80PPsgChNyfIqgDAegD4gXoAwXoAyD1AwAAAIA&amp;num=2&amp;sig=AOD64_3cumxjlsm7qICtBE-sld89ZH7cBw&amp;client=ca-pub-5717128494977839&amp;adurl=http://www.lg.com/es/telefonia-movil/moviles-lg/LG-touch-P970-Optimus-Black.jsp%3Fcmpid%3Dopesct6754"; 
+google_ad.visible_url = "www.lg.com/es"; 
+google_ad.line1 = "El Nuevo Optimus Black"; 
+google_ad.line2 = "ligero y f\x26#225;cil de usar. Pruebe"; 
+google_ad.line3 = "el genial dise\x26#241;o de Optimus Black."; 
+google_ad.regionname = ""; 
+google_ads[1] = google_ad; 
+google_ad = new Object(); 
+google_ad.n = 3; 
+google_ad.type = "text"; 
+google_ad.bidtype = "CPC"; 
+google_ad.targeting_type = "contextual"; 
+google_ad.url = "http://googleads.g.doubleclick.net/aclk?sa=l&amp;ai=BierMqCNCTrSYHYma0AWH8eG3CJKp-OYB8tP79xLAjbcBwKkHEAMYAyCfiM4SKAQ4AFDS45qO-P____8BYNW904K8CKABnJnB_wOyAQ93d3cudGFyaW5nYS5uZXS6AQozMzZ4MjgwX2pzyAEB2gFfaHR0cDovL3d3dy50YXJpbmdhLm5ldC9wb3N0cy9saW51eC8zMjQ5OTgwL1NhY2FuZG8tQ2xhdmUtV2VwLUVuLVJlZGVzLVdpZmktQ29uLVVidW50dS05XzA0Lmh0bWyAAgHIAoayvgGoAwHoA-IF6AMF6AMg9QMAAACA&amp;num=3&amp;sig=AOD64_0ZkneTCe95EW4GnSlVIDEtjp929g&amp;client=ca-pub-5717128494977839&amp;adurl=http://www.paessler.com/prtg/%3Fsource%3Dadwords%26campaign%3DPRTG-Spanish-Content-English%26adgroup%3Dwireless-sniffer%26adnum%3D003"; 
+google_ad.visible_url = "www.Paessler.com"; 
+google_ad.line1 = "WiFi Sniffer - Download"; 
+google_ad.line2 = "Monitor wireless traffic."; 
+google_ad.line3 = "Freeware. Download Now!"; 
+google_ad.regionname = ""; 
+google_ads[2] = google_ad; 
+google_ad = new Object(); 
+google_ad.n = 4; 
+google_ad.type = "text"; 
+google_ad.bidtype = "CPC"; 
+google_ad.targeting_type = "contextual"; 
+google_ad.url = "http://googleads.g.doubleclick.net/aclk?sa=l&amp;ai=ByJ-6qCNCTrSYHYma0AWH8eG3CNT19P8BjKG95hncuYv8DvD1EhAEGAQgn4jOEigEOABQ8Ofl_v______AWDVvdOCvAigAZKUkeoDsgEPd3d3LnRhcmluZ2EubmV0ugEKMzM2eDI4MF9qc8gBAdoBX2h0dHA6Ly93d3cudGFyaW5nYS5uZXQvcG9zdHMvbGludXgvMzI0OTk4MC9TYWNhbmRvLUNsYXZlLVdlcC1Fbi1SZWRlcy1XaWZpLUNvbi1VYnVudHUtOV8wNC5odG1sgAIBqQKwCpL9_hS4PqgDAegD4gXoAwXoAyD1AwAAAIA&amp;num=4&amp;sig=AOD64_1u5loR-TCfoiYVg37TA6mEpgdFAg&amp;client=ca-pub-5717128494977839&amp;adurl=http://www.maswifi.com/adaptador-wifi-alfa-1000-mw-1w-awus036h-9dbi.html"; 
+google_ad.visible_url = "www.MasWiFi.com"; 
+google_ad.line1 = "Alfa AWUS036H S\x26#243;lo 27,95\x26#8364;"; 
+google_ad.line2 = "Env\x26#237;o Urgente 24H. Recupera Claves"; 
+google_ad.line3 = "2 a\x26#241;os garantia y Soporte Ventosa"; 
+google_ad.regionname = ""; 
+google_ads[3] = google_ad; 
+google_info.feedback_url = "http://www.google.com/url?ct\x3dabg\x26q\x3dhttps://www.google.com/adsense/support/bin/request.py%3Fcontact%3Dabg_afc%26url%3Dhttp://www.taringa.net/posts/linux/3249980/Sacando-Clave-Wep-En-Redes-Wifi-Con-Ubuntu-9_04.html%26hl%3Des%26client%3Dca-pub-5717128494977839%26adU%3Dwww.salleurl.edu%26adT%3DM%25C3%25A1ster%2Ben%2BGesti%25C3%25B3n%2Bde%26adU%3Dwww.lg.com/es%26adT%3DEl%2BNuevo%2BOptimus%2BBlack%26adU%3Dwww.Paessler.com%26adT%3DWiFi%2BSniffer%2B-%2BDownload%26adU%3Dwww.MasWiFi.com%26adT%3DAlfa%2BAWUS036H%2BS%25C3%25B3lo%2B27,95%25E2%2582%25AC%26gl%3DES\x26usg\x3dAFQjCNEPg5SAbJhSxEwUsGkXBq7ITmhHVw";
+var google_attribution_text = "Anuncios Google";
+var google_is_rtl = false;
+if (window.google_ad_request_done) {
+google_ad_request_done(google_ads);
+}
+if (window.google_radlink_request_done) {
+google_radlink_request_done(google_radlinks);
+}
+}

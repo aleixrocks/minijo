@@ -1,0 +1,16 @@
+
+
+BASIC
+ <Ctrl+a c> open bash on region
+
+REGIONS
+ <Ctrl+a S> split horizontally
+ <Ctrl+a |> split vertically
+ <Ctrl+a X> remove active region
+ <Ctrl+a number[0-9]> change to screen num
+ <Ctrl+a Q> active region is the only seen
+ <Ctrl+a :resize +10> increase 10 lines horizontally
+
+DEATACH
+ <Ctrl+a d> deatach
+ 

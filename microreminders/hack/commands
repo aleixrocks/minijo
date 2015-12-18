@@ -1,0 +1,15 @@
+netstat: information about local machine connections/ports/routes/statistics...
+hping3: send customized tcp/udp/icmp packets.
+tcptraceroute: traceroute using tcp instead of icmp packets.
+tcptrack: track all tcp connections on the net for the given interface.
+ncat: connect to a specific server port and allows to send raw characters to it. Also can be executed two ncat process, one has listener(server) and other as client and send raw characters between them at specific port.
+nmap: host discovery and port scan.
+arpspoof: arp poison
+iptables: manage local firewall. Specially interessint mangle table for modify ingoing and outgoing packets headers.
+tcpdump: dump all captured packets in interface for any protocol (not only tcp)
+
+
+suits:
+ettercap
+metasploit
+iptraf: tcp connections monitor on termial based display. It has some interessting freatures.

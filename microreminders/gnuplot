@@ -1,0 +1,99 @@
+Basic
+ - gnuplot scriptfile.gpi
+ - gnuplot -p -e "command1; command2;..." p for persist windows after gnuplot dies
+    e for accepting string as script.
+
+READ FROM STDIN
+ - gnuplot -p -e "plot '-'" introduce "e" to end input
+   EXAMPLE:
+    gnuplot -p -e "plot '-' using 1:2 with lines, '-' using 1:2 with lines" < data.dat 
+    where data.dat is:
+	2 3.406
+	4 2.799
+	6 2.645
+	8 2.585
+	10 2.668
+	12 2.804
+	14 2.747
+	16 2.619
+	18 3.413
+	20 4.000
+	e
+	2 4.406
+	4 4.799
+	6 4.645
+	8 4.585
+	10 4.668
+	12 4.804
+	14 4.747
+	16 4.619
+	18 4.413
+	20 4.000
+
+- plot sin(x)/x -> 2d plot
+- splot sin(x*y/20) -> 3d plot
+- plot sin(x) title 'sine function', tan(x) title 'tangent' -> multiple plots per figure
+
+llegir de fitxers
+Ordenats per columnes, no utilitzar comes separadores. Podem elegir utilitzar nomes certes columnes amb "using"
+- plot fitxer using 1:2 (columnes 1 i 2) title 'Columns'
+
+
+CUSTOMIAION OPTIONS
+ set output  "name.png"          output to image
+ set terminal postfile              type of terminal
+ set title "Force-Deflection Data"  Create a title
+ set xlabel "Deflection (meters)"   put a label on the x-axis
+ set ylabel "Force (kN)"            put a label on the y-axis
+ set xrange [0.001:0.005]           change the x axis range
+ set yrange [20:500]                change the y axis range
+ set autoscale                      auto determine ranges
+ pause -1 "Hit any key to continue" to avoid gnuplot from closing
+
+LOOP
+ - plot for [i=1:1000] 'data'.i.'.txt' using 1:2 title 'Flow '.i
+ - arrays example with for
+     command:
+       $1="title"
+       TITLE="title" NF="3" FILES="f1.dat f2.dat" LABELS="l1 l2" gnuplot -p ./parse.gpi
+  
+     script:
+       TITLE=system("echo $TITLE")
+       NF=system("echo $NF")
+       FILES=system("echo $FILES")
+       LABELS=system("echo $LABELS")
+       
+       set title TITLE
+       set xlabel "Number of Threads"
+       set ylabel "Time (s)"
+       plot for [i=1:words(FILES)] word(FILES,i) using 1:2 with lines title word(LABELS,i)
+
+ - do for [t=0:50] {
+     outfile = sprintf('animation/bessel%03.0f.png',t)
+     set output outfile
+     splot u*sin(v),u*cos(v),bessel(u,t/50.0) w pm3d ls 1
+   }
+
+
+Multiple plots
+ - set term x11 0; plot sin(x)
+ - set term x11 1; plot cos(x)
+
+
+Altres opcions de customitzacio
+
+- Plot a function. To plot a function instead of a data file, try
+	plot sin(x) with lines
+- Plot in a specified range. To plot a data set in the range 0 < x < 10 and 0.2 < y < 0.6, try
+	plot [0,10] [0.2,0.6] "d1.dat" with lines
+- Plot with points. To plot with points, or to plot with lines and points, use the folloing forms
+	plot "d1.dat" with points
+	plot "d1.dat" with linespoints
+- Plot different columns of datafile. For example, to take x from column 4 and y from column 2, 
+	plot "data.dat" using 4:2 with lines
+	Plot several functions at once. To plot d1.dat against the line y(x)=exp(-x), try
+	plot "d1.dat" with lines, exp(x) with lines
+- Change the Plot Title. To change the name that appears in the 'key' in the corner of the plot, try 
+	plot "d1.dat" title 'Sample Data' with lines
+  or, if you don't like the key, try 
+	plot "d1.dat" notitle with lines

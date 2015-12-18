@@ -1,0 +1,14 @@
+
+install gnuplot and gnuplot-x11
+
+
+We'll use this code to test our plotting script: the data for two streams (sine and cosine) are printed in the expected format: one sample (one number) printed per line. To distinguish between the two streams, the sample is prefixed with "0:", "1:", etc. Notice that we explicitly set the autoflush flag for our standard output: we need the data output to be unbuffered, otherwise our plotting script will receive data in bursts (when the data are flushed from the producer), and the plots will "jerk" forward.
+
+The parameters we passed to driveGnuPlots.pl are:
+
+2 is the number of streams
+The window for the first stream (sine) will be 50 samples wide
+The window for the second stream (cosine) will be 500 samples wide (hence the different "zoom" factor)
+The titles of the two streams follow
+
+./sinuses.pl | ./driveGnuPlots.pl 2 50 500 "Sine" "Cosine"

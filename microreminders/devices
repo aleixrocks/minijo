@@ -1,0 +1,9 @@
+BLOCK AND CHARACTER DEVICES
+
+When a program reads or writes data from a file, the requests go to a kernel driver. If the file is a regular file, the data is handled by a filesystem driver and it is typically stored in zones on a disk or other storage media, and the data that is read from a file is what was previously written in that place. There are other file types for which different things happen.
+
+When data is read or written to a device file, the request is handled by the driver for that device. Each device file has an associated number which identifies the driver to use. What the device does with the data is its own business.
+
+Block devices (also called block special files) usually behave a lot like ordinary files: they are an array of bytes, and the value that is read at a given location is the value that was last written there. Data from block device can be cached in memory and read back from cache; writes can be buffered. Block devices are normally seekable (i.e. there is a notion of position inside the file which the application can change). The name “block device” comes from the fact that the corresponding hardware typically reads and writes a whole block at a time (e.g. a sector on a hard disk).
+
+Character devices (also called character special files) behave like pipes, serial ports, etc. Writing or reading to them is an immediate action. What the driver does with the data is its own business. Writing a byte to a character device might cause it to be displayed on screen, output on a serial port, converted into a sound, ... Reading a byte from a device might cause the serial port to wait for input, might return a random byte (/dev/urandom), ... The name “character device” comes from the fact that each character is handled individually.

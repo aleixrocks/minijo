@@ -1,0 +1,60 @@
+Per poder fer commit d'algo primer l'hem de marcar com a staged. La comanda commit sola només fara comit del que haguem marcat com staged. Per marcar com staged fem servir "git add". "git add" es multifuncio. tambe serveix per passar de estat untracked a tracked, es a dir, que git el te en compte alhora de fer coses.
+
+
+general
+- git init -> inicia git per projecte ja existent
+- git rm -> eliminar el fitxer del disc dur i marca el canvi com staged. faltara commit per fer-ho permement.
+- Per eliminar fixers que tenim a tracked i no haurien (p.e. fitxers que no em posat al gitignore i que haurien de ser-hi com ".o") fem git rm --cached readme.txt. Posara readme.txt a untracked i no eliminara readme.txt del disc dur.
+- git commit -a -m "..." -> es salta la staged area i fa comit de tot.
+- gitignore -> per posar fitxers que no ens mostrara a git state com a untracked i aixi no molesten. tipicament hi posem els ".o"
+- git mv nomVell nomNou -> canvi nom
+
+mostrar log
+- git log
+- git log --stat -> mini resum sobre cada commit
+- git log -x -> mostra ultimes x entrades
+- git log --prety=[oneline|short|full|fullest]
+- git log --pretty=format:"%h - %an, %ar : %s" -> ben resumit
+- git log --pretty=format:"%h %s" --graph -> grapfic chachi
+
+filtrar log
+- GUI gitk
+- git log --since=2.weeks
+- git log --until=
+- git log --grep="patro a buscar"
+- si volem posar mes de un criteri de filtre en forma de "AND" cal posar "-all-match" sino per defecte fa "OR"
+- git log [altres opcions] -- Readme.txt -> busca commits on s'hagui modificat Readme.txt (tambe pot ser un directori). Fixarse en els espais de "--" es important.
+
+
+Rectificar
+- git commit --amend -> substitueix el ultim commit (per si ens hem deixat de fer algo rapid en el utltim commit)
+- git checkout <SHA-1> -> coloca HEAD en el commit indicat. Pases a no estar lligat a cap branca aixi que no es pot fer commit. Per fer commits cal crear una nova branca.
+- git revert <SHA-1> -> crea un nou commmit desfnet els canvis que introduiem en el commit <SHA-1>. Pot ser que dongui lloc a errors de merge
+- git checkout -- fitxers -> torna els fitxers (que no han destar staged) al seu estat del ultim commit (vaja, que desfa els canvis locals)
+- git reset --soft <SHA-1>  -> posiciona el HEAD al commit que li haguem indicat amb el sha
+- git reset --hard -> COMPTE!!!! es carrega el tree i torna al estat del comit que li indiguem amb part del SHA
+
+Repositoris
+- git clone URL -> copia repositori remot
+- git remote -v -> mostra servers remots
+- git remote add Nom URL -> afegeix el repo URL i li dona nom Nom
+- git fetch -> pilla data de repo pero no la barreja
+- git push [remote-name] [branch-name] -> carrega al repo, a una branca concreta
+
+Branches
+- important! opcio --all per veure totes les branques
+- git branch -> llista branches
+- git branch -v -> llista branches + info
+- git branch --merged -> llista branches ja fusionades amb el actual check out
+- git branch --no-merged -> igual pero amb les no fusionades
+- git branch NomBranca -> crea una nova branca
+- git checkout NomBranca -> canvia a la branca NomBranca
+- git merge NomBranca -> barreja branca actual + NomBranca
+- git branch -d NomBranca -> elimina branca
+- git checkout --track origin/serverfix -> crea branca local que fins ara només estava al server (origin/serverfix) que es dira a partir dara serverfix.
+- git push origin :serverfix -> elimina branca serverfix remota (si, sintaxi fea k te kages)
+
+Conflictes
+- git mergetool -> GUI per soluciona problemes.
+- Si no volem fer servir la GUI podem simplement obrir el fitxer amb conflicte i eliminar les marques de conflicte >>>>>>> <<<<<<<<< ======= tot solucionant el problema manualment.
+

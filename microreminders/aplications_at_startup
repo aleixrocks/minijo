@@ -1,0 +1,48 @@
+SCREEN
+
+screen -d -m program arguments: start program with arguments inside
+  screen without bash
+
+screen -R : connect to a deateched screen
+screen -r : list deateched screens
+
+INIT
+How to make a proces execute at startup as a specific user?
+
+Create script witch the following structure
+
+  #! /bin/sh
+  # /etc/init.d/blah
+  #
+  
+  # Some things that run always
+  touch /var/lock/blah
+  
+  # Carry out specific functions when asked to by the system
+  case "$1" in
+    start)
+      echo "Starting script blah "
+      echo "Could do more here"
+      ;;
+    stop)
+      echo "Stopping script blah"
+      echo "Could do more here"
+      ;;
+    *)
+      echo "Usage: /etc/init.d/blah {start|stop}"
+      exit 1
+      ;;
+  esac
+  
+  exit 0
+
+Add script to /etc/init.d  [valid on debian]
+
+  sudo mv /filename /etc/init.d/
+  sudo chmod +x /etc/init.d/filename 
+  sudo update-rc.d filename defaults 
+
+Change user of the executed command
+
+  su -s /bin/sh - aleix -c /usr/bin/deluged
+

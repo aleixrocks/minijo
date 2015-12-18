@@ -1,0 +1,82 @@
+compile with -g[0-3] o -ggdb[1-3]. To archive most amount of information
+use -ggdb3. The number means 1 (less) 2 (medium) 3 (high) amount of info
+
+compile with -W - Wall. It gives more warnings.
+
+general
+ - run -> run the program
+     - you can specify argumentes here. to reset arguments type "set args"
+ - continue -> continue execution
+ - help command -> help!
+ - where -> print where you are.
+ - when enter is pressed without typing a command, last comand is used.
+ - backtrace -> print stack trace. On functions call, if we see
+   something like name_function=@ffbef014, we know that the 
+   first parameter of the function is allocated in ffbef014
+ - x address -> examine the address, get the value.
+
+TUI
+ - gdb -tui
+ - info win -> show who has focus: windows CMD or windows SRC
+ - foucs CMD or SRC -> set focus
+
+MALDAD
+ - attach processID -> debug an alreeady running process. The process
+   will halt unitl gdb exit.
+ - deatch -> deatach process so it can continue executing normaly
+
+Variables
+ - print or p nomVar/nomFuncio -> print variable. Variable must be 
+   abailable on the current context. We can flip context with "frame". 
+   You can typecast a variable by typing print (char) variable.
+ - ptype or pt nomvar-> print type of variable
+ - p myarray[3]@5 -> print 5 elements of myarray from 3t position.
+ - set print pretty -> print more pretty structs and stuff
+ - print /FMT variable -> where /FMT is
+      o octal, x hex, d decimal, u unsigned decimal,t binary, 
+      f float, a address, c char
+ - print *(&a) -> just like c. & gets address and * value.
+ - set variable = value -> give value to variable
+ - printf "X = %d, Y = %d\n",X,Y -> just like C
+
+Breakpoints
+ - break functionname/linenumber -> new breakpoint
+ - condition numBreakpoint variaable1==variable2 -> make numBreakpoint 
+   breakpoint execute only when condition is true.
+ - info breakpoints -> show breakpoints
+ - step -> execute just one step entering inside functions
+ - next -> execute just one step without entering inside functions
+ - disable n -> disable breakpoint n
+ - enable n -> enable breakpoint n
+ - clear -> remove by its location
+ - delete -> remove by its identifier
+
+List
+ - list or "l" -> list code
+	 - starting with some line number	(gdb) list 5,
+	 - ending with some line number	(gdb) list ,28
+	 - between two numbers:	(gdb) list 21,25
+	 - by function name:	(gdb) list f
+	 - functions in the other file:	(gdb) list CentralDiff
+	 - by filename and line number:	(gdb) list derivative.c:12
+	 - filename and function name:	(gdb) list derivative.c:ForwardDiff
+ - set listsize 5 -> change list size
+
+Localitzation
+ - frame -> returns frame where gdb is it. frame is the header of a 
+   function call stored on the stack.
+ - frame numFrame -> swtich to numFrame so variables are available.
+ - where -> print where you are.
+
+Checkpoints
+ - checkpoint -> store current process status
+ - restart idcheckpoing -> restart program since checkpoint
+ - info checkpoints -> list all chekpoints and idcheckpoints
+
+Others
+ - call x() -> call function (yes! during execution time!)
+
+altres comandes
+ - comanda linux size: size of elements of an object file .o
+ - comanda linux strip: extirpa trosos d'un executable, com la 
+   seccio .text or la symbol table

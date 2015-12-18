@@ -1,0 +1,5 @@
+set target 
+set myaddr 
+set destport
+set sourceport
+hping send "ip(saddr=$myaddr,daddr=$target,ttl=255)+tcp(sport=$sourceport,dport=$destport,flags=r)"

@@ -1,0 +1,154 @@
+syntax on/off -> activar highlight
+set autoindent -> autoindentat
+set number -> mostrar num lineas
+set ts=4 -> set number of spaces for each tab space
+
+
+BASH IN VIM
+ - ! command -> execute bash command (it's called bang)
+ - w !diff % -  -> diff between current file and last time saved. w for send the file to be written
+   to the input of diff, % is a global var with the name of the vi file and - is special of diff to take
+   the second file from stdin
+
+NAVIGATIN
+ - G -> move cursor to the end of the file
+ - gg -> move cursor to the start of the file
+ - M -> move cursor to the middle of the current view
+ - H -> move cursor to the top of the current view
+ - L -> move cursor to the bottom of the current view
+ - w -> move to the start of the next word
+ - e -> move to the end of the next word
+ - b -> move to the start of the previous word.
+
+BUFERS
+ - r file -> read file to vim buffer
+ - r !command -> command output to vim buffer
+
+SELECT TEXT
+v -> mode seleccio text
+ctrl v -> selecciona per columnes
+V -> selecciona linea sencera
+
+ADD TEXT IN FRONT OF SELECTION
+ - seleccioinar per columnes
+ - presionar I
+ - escriure (nomes es veura a la primera columna
+ - ESC 
+
+BASIC USAGE
+d -> cortar
+p -> pegar
+y -> copiar
+
+u -> undo
+ctrl R -> redo
+
+JUMP MATCHING BRACKETS
+ - The % key can be used for the following: ([{}]), /**/, #if #ifdef, #else...
+
+TABS
+:tabe file -> open file in a new tab
+:tabn, tabp -> tabnext and tabprevious
+gt, gT -> next tab, previous tab
+ngt -> jump to tab "n"
+ZZ -> save and close tab
+:tabm [i | +i | -i] -> move tab to i (absolute) or current+i(-i) (relative)
+
+DELETE
+ - D -> from cursor to end of line (same as d$)
+ - d0 -> from cursor to start of line (it takes some time to execute)
+ - d w -> delete from the current cursor to the beginning of th next word
+
+FOLDING
+ - set foldingmethod=syntax -> turn on folding
+ - zo -> open folding on cursor (1 level)
+ - zc -> close folding on cursor (1 level)
+ - za -> toggle (1 level)
+ - zO -> open all foldings on cursor
+ - zC -> close all foldings on cursor
+ - zA -> toggle all levels
+ - zM -> close all on file
+ - zR -> opens all on file
+
+CTAGS vs CSCOPE
+
+ctags enables two features: allowing you to jump from function calls to 
+their definitions, and omni completion. The first means that when you are 
+over a call to a method, hitting g] or CTRL-] will jump to the place where 
+that method is defined or implemented. The second feature means that when 
+you type foo. or foo->, and if foo is a structure, then a pop-up menu with 
+field completion will be shown.
+
+cscope also has the first feature - using set cscopetag - but not the last. 
+However cscope additionally adds the ability to jump to any of the places 
+where a function is called as well.
+
+
+CTAGS
+ 1 - First, you need the ctags tool. The most common today is Exuberant 
+     Ctags, found at ctags.sourceforge.net.
+ 2 - Next, you need to create a tags database (a file names tags) for all 
+     the files in your project(s). This is usually done by running ctags -R . 
+     from your project root (also from within Vim via :!ctags ...). Exuberant 
+     Ctags support 41 languages, and you can even extend it via regular 
+     expressions.
+ 3 - Finally, Vim needs to be configured to pick up the tags database. 
+     With :set tags=./tags;, it will search in the file's directory upwards 
+     to the root directory. If you have certain global include directories, 
+     you can add those.
+ 4 - With that, you can start using Vim's tag functionality like 
+      - <C-]> go to definition
+      - <C-T> return
+
+CSCOPE
+ 1 - cscope -Rb : Generate database. (execute from project's root directory).
+     -R for recursive and -b to avoid interactive prompt.
+ 2 - (Optional) set and export the variable CSCOPE_DB with the absolute path
+     pointing to the cscope.out file (database generated with cscope -Rb)
+ 3 - A configuration file is needed to use cscopes in vim. Search it into
+     their website.
+ 4 - Put the cursor over a C symbol that is used in several places in your 
+     program:
+      4.1 - types of search: 
+         4.1.1 - 's', for 'find all uses of symbol X'. 
+         4.1.2 - 'g' finds the global definition(s) of a symbol 
+         4.1.3 - 'c' finds all calls to a function 
+         4.1.4 - 'f' opens the filename under the cursor (note: since Cscope 
+              by default parses all C header files it finds in /usr/include, 
+              you can open up most standard include files with this). 
+         4.1.5 - (look in the cscope_maps.vim file for all of them, and/or 
+              read the Cscope man page).
+      4.2 - "CTRL-\ s" (Control-backslash, then just 's') in quick 
+       succession, and you should see a menu at the bottom of your Vim window 
+       showing you all the uses of the symbol in the program. Select one of 
+       them and hit enter, and you'll jump to that use. 
+      4.3 - "CTRL-t" to jump back to your original location before the search 
+      4.4 - "CTRL-spacebar s". This time, your Vim window will split in two 
+       horizontally , and the Cscope search result will be put in the new 
+       window. [if you've never used multiple Vim windows before: move between 
+       windows via 'CTRL-W w' (or CTRL-W arrow key, or CTRL-W h/j/k/l for 
+       left/up/down/right), close a window via 'CTRL-W c' (or good old ':q'), 
+       make the current window the only one via 'CTRL-W o', split a window 
+       into two via 'CTRL-W s' (or 'CTRL-W v' for a vertical split), open 
+       a file in a new window via ':spl[it] filename']
+      4.5 - "CTRL-spacebar CTRL-spacebar s" (just hold down the CTRL key and 
+       tap the spacebar twice). Window split vertically. If you have trouble 
+       hitting the keys fast enough for this to work, go into the 
+       cscope_maps.vim script and change Vim's timeout settings as described 
+       in the comments [actually, I generally recommend that you turn off 
+       Vim's timeouts]. This doesn't work with old Vims
+
+AUTO SPLIT LINES
+ - gq{motion} % format the line that {motion} moves over
+ - {Visual}gq % format the visually selected area
+ - gqq        % format the current line
+ - :help gq and :help gw -> more info
+ - :set tw=80 -> will give you auto line break when exceeded during typing. It
+   is used in gq too, though if disabled gq breaks on window size or 79
+   depending on which comes first.
+
+SPACES TO TABS
+ - :set tabstop=2      " To match the sample file
+ - :set noexpandtab    " Use tabs, not spaces
+ - :%retab!            " Retabulate the whole file
+

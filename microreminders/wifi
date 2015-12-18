@@ -1,0 +1,3 @@
+check channel network usage
+ - sudo iwlist wlan0 scan | grep \(Channel
+

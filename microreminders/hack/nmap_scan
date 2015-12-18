@@ -1,0 +1,7 @@
+NMAP
+
+El estat de un port segons nmap pot ser, filtered, open, closed
+-filtered: No hi ha hagut cap contestacio al paquet que em enviat, pot ser que un firewall l'hagui filtarat pel cami, o que simplement la aplicacio que escoltava en aquell port, no ha contestat per el motiu que sigui.
+-open: un programa que escoltava en aquest port ens ha respost amb un SYN_ACK, disposat a establir una comunicacio amb nosalters (pobrecillo u.u)
+-closed: la politica per defecte de la maquina a la que ha arribat el paquet es respondre un missatge de RESET per cada solicitud d'establir connexio amb un port on no hi ha cap programa escoltant. Per tant, si rebem un RESET es que el port esta tancat, o dit de una altra manera, no hi ha ningu escoltant.
+

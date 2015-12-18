@@ -1,0 +1,10 @@
+ - end evey line with a dot "."
+ - files must start with -module(name_module). where name_module is 
+   the file name without extension.
+
+BASIC
+ -c(module_name): compile. name without file extension.
+ -"-export([func/numArgs])": export functions. e.g. export([start/0,hola/3]).
+ -"-import([func/numArgs])" : import module
+ -io:format("fist ~p second ~p and now, newline ~n",[first_arg, second_arg, ...])
+

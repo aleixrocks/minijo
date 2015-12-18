@@ -1,0 +1,13 @@
+
+first configuration server:
+ - apt-get install tightvncserver
+ - tightvncserver
+
+config client
+ - apt-get install xtightvncviewer
+
+server:
+ - vncserver :0 -geometry 1366x768 -depth 24
+
+client:
+ - xtightvncviewer 217.124.187.224:1

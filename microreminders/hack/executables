@@ -1,0 +1,3 @@
+- pescanner: info about the executable like the compilation time
+- fiddler: web debugging proxy (like webscarab, the one used on SSI)
+- webscarab: web debugging proxy

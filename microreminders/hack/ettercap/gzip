@@ -1,0 +1,6 @@
+if (ip.proto == TCP && tcp.dst == 80) { #Verifica Puerto destino TCP, N° Puerto destino 80
+if (search(DATA.data, "Accept-Encoding")) { #Verifica si la pagina contiene Encoding (gzip,otro)
+replace("Accept-Encoding", "Accept-Rubbish!"); #Si es afirmativo se forza a que los ignore
+msg("Accept-Encoding!\n"); #Mensaje para visualizar si pasa por este punto
+}
+}

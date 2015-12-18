@@ -1,0 +1,91 @@
+
+VARIABLES BASH
+ - $# -> nombre de parametres
+ - $1, $2, ... -> parametres del 1 al x
+ - $0 -> nom del programa
+ - $$ -> pid del script
+ - $? -> estat final d'execucio de lultim programa
+ - IFS -> Internal field separator. The value used to split between "objects" when using "in",
+   for exemple.
+
+CONTROL DE FLUX
+
+     if (( )); then
+
+     fi
+
+     for (( i = 0; i < N ; i++ )); do
+
+     done
+
+     for VALUE in $VALUES; do
+
+     done
+     - VALUES is a set of values like "ei 666 hola pepe yuhuuu"     
+
+
+     [ ]  -> test things
+       -eq, -ne, -gt, -lt, ...
+       -e true if file exist
+       -s true if file exist and is not empty
+
+     - (( )) interpeta el que hi ha a dins com C/C++
+     - Per operacions en decimal utilitzar la comanda bc -l
+
+     
+
+
+UTILITATS SCRIPTS
+ - ${variable(sense dolar!!!):-valor} -> retorna valor si variable no existeix. Si variable existeix retorna variable.
+ - Per llegir directament de un fitxer a una variable VAR=$(</tmp/Fitxer)
+ - Per guardar el contingut de un fitxer en una variable i despres mostarla per pantalla, s'ha de fer un echo
+   amb la variable entre comentes VAR=`cat FILE`; echo "$VAR"; Sino no fara els salts de linia
+
+
+FUNCTIONS
+  - declare function: 
+      nameFunction() {
+        arg1=$1
+        arg2=$2
+      }
+  - call function
+      nameFunction param1 param2
+
+
+
+READ FROM A FILE
+	while read LINE
+	do
+		echo LINE
+	done < PATH_TO_FILE
+
+PARSE STRINGS
+ - ${#string} -> string length
+ - ${string:position} -> extract substring from string begining at position 
+   and ending on the end of the string
+ - ${string:position:length} -> extract substring from string begining at
+   position and ending at position + length
+
+ - ${string#pattern} -> start at the begining, first match, delete pattern
+ - ${string##pattern} -> start at the begining, last match, delete pattern
+ - ${string%pattern} -> start at the end, first match, delete pattern 
+ - ${string%%pattern} -> start at the end, last match, delete pattern
+
+ - sed 's/patt1/patt2/gi'
+    - s for substitue
+    - substitute patt1 for patt2
+    - i for ignore case
+    - g for change all the matches in each line
+
+   using the deliminter specified by IFS
+ - IFS=', ' read -a array <<< "$string" -> to split $string into an array
+
+INTERRUPTIONS
+ - trap "trap_ctrl_c" 2 -> catch interrupt control-c and execute the function trap_ctrl_c
+     trap_ctrl_c() {
+	 # Do things
+         exit 0
+     }
+
+
+ 

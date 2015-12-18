@@ -1,0 +1,19 @@
+# This generic gnuplot script takes as input
+# a certain number of graphs (NF) and plots them.
+# The data for each graph is provided in separeted
+# files. The name of the files is found in a shell
+# variable (FILES). Each graph as a label that is
+# plotted in the legend. The labes are found in 
+# another shell variable (LABELS). The overall title
+# of the image created is specified in another shell
+# variable (TITLE).
+
+TITLE=system("echo $TITLE")
+NF=system("echo $NF")
+FILES=system("echo $FILES")
+LABELS=system("echo $LABELS")
+
+set title TITLE
+set xlabel "Number of Threads"
+set ylabel "Time (s)"
+plot for [i=1:words(FILES)] word(FILES,i) using 1:2 with lines title word(LABELS,i)

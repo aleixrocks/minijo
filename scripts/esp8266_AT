@@ -1,0 +1,9 @@
+AT -> expected return "OK"
+
+AT+CWMODE=3 -> connect to router mode
+
+AT+CWMODE? -> check current mode
+
+AT+CWLAP -> scan wifis
+
+

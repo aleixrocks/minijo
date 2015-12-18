@@ -1,0 +1,53 @@
+PRIORITY VALUE (PREEMPT_RT)
+
+There is a priority for "normal processes" and other for real time
+processes. The normal processes are shceduled in a different queue than 
+the real time processes by the linux kernel scheduler. The normal
+processes queues are: SCHED_OTHER, SCHED_BATCH, or SCHED_IDLE. The real
+time queues are: SCHED_FIFO and SCHED_RR.
+
+The Nice value goes from -20 to +20. The real priority of a process 
+(the one used by the scheduler) is calculated using the niceness, usually
+PR = NICE + 20. This PR priority is also the one shown under the PR
+top column. But it may vary if the kernel decides to put another one
+for a better scheduling (more fair). Therefore, the ranges of this
+priority used by the scheduler go from 0 to 40.
+
+  nice -n value command -> run command with value nice
+  renice -n value -p pid -> renice an already running process
+
+The real time processes have priorities in a different range. These
+priorities range from -100 to -1 but we specify them as 0 to 99, where
+0 is -1 and 99 is -100. (I suppose that it was an attempt to make things
+easier, so one can specify a value between 0 and 99 which is more intuitive
+than a value between -1 to -100). Therefore, the complete range of priorities
+used by the scheduler are:
+
+-100 (highest real time priority) to -1 (lowest real time priority), and 
+then 0 to 40 (the priorities for the normal processes calculated using 
+the niceness)
+
+The priority of real time processes is referred as static priority that 
+cannot be changed by the kernel. So positive PR values can be treated 
+as dynamic priority for non-realtime (SCHED_OTHER, SCHED_BATCH) processes 
+and negative PR value as static priority for realtime processes 
+(SCHED_RR, SCHED_FIFO).
+
+  chrt -r 50 command -> run command with real time priority of 50 (-51)
+
+The real time processes will always preempt any other process with the
+same priority. When two or more processes with the same 
+priority want the CPU, the preempt behaviour depends on 
+the scheduler used. Processes in SCHED_FIFO will be runned
+with a "first input, first output" basis. Processes in SCHED_RR will be 
+given "timeslices" (time to run into a CPU). When they consume the
+timeslices, another process with the same priority will take the CPU.
+
+
+
+
+CPU SHIELDING
+
+bound a process to a cpu using the command "cpuset". This "shields" a CPU
+from external non-essential interrupts and other processes which want to
+be run there.

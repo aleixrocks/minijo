@@ -1,0 +1,49 @@
+Instala estos paquetes:
+
+sudo apt-get install netcat hping3 kismet tcpdump ettercap nikto dsniff p0f ntop tripwire ngrep xprobe2 etherape lsof rkhunter chkrootkit yersinia nmap nmapfe wireshark aircrack-ng airsnort john kismet
+
+Explicacion de lo que se instala :
+
+Netcat: Utilidad que te permite abrir puertos, leer y escribir en conexiones TCP o UDP, asociar una shell a un puerto. A menudo se usa para abrir backdoors en sistemas remotos.
+
+Hping3: Utilidad capaz de enviar cualquier tipo de paquetes ICMP/UDP/TCP y mostrar la respuesta de la máquina de destino.
+
+ettercap: Es un sniffer que puede capturar contraseñas y producir ataques de man-in-the-middle de forma sencilla.
+
+nikto: Escáner de servidores web que identifica versiones y detecta vulnerabilidades.
+
+dsniff: Sniffer especializado en la captura de passwords transmitidos a través de varios protocolos. Incluye herramientas adicionales que permiten llevar a cabo ataques de spoofing y man-in-the-middle.
+
+p0f: Utilidad que identifica sistemas operativos de forma pasiva, es decir, escuchando el tráfico que generan sin introducir paquetes en la red.
+
+ntop: Muestra estadisticas de uso de la red. Es como el top de unix pero aplicado a las comunicaciones en red.
+
+tripwire: Verifica la integridad de los archivos del sistema. Detecta cambios en los ficheros ejecutables a fin de informar sobre posibles acciones no autorizadas como la instalación de backdoors.
+
+ngrep: Es un sniffer que implementa el tradicional grep pero buscando en los paquetes que se escuchan en la red.
+
+xprobe2: Identifica sistemas operativos de forma activa, es decir, enviando una serie de tests al sistema remoto y determinando su tipo en base a las respuestas recibidas.
+
+etherape: Muestra graficamente estadísticas sobre la actividad de la red.
+
+lsof: Muestra una lista de los archivos abiertos en el sistema. Util para detectar arccesos no autorizados o para ver qué ficheros está utilizando una aplicación determinada.
+
+rkhunter: Es un detector de rootkits.
+
+chkrootkit: Otro detector de rootkits.
+
+yersinia: Utilidad que se aprovecha de diversas flaquezas en algunos protocols de red (STP, CDP, DTP, DHCP, HSRP. ISL, VTP…) para provocar ataques de diversos tipos.
+
+nmap: Es el mejor escáner de puertos que existe. Implementa una gran variedad de técnicas y un excelente sistema de deteccion de sistemas operativos y versiones. Para el que no la conozca , es "LA HERRAMIENTA QUE UTILIZABA TRINITY, EN LA PELICULA MATRIX, para hackear uno de los sistemas".
+
+nmapfe: Front-end para nmap. Una interfaz gráfica basada en GTK.
+
+wireshark: (antes se llamaba ethereal). Es el mejor sniffer en modo gráfico que existe. Es muy potente y sus capacidades para filtrar el tráfico lo hacen indispensable para cualquier administrador de red. Tambien hay version para Windows.
+
+aircrack: Suite de utilidades para crackear las claves WEP utilizadas en las redes 802.11. Permiten la escucha del tráfico de la red, la inyección de paquetes y el crackeo de claves WEP de cualquier longitud.
+
+airsnort: Utilidad para crackear claves WEP, similar a aircrack.
+
+john: (John the Ripper) Es un excelente crackeador de contraseña. Soporta un gran numero de formatos distintos y permite bien el uso de diccionarios o el crackeo por fuerza bruta.
+
+kismet: Identifica redes inalambricas de forma pasiva recolectando paquetes, detecta redes ocultas, clientes asociados y es capaz de sniffar el tráfico de las redes no encriptadas. Kismet es el sistema de monitorización de redes inalambricas más potente que existe en la actualidad.

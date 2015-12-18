@@ -1,0 +1,442 @@
+awk  [options]  'script'  var=value  file(s)
+awk  [options]  -f scriptfile  var=value  file(s)
+
+Where "var" are shell variables
+
+
+Overview
+ The scripts has this form:
+    BEGIN { somthing to do before starts with the script itself}
+   
+    condition1 { something1 }
+    condition2 { something2 }
+    ...
+   
+    END { something to do after the script itself}
+
+  Where condition can be regular expressions "^Hola" or 
+  conditions "$1 > $2", bool expresions "$1 == 0 and 
+  $2 == 0", matching "$1 ~ /pattern/", ...
+
+ 
+
+
+Common
+ - Ffs -> set field separator to fs.
+ - variable FS = "fs" -> same as above
+ - variable NF > 2 -> Number Fields greater than 2
+ - /pattern/ { something } -> does something when matches patter on 
+   current line.
+ - $1 ~ /pattern/ {something} -> does something when pattern $1 is equal
+   to pattern.
+ - Print each line that begins with "Name:" and that contains 
+   exactly seven fields: NF == 7 && /^Name:/
+ - The "^" and "$" refer to the beginning and end of a string (such as the fields)
+ - ~ (match) and !~ (don't match). 
+ - The BEGIN pattern lets you specify procedures that take place before the first input line is processed. (Generally, you set global variables here.)
+ - The END pattern lets you specify procedures that take place after the last input record is read.
+
+
+Variable	Description
+	
+  FILENAME	Current filename
+  FS		Field separator (a space)
+  NF		Number of fields in current record
+  NR		Number of the current record (or line number)
+  OFMT		Output format for numbers ("%.6g") and for conversion to string
+  OFS		Output field separator (a space)
+  ORS		Output record separator (a newline)
+  RS		Record separator (a newline)
+  $0		Entire input record
+  $n		nth field in current record; fields are separated by FS
+
+
+Simplest script
+
+  awk -F: '{ print $1; print $2; print $3 }' /etc/passwd
+
+Examples
+
+Print first field of each line:
+{ print $1 }
+
+Print all lines that contain pattern:
+/pattern/
+
+Print first field of lines that contain pattern:
+/pattern/ { print $1 }
+
+Select records containing more than two fields:
+NF > 2
+
+Interpret input records as a group of lines up to a blank line. Each line is a single field:
+BEGIN { FS = "\n"; RS = "" }
+
+Print fields 2 and 3 in switched order, but only on lines whose first field matches the string "URGENT":
+$1 ~ /URGENT/ { print $3, $2 }
+
+Count and print the number of pattern found:
+/pattern/ { ++x }
+END { print x }
+
+Add numbers in second column and print total:
+{ total += $2 }
+END { print "column total is", total}
+
+Print lines that contain less than 20 characters:
+length($0) < 20
+
+Print each line that begins with Name: and that contains exactly seven fields:
+NF == 7 && /^Name:/
+
+Print the fields of each input record in reverse order, one per line:
+{
+	for (i = NF; i >= 1; i--)
+		print $i
+}
+
+
+
+
+Arrays
+
+  /widget/ { count["widget"]++ }		Count widgets
+  END      { print count["widget"] }	Print the count
+
+  They work as hash tables.
+
+
+
+
+User Defined Functions
+
+nawk allows you to define your own functions. This makes it easy to encapsulate sequences of steps that need to be repeated into a single place, and reuse the code from anywhere in your program. Note: for user-defined functions, no space is allowed between the function name and the left parenthesis when the function is called.
+
+The following function capitalizes each word in a string. It has one parameter, named input, and five local variables, which are written as extra parameters.
+
+# capitalize each word in a string
+function capitalize(input,    result, words, n, i, w)
+{
+	result = ""
+	n = split(input, words, " ")
+	for (i = 1; i <= n; i++) {
+		w = words[i]
+		w = toupper(substr(w, 1, 1)) substr(w, 2)
+		if (i > 1)
+			result = result " "
+		result = result w
+	}
+	return result
+}
+
+# main program, for testing
+{ print capitalize($0) }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+11.10 Alphabetical Summary of Functions and Commands
+
+The following alphabetical list of keywords and functions includes all that are available in awk, nawk, and gawk. nawk includes all old awk functions and keywords, plus some additional ones (marked as {N}). gawk includes all nawk functions and keywords, plus some additional ones (marked as {G}). Items marked with {B} are available in the Bell Labs awk. Items that aren't marked with a symbol are available in all versions.
+
+atan2
+
+	atan2(y, x)
+	Return the arctangent of y/x in radians. {N}
+
+break
+
+	break
+	Exit from a while, for, or do loop.
+
+close
+
+	close(filename-expr)
+	close(command-expr)
+	In most implementations of awk, you can have only 10 files open simultaneously and one pipe. Therefore, nawk provides a close function that allows you to close a file or a pipe. It takes as an argument the same expression that opened the pipe or file. This expression must be identical, character by character, to the one that opened the file or pipe; even whitespace is significant. {N}
+
+continue
+
+	continue
+	Begin next iteration of while, for, or do loop.
+
+cos
+
+	cos(x)
+	Return the cosine of x, an angle in radians. {N}
+
+delete
+
+	delete array[element]
+	delete array
+	Delete element from array. The brackets are typed literally. The second form is a common extension, which deletes all elements of the array at one shot. {N}
+
+do
+
+	do
+    		statement
+	while (expr)
+	Looping statement. Execute statement, then evaluate expr and, if true, execute statement again. A series of statements must be put within braces. {N}
+
+exit
+
+	exit [expr]
+	Exit from script, reading no new input. The END procedure, if it exists, will be executed. An optional expr becomes awk's return value.
+
+exp
+
+	exp(x)
+	Return exponential of x (ex).
+
+fflush
+
+	fflush([output-expr])
+	Flush any buffers associated with open output file or pipe output-expr. {B}
+
+	gawk extends this function. If no output-expr is supplied, it flushes standard output. If output-expr is the null string (""), it flushes all open files and pipes. {G}
+
+for
+
+	for (init-expr; test-expr; incr-expr)
+    	statement
+	C-style looping construct. init-expr assigns the initial value of a counter variable. test-expr is a relational expression that is evaluated each time before executing the statement. When test-expr is false, the loop is exited. incr-expr increments the counter variable after each pass. All the expressions are optional. A missing test-expr is considered to be true. A series of statements must be put within braces.
+
+for
+
+	for (item in array)
+    		statement
+	Special loop designed for reading associative arrays. For each element of the array, the statement is executed; the element can be referenced by array[item]. A series of statements must be put within braces.
+
+function
+
+	function name(parameter-list) {
+    		statements
+	}
+	Create name as a user-defined function consisting of awk statements that apply to the specified list of parameters. No space is allowed between name and the left paren when the function is called. {N}
+
+getline
+
+	getline [var] [< file]
+    	or
+	command | getline [var]
+	Read next line of input. Original awk doesn't support the syntax to open multiple input streams. The first form reads input from file; the second form reads the output of command. Both forms read one record at a time, and each time the statement is executed, it gets the next record of input. The record is assigned to $0 and is parsed into fields, setting NF, NR and FNR. If var is specified, the result is assigned to var, and $0 and NF aren't changed. Thus, if the result is assigned to a variable, the current record doesn't change. getline is actually a function and returns 1 if it reads a record successfully, 0 if end-of-file is encountered, and -1 if it's otherwise unsuccessful. {N}
+
+gensub
+
+	gensub(r, s, h [, t])
+	General substitution function. Substitute s for matches of the regular expression r in the string t. If h is a number, replace the hth match. If it is "g" or "G", substitute globally. If t is not supplied, $0 is used. Return the new string value. The original t is not modified. (Compare gsub and sub.) {G}
+
+gsub
+
+	gsub(r, s [, t])
+	Globally substitute s for each match of the regular expression r in the string t. If t is not supplied, defaults to $0. Return the number of substitutions. {N}
+
+if
+
+	if (condition)
+	    statement
+	[else
+	    statement]
+	If condition is true, do statement(s); otherwise do statement in the optional else clause. The condition can be an expression using any of the relational operators <, <=, ==, !=, >=, or >, as well as the array membership operator in, and the pattern-matching operators ~ and !~ (e.g., if ($1 ~ /[Aa].*/)). A series of statements must be put within braces. Another if can directly follow an else in order to produce a chain of tests or decisions.
+
+index
+
+index(str, substr)
+Return the position (starting at 1) of substr in str, or zero if substr is not present in str.
+
+int
+
+int(x)
+Return integer value of x by truncating any fractional part.
+
+length
+
+length([arg])
+Return length of arg, or the length of $0 if no argument.
+
+log
+
+log(x)
+Return the natural logarithm (base e) of x.
+
+match
+
+match(s, r)
+Function that matches the pattern, specified by the regular expression r, in the string s, and returns either the position in s, where the match begins, or 0 if no occurrences are found. Sets the values of RSTART and RLENGTH to the start and length of the match, respectively. {N}
+
+next
+
+next
+Read next input line and start new cycle through pattern/procedures statements.
+
+nextfile
+
+nextfile
+Stop processing the current input file and start new cycle through pattern/procedures statements, beginning with the first record of the next file. {B} {G}
+
+print
+
+print [ output-expr[, ...]] [ dest-expr ]
+Evaluate the output-expr and direct it to standard output, followed by the value of ORS. Each comma-separated output-expr is separated in the output by the value of OFS. With no output-expr, print $0.
+
+Output Redirections
+
+dest-expr is an optional expression that directs the output to a file or pipe.
+
+> file
+Directs the output to a file, overwriting its previous contents.
+
+>> file
+Appends the output to a file, preserving its previous contents. In both cases, the file is created if it does not already exist.
+
+| command
+Directs the output as the input to a Unix command.
+
+Be careful not to mix > and >> for the same file. Once a file has been opened with >, subsequent output statements continue to append to the file until it is closed.
+
+Remember to call close() when you have finished with a file or pipe. If you don't, eventually you will hit the system limit on the number of simultaneously open files.
+
+printf
+
+printf(format [, expr-list ]) [ dest-expr ]
+An alternative output statement borrowed from the C language. It can produce formatted output and also output data without automatically producing a newline. format is a string of format specifications and constants. expr-list is a list of arguments corresponding to format specifiers. See print for a description of dest-expr.
+
+format follows the conventions of the C-language printf(3S) library function. Here are a few of the most common formats:
+
+%s	
+A string.
+
+%d	
+A decimal number.
+
+%n.mf	
+A floating-point number; n = total number of digits. m = number of digits after decimal point.
+
+%[-]nc	
+n specifies minimum field length for format type c, while - left-justifies value in field; otherwise, value is right-justified.
+
+Like any string, format can also contain embedded escape sequences: \n (newline) or \t (tab) being the most common. Spaces and literal text can be placed in the format argument by quoting the entire argument. If there are multiple expressions to be printed, there should be multiple formats specified.
+
+Example
+
+Using the script:
+
+{ printf("The sum on line %d is %.0f.\n", NR, $1+$2) }
+The following input line:
+
+5   5
+produces this output, followed by a newline:
+
+The sum on line 1 is 10.
+rand
+
+rand()
+Generate a random number between 0 and 1. This function returns the same series of numbers each time the script is executed, unless the random number generator is seeded using srand(). {N}
+
+return
+
+return [expr]
+Used within a user-defined function to exit the function, returning value of expr. The return value of a function is undefined if expr is not provided. {N}
+
+sin
+
+sin(x)
+Return the sine of x, an angle in radians. {N}
+
+split
+
+split(string, array [, sep])
+Split string into elements of array array[1],...,array[n]. The string is split at each occurrence of separator sep. If sep is not specified, FS is used. The number of array elements created is returned.
+
+sprintf
+
+sprintf(format [, expressions])
+Return the formatted value of one or more expressions, using the specified format (see printf). Data is formatted but not printed. {N}
+
+sqrt
+
+sqrt(arg)
+Return square root of arg.
+
+srand
+
+srand([expr])
+Use optional expr to set a new seed for the random number generator. Default is the time of day. Return value is the old seed. {N}
+
+strftime
+
+strftime([format [,timestamp]])
+Format timestamp according to format. Return the formatted string. The timestamp is a time-of-day value in seconds since midnight, January 1, 1970, UTC. The format string is similar to that of sprintf. (See the Example for systime.) If timestamp is omitted, it defaults to the current time. If format is omitted, it defaults to a value that produces output similar to that of date. {G}
+
+sub
+
+sub(r, s [, t])
+Substitute s for first match of the regular expression r in the string t. If t is not supplied, defaults to $0. Return 1 if successful; 0 otherwise. {N}
+
+substr
+
+substr(string, beg [, len])
+Return substring of string at beginning position beg and the characters that follow to maximum specified length len. If no length is given, use the rest of the string.
+
+system
+
+system(command)
+Function that executes the specified command and returns its status. The status of the executed command typically indicates success or failure. A value of 0 means that the command executed successfully. A nonzero value indicates a failure of some sort. The documentation for the command you're running will give you the details.
+
+The output of the command is not available for processing within the awk script. Use command | getline to read the output of a command into the script. {N}
+
+systime
+
+systime()
+Return a time-of-day value in seconds since midnight, January 1, 1970, UTC. {G}
+
+Example
+
+Log the start and end times of a data-processing program:
+
+BEGIN {
+	now = systime()
+	mesg = strftime("Started at %m/%d/%Y %H:%M:%S", now)
+	print mesg
+}
+process data ...
+END {
+	now = systime()
+	mesg = strftime("Ended at %m/%d/%Y %H:%M:%S", now)
+	print mesg
+}
+tolower
+
+tolower(str)
+Translate all uppercase characters in str to lowercase and return the new string.[6] {N}
+
+[6] Very early versions of nawk don't support tolower() and toupper(). However, they are now part of the POSIX specification for awk, and are included in the SVR4 nawk.
+
+toupper
+
+toupper(str)
+Translate all lowercase characters in str to uppercase and return the new string. {N}
+
+while
+
+while (condition)
+    statement
+Do statement while condition is true (see if for a description of allowable conditions). A series of statements must be put within braces.
+
+11.10.1 printf Formats
+
+Format specifiers for printf and sprintf have the following form:
+
+%[flag][width][.precision]letter
+
+The control letter is required. The format conversion control letters are as follows.

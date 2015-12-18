@@ -1,0 +1,28 @@
+
+SED FOR DELETION
+
+sed '/MATCH/d' FILE
+
+
+SED FOR SUBSTITUTION
+
+sed [OPTIONS] 's/MATCH/SUBST/PARAMETERS' FILE
+
+
+Options
+ - i: modify the FILE with the changes
+
+Parameters
+ - g: replace all the matches on the same line
+ - c: confirm every match (ONLY IN VIM)
+ - i: not case sensitive
+ - I: case sensitive
+
+Wildcards
+ - The asterisk (*) means "zero or more of the previous item".
+      echo "aaaaax" | sed 's/a*/b' -> bx
+ - Match any single character: sed -i 's/string-./string-0/g' file.txt
+ - Match any string (i.e. any single character zero or more times):
+      echo "aaaaax" | sed 's/a.*/b' -> b
+ - NOT: [^x] (any character except x)
+ 

@@ -1,0 +1,248 @@
+This applies to 12.04+ since these are the ones I could test but could also be used in older versions. I have separated this guide into several parts, which consist of:
+
+Part 1 - Wireless Routers with no password or WEP Key
+
+Part 2 - Wireless Routers with WPA Key
+
+Part 2.1 - Connecting to a WPA Router with wpa_supplicant
+Part 2.2 - Connecting to a WPA Router with Network Manager
+Part 3 - Disconnecting from a Wireless Router
+
+Part 4 - Deleting a Connection (Including Configuration File)
+
+Part 5 - Automatic connection when login in
+
+Bonus - How to find your network interface name via GUI
+
+The following command lines can be used to connect and disconnect depending on the Wireless card, wireless security and wireless router settings:
+
+
+
+
+
+
+WIRELESS ROUTER (NO PASSWORD OR WEP SECURITY ONLY)
+
+For cases where the wireless router has no password or WEP security, do the following:
+
+Open the terminal and lookup for the wireless connection:
+
+iwlist wlan0 s  
+(The s is for Scan. wlan0 is my wireless card but could be different for each user. Some have eth0, others wlan2.. You need sudo to execute this option.To find out the name of your wireless card simply type iwlist and press TAB. This should autocomplete the line with the network card's name. You can also type iwconfig and find the name on the list that will show.)
+
+If you do not know the name of your wireless devices type: iwconfig which will show you your wired/wireless devices and their names. They might be something like wlan0, wlan1, eth1, eth2..
+
+The lookup will show you all possible Access Points (AP) visible to you. After you see your router in the list try to connect to it:
+
+If it does not have a password do the following:
+
+iwconfig wlan0 essid NAME_OF_ACCESS_POINT  
+For example
+
+iwconfig wlan0 essid CYREX  
+after that, make sure to use dhclient so you can get a dynamic IP in case you don't get assigned one by the router. That should leave you connected to the CYREX router.
+
+If it has a password then do:
+
+iwconfig wlan0 essid CYREX key PASSWORD
+That should connect using the PASSWORD you gave there.
+
+Again, do dhclient after connecting to make sure you get an IP assigned.
+
+Making sure you are correctly connected is always good so execute iwconfig to make sure your wireless card is connected to the SSID you mentioned above. It should show your device connected and the IP assigned to you. If it does not and gives you an error like Interface doesn't support scanning try the following 2 options:
+
+Test if your interface is UP: sudo ifconfig wlan0 up
+
+Try adding sudo when doing the scan: sudo iwlist wlan0 s
+
+Try bringing the device down and then back up:
+
+sudo ifconfig wlan0 down  
+sudo ifconfig wlan0 up
+
+
+
+
+
+WIRELESS ROUTER (WPA or WPA2 SECURITY)
+
+For cases where the wireless router has a WPA/WPA2 password there are a few ways of doing this. I will mention the 2 most popular ones::
+
+Open the terminal and lookup for the wireless connection:
+
+iwlist wlan0 s  
+(The s is for Scan. wlan0 is my wireless card but could be different for each user. Some have eth0, others wlan2.. You need sudo to execute this option. To find out the name of your wireless card simply type iwlist and press TAB. This should autocomplete the line with the network card's name. You can also type iwconfig and find the name on the list that will show.)
+
+If you do not know the name of your wireless devices type: iwconfig which will show you your wired/wireless devices and their names. They might be something like wlan0, wlan1, eth1, eth2..
+
+The lookup will show you all possible Access Points (AP) visible to you. After you see your router in the list try to connect to it:
+
+
+
+WPA-SUPPLICANT GUIDE
+
+Type the following in the terminal (Assuming you have the wpasupplicant package installed which installs all the needed commands we will use here):
+
+wpa_passphrase SSID PASSWORD > CONFIG_FILE
+Example: wpa_passphrase Virus LinuxFTW > wpa.conf
+
+Where Virus is the name of my router,LinuxFTW is my password and wpa.conf is the file where I want to store all of this information in. Note that you can save the file in another place, many users save the file in /etc/wpa_supplicant.conf instead of wpa.conf. The data of the wpa.conf file should be something like this:
+
+network={  
+        ssid="Virus"  
+        #psk="LinuxFTW"  
+        psk=1d538d505f48205589ad25b2ca9f52f9cbb67687e310c58a8dd940ccc03fbfae  
+}  
+Up to this point, we should know the name of our wireless card interface (eg: Wlan0, eth2, Wlan2...). We now need to know which Driver is in use. for this we type:
+
+wpa_supplicant
+It should show us a lot of information, but there will be a section called **Drivers* which shows all available drivers (These are available when compiling wpa_supplicant). In my case it is like this:
+
+drivers:  
+  wext = Linux wireless extensions (generic)  
+  nl80211 = Linux nl80211/cfg80211  
+  wired = Wired Ethernet driver  
+  none = no driver (RADIUS server/WPS ER)  
+The whole list is hostap, hermes, madwifi, wext, broadcom, wired, roboswitch, bsd, ndis. This can change depending on how wpa_supplicant was compiled, but the one that shows for me should be similar to the one on your system. Most users will select the wext driver.
+
+So now that we have our wireless interface card name and the driver name, we proceed to connect to it using the already created configuration file using the following format:
+
+wpa_supplicant -iINTERFACE_NAME -cCONFIGURATION_FILE -DDRIVER_NAME
+For example:
+
+wpa_supplicant -iwlan0 -c/etc/wpa_supplicant.conf -Dwext
+Where -i is your interface card's name, -c is where your configuration file is and -D is the name of the driver you will be using to connect. If it connects correctly, then we press CTRL+C to cancel it and then execute the line again but this time we send it to the background with -B so we can continue to use the terminal:
+
+wpa_supplicant -B -iwlan0 -c/etc/wpa_supplicant.conf -Dwext  
+After that simply do a sudo dhclient wlan0 to get an IP from the router.
+
+Some users have reported removing the Hash and leaving only the password in the config, for example:
+
+     network={  
+            ssid="Virus"  
+            psk="LinuxFTW"  
+    }  
+Others have added the ssid_scan to the config file:
+
+    network={  
+            ssid="Virus"
+            scan_ssid=1  
+            #psk="LinuxFTW"  
+            psk=1d538d505f48205589ad25b2ca9f52f9cbb67687e310c58a8dd940ccc03fbfae  
+    }  
+Or even adding the Key type:
+
+    network={  
+            ssid="Virus"
+            scan_ssid=1  
+            key_mgmt=WPA-PSK
+            #psk="LinuxFTW"  
+            psk=1d538d505f48205589ad25b2ca9f52f9cbb67687e310c58a8dd940ccc03fbfae  
+    }  
+More information about this in man wpa_supplicant.conf
+
+NETWORK MANAGER GUIDE
+
+The good thing about network manager is that it comes with a couple of nice scripts and tools. Two of these are nmcli and create_connection (Neat Python 3 script) which we will use in this case.
+
+After doing the steps mentioned previously to find your router's SSID name (Remember the part about iwlist above) we do the following:
+
+sudo /usr/share/checkbox/scripts/create_connection -S SECURITY_TYPE -K PASSWORD SSID_NAME
+Where SECURITY is the type of security the Router uses (WPA, WEP), PASSWORD is.. well..the password and SSID_NAME is the SSID Name of the Router. For example:
+
+sudo /usr/share/checkbox/scripts/create_connection -S wpa -K LinuxFTW Virus
+Will create a connection for Network Manager which should look something like this:
+
+  cyrex@cyrex:~$ sudo /usr/share/checkbox/scripts/create_connection -S wpa -K LinuxFTW Virus
+  [sudo] password for cyrex: 
+  Connection Virus registered
+  Connection Virus activated.
+After this, you should get an IP assigned from the router. If not simply do sudo dhclient wlan0 (Assuming wlan0 is the name of your interface). You can also check your network manager's connections using nmcli like this: nmcli c which should show something like this:
+
+ cyrex@cyrex:~$ nmcli c
+  NAME                      UUID                                   TYPE              TIMESTAMP-REAL                    
+  Xcentral                  f51a5a64-8a91-47d6-897c-28efcd84d2b0   802-11-wireless   Fri 22 Mar 2013 02:25:54 PM VET   
+  Realtek                   9ded7740-ad29-4c8f-861f-84ec4da87f8d   802-3-ethernet    Tue 05 Mar 2013 01:18:31 AM VET   
+  Intel                     e25b1fd8-c4ff-41ac-a6bc-22620296f01c   802-3-ethernet    Fri 05 Apr 2013 10:04:05 PM VET   
+  Virus                     3f8ced55-507b-4558-a70b-0d260441f570   802-11-wireless   Tue 09 Apr 2013 06:31:10 AM VET   
+I mention the Network Manager's way because there are a couple of cases where using wpa_supplicant will simply not work (Problems between router and wireless card, security issues, etc..). In my case, all attempts to use wpa_supplicant on one PC did not work, but in another it worked the first time I tried. So am posting both methods to help on each case and to make it easier for users to decide which one they want.
+
+DISCONNECTING FROM A WIRELESS ROUTER
+
+There are several ways of accomplishing this:
+
+Disconnect by "force": sudo ifconfig wlan0 down
+
+This will turn your wireless card interface off (Driver turns off). To turn in on simply type ifconfig wlan0 up followed by a sudo dhclient wlan0. It will still show as connected if viewed by Network Manager but there will actually be no connection to the router. Trying to ping will throw an connect: Network is unreachable error.
+
+Release the DHCP IP: sudo dhclient -r wlan0
+
+Remember to do sudo dhclient wlan0 to assign yourself an IP again.
+
+Disconnect using Network Manager: nmcli nm enable false
+
+Where nm is the parameter of nmcli that manages and sets Network Manager's states. The option enable can be true or false, meaning if set to false, all network connections managed by Network Manager will be disconnected. note that nmcli does not need root permissions.
+
+To see the status of Network Manager type nmcli nm, it should show something similar to this:
+
+      cyrex@cyrex:~$ nmcli nm
+      RUNNING         STATE           WIFI-HARDWARE   WIFI       WWAN-HARDWARE   WWAN      
+      running         connected       enabled         enabled    enabled         enabled   
+Another way of turning the Connection On or Off (Connecting/Disconnecting) is by doing the following:
+
+nmcli c down id NAME` - Will disconnect the connection NAME  
+
+nmcli c up id NAME` - Will connect the connection NAME
+DELETING A CONNECTION
+
+To delete an existing connection is fairly easy. First type in the terminal:
+
+nmcli c
+It will output something like this:
+
+cyrex@cyrex:~$ nmcli c
+NAME                      UUID                                   TYPE              TIMESTAMP-REAL                    
+Realtek                   9ded7740-ad29-4c8f-861f-84ec4da87f8d   802-3-ethernet    Tue 05 Mar 2013 01:18:31 AM VET   
+PrivateSys                86b2b37d-4835-44f1-ba95-46c4b747140f   802-11-wireless   Sun 21 Apr 2013 07:52:57 PM VET   
+pepe                      9887664b-183a-45c0-a81f-27d5d0e6d9d8   802-11-wireless   Thu 18 Apr 2013 02:43:05 AM VET   
+Virus                     3f8ced55-507b-4558-a70b-0d260441f570   802-11-wireless   Tue 16 Apr 2013 11:33:24 AM VET   
+Intel                     e25b1fd8-c4ff-41ac-a6bc-22620296f01c   802-3-ethernet    Sun 21 Apr 2013 08:12:29 PM VET   
+Xcentral                  f51a5a64-8a91-47d6-897c-28efcd84d2b0   802-11-wireless   Fri 22 Mar 2013 02:25:54 PM VET  
+Now let us say we want to delete Xcentral, we then proceed with the following command:
+
+nmcli c delete id Xcentral
+After doing it should look something like this:
+
+cyrex@cyrex:~$ nmcli c delete id Xcentral
+cyrex@cyrex:~$ nmcli c
+NAME                      UUID                                   TYPE              TIMESTAMP-REAL                    
+Realtek                   9ded7740-ad29-4c8f-861f-84ec4da87f8d   802-3-ethernet    Tue 05 Mar 2013 01:18:31 AM VET   
+PrivateSys                86b2b37d-4835-44f1-ba95-46c4b747140f   802-11-wireless   Sun 21 Apr 2013 07:52:57 PM VET   
+pepe                      9887664b-183a-45c0-a81f-27d5d0e6d9d8   802-11-wireless   Thu 18 Apr 2013 02:43:05 AM VET   
+Virus                     3f8ced55-507b-4558-a70b-0d260441f570   802-11-wireless   Tue 16 Apr 2013 11:33:24 AM VET   
+Intel                     e25b1fd8-c4ff-41ac-a6bc-22620296f01c   802-3-ethernet    Sun 21 Apr 2013 08:12:29 PM VET   
+All connections are stored in /etc/NetworkManager/system-connections/
+
+If I were to look in that folder right now I would see the following files:
+
+cyrex@cyrex:~$ ls /etc/NetworkManager/system-connections
+Intel  pepe  PrivateSys  Realtek  Virus
+This is only in case you wish to edit/delete/add a connection by hand.
+
+Automatic Wireless Connection on Login
+
+For cases where you would like to login automatically to a wireless router here are the steps:
+
+Open the interface file:
+
+sudo nano /etc/network/interfaces
+Add the following information (Assuming your interface is called wlan0):
+
+auto wlan0
+iface wlan0 inet static
+address ASSIGNED_IP
+netmask 255.255.255.0
+gateway THE_GATEWAY
+wireless-essid YOURSSID
+wireless-key WIRELESSKEY_HERE
+Save the file and reboot computer. Note that this will be saved on a plain text file which can be accessed from the same computer.

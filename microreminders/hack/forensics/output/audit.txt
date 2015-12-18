@@ -1,0 +1,27 @@
+Foremost version 1.5.7 by Jesse Kornblum, Kris Kendall, and Nick Mikus
+Audit File
+
+Foremost started at Sun May 13 20:43:55 2012
+Invocation: foremost -i image 
+Output directory: /home/arn/hack/forensics/output
+Configuration file: /etc/foremost.conf
+------------------------------------------------------------------
+File: image
+Start: Sun May 13 20:43:55 2012
+Length: 1 MB (1474560 bytes)
+ 
+Num	 Name (bs=512)	       Size	 File Offset	 Comment 
+
+0:	00000073.jpg 	       8 KB 	      37376 	 
+1:	00000033.ole 	      21 KB 	      16896 	 
+2:	00000104.zip 	       2 KB 	      53248 	 
+Finish: Sun May 13 20:43:55 2012
+
+3 FILES EXTRACTED
+	
+jpg:= 1
+ole:= 1
+zip:= 1
+------------------------------------------------------------------
+
+Foremost finished at Sun May 13 20:43:55 2012

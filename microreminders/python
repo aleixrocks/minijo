@@ -1,0 +1,217 @@
+Variables
+ - Last value "_"
+ - Casting: float(), int(), long(), str(), repr() (str and repr are similar)
+ - del var -> delete variable var (works for items of lists)
+ - tuples: var = (1,2,3); var = 1,2; var 1,; var = (); x,y,z = t
+ - lists: var = [1,2,3]; var = []
+ - sets: var = [1,2,3]; a = set(var); "-", "|", "&", "^" operations supported
+         unordered. "in" fast.
+ - dictionary: tel={'jack':2934, 34:66}; tel['jack']; tel[34];
+               tel['hola'] = ajiak; del tel['hola']; tel.keys();
+               'jack' in tel; tel=dict(key1=lalal,key2=lele)
+
+Print
+ - print varA, varB # where varA, varB can be different types
+ - print varA, # print varA without a new line
+
+Modules
+ - import module (if module is named module.py)
+ - module.function(a,b,c) -> call function module
+ - newname = module.function; newname(a,b,c) -> give new name
+ - from module import functionA, functionB -> import functions directly
+ - dir(module) -> return name of symbols of the module (function names, varaibles etc)
+
+Control flow
+ - IF statement:
+      >>> x = int(raw_input("Please enter an integer: "))
+      Please enter an integer: 42
+      >>> if x < 0:
+      ...      x = 0
+      ...      print 'Negative changed to zero'
+      ... elif x == 0:
+      ...      print 'Zero'
+      ... elif x == 1:
+      ...      print 'Single'
+      ... else:
+      ...      print 'More'
+      ...
+      More
+
+ - FOR statement:  iterates over the items of any sequence (a list 
+   or a string), in the order that they appear in the sequence.
+      >>> # Measure some strings:
+      ... words = ['cat', 'window', 'defenestrate']
+      >>> for w in words:
+      ...     print w, len(w)
+      ... else:
+      ...     print holaaaaa
+      ...
+      cat 3
+      window 6
+      defenestrate 12
+      holaaaaa
+
+      - If you need to modify the sequence you are iterating over while 
+        inside the loop (for example to duplicate selected items), it is 
+        recommended that you first make a copy. Iterating over a sequence 
+        does not implicitly make a copy. The slice notation makes this 
+        especially convenient "a[:]"
+      - >>> range(0, 10, 3) #beggining at 0, till number 10, from 3 to 3.
+        [0, 3, 6, 9]
+      - A loop else clause runs when the list has exhausted the list and
+        when no break statement as been fired up.
+
+      - for i,v in enumerate(['tic','tac']): -> i index, v value
+      - loop in reverse order -> for i in reversed(xrange(1,10,2)):
+
+
+
+Functions statements
+   to define:
+
+   def parrot(voltage, state='a stiff'):
+       print "-- This parrot wouldn't", action,
+
+   - to call it: 
+       - parrot(3)
+       - parrot(3, "lelele")
+       - parrot(state="lololo", voltage=33)
+   - can have return statement or not
+   - always return a value, if not explicit, returns "None"
+
+Strings
+ - Strings are immutable, we cannot change te content of an index
+ - To concatenate just: >>> 'str' + 'ing'
+ - Acces by index:
+	word[4]   #5th character
+	word[0:2] #two first characters
+	word[:3]  #the first tree characters
+	word[4:]  #Everything exept the the first 4th characters
+	word[-1]  #The last character
+	word[-2:] #The last two characters
+ - len(word) #size string
+ - str() -> passes lists, vars, whatever to strings
+ - '12'.zfill(5) -> '00012' (padd zeroes)
+ - print 'We are the {} who say "{}!"'.format('knights', 'Ni')
+ - str.split(delimiter) -> split str string 
+
+Lists/Arrays
+ - We can change the conten of an index
+ - varA in listB: return true if varA is in listB 
+ - a = ['spam', 'eggs', 100, 1234]
+
+   >>> # Replace some items:
+   ... a[0:2] = [1, 12]
+   >>> a
+   [1, 12, 123, 1234]
+   >>> # Remove some:
+   ... a[0:2] = []
+   >>> a
+   [123, 1234]
+   >>> # Insert some:
+   ... a[1:1] = ['bletch', 'xyzzy']
+   >>> a
+   [123, 'bletch', 'xyzzy', 1234]
+   >>> # Insert (a copy of) itself at the beginning
+   >>> a[:0] = a
+   >>> a
+   [123, 'bletch', 'xyzzy', 1234, 123, 'bletch', 'xyzzy', 1234]
+   >>> # Clear the list: replace all items with an empty list
+   >>> a[:] = []
+   >>> a
+   [] 
+
+ - concatenate lists: a[2:3] + 2*b[2]
+ - create copy: a[:]
+ - Nest lists
+
+   >>> q = [2, 3]
+   >>> p = [1, q, 4]
+   >>> len(p)
+   3
+   >>> p[1]
+   [2, 3]
+   >>> p[1][0]
+   2
+   >>> p[1].append('xtra')     # See section 5.1
+   >>> p
+   [1, [2, 3, 'xtra'], 4]
+   >>> q
+   [2, 3, 'xtra']
+ - list.append(x)	append
+ - list.extend(L)	extend by appending list L
+ - list.insert(i,x)	insert x, before item number "i"
+ - list.remove(x)	remove first item which value is X
+ - list.pop([i])	[i] optional. removes item num i and returns it
+ - list.index(x)	return index first item which value is X
+ - list.count(x)	count number of times x appears in list
+ - list.sort()		sort 
+ - list.reverse()	reverse the list
+
+
+Exceptions
+  try:
+     f = open('myfile.txt')
+  except IOError as e:
+     print "I/O error:" e
+  except:
+     print "Unexpected error:", sys.exc_info()[0]
+  else:  ->  executed if no except: clause executed
+
+  finally: -> executed always
+
+Threads
+ - Do not really execute in parallel, each 10 bytecode instructions,
+   the thread is chagned.
+ - Example of threads (it could be done using thread classes)  
+     import threading  
+       
+     def imprime(num):  
+         print "Soy el hilo", num  
+       
+     print "Soy el hilo principal"  
+       
+     for i in range(0, 10):  
+         t = threading.Thread(target=imprime, args=(i, ))  
+         t.setDaemon(True) # The thread will die when the main app does.
+         t.start()  
+
+Functional programming
+ - filter(function, sequence) -> apply function to each value of sequence 
+   and return it if true. Result is a sequence
+ - map(function, sequence) -> apply function to each value of sequence and 
+   return the value. Result is a sequence. If function have two or more 
+   parameteters
+
+ - reduce(function, sequence, [first]) -> apply function to the first
+   element of sequence and the second, then the result and the third,...
+   The result is a number. If [first], use it as first element, and then 
+   the first element of the sequence and so on.
+
+
+Clases
+ - defintion:
+     class MyClass:
+         arg1 = 1234
+         arg2 = 1
+
+         def __init__(self, arg1, arg2): -> constructor
+            self.i = arg1
+            self.y = arg2
+         def f(self):
+            return 'hello world
+
+ - creation: 
+     x = MyClass(arg1, arg2)
+
+Others
+ -  In Python, like in C, any non-zero integer value is true; zero is 
+    false. The condition may also be a string or list value, in fact any 
+    sequence; anything with a non-zero length is true, empty sequences 
+    are false
+ -  pass: does nothing
+ -  None: is the null, nill
+ -  Use list as stacks
+ -  use deque (from collectionis import deque) as queues
+
+

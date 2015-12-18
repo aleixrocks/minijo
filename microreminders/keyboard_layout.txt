@@ -1,0 +1,13 @@
+﻿On X
+
+  setxkbmap (es | us )
+
+Outside X (debian)
+
+  On the fly:
+     sudo apt-get install console-data
+     sudo loadkeys ( es | us )
+
+  Permanent change:
+     sudo dpkg-reconfigure keyboard-configuration 
+     sudo reboot

@@ -1,0 +1,2 @@
+avconv -y -i INPUT -pre:v libx264-slower -b:a 96k -c:v libx264 -c:a libvo_aacenc OUTPUT.mp4
+

@@ -1,0 +1,38 @@
+.post A:link{text-decoration:underline;color:#006699;background-color:transparent;}
+.post A:visited{text-decoration:underline;color:#006699;background-color:transparent;}
+.post A:hover{text-decoration:underline;color:#006699;background-color:transparent;}
+A:link{text-decoration:none;color:#000000;background-color:transparent;}
+A:visited{text-decoration:none;color:#000000;background-color:transparent;}
+A:hover{color:#006699;top:1px;right:0px;text-decoration:none;background-color:transparent;}
+.nav{text-decoration:none;color:#000000;background-color:transparent;}
+.nav:link{text-decoration:none;color:#000000;background-color:transparent;}
+.nav:visited{text-decoration:none;color:#000000;background-color:transparent;}
+.nav:hover{text-decoration:none;color:#0082BF;font-weight:bold;background-color:transparent;}
+BODY{cursor:url('//foro.elhacker.net/elhacker.cur'), default;scrollbar-face-color:#BCD1DC;scrollbar-highlight-color:#3299CB;scrollbar-shadow-color:#005680;scrollbar-3dlight-color:#B0E6F9;scrollbar-arrow-color:#297FA9;scrollbar-track-color:#297FA9;scrollbar-darkshadow-color:#003E5B;font-family:Verdana, arial, helvetica, serif;font-size:11px;background-color:#E1E8F0;}
+TABLE{empty-cells:show}
+TD{font-family:Verdana, arial, helvetica, serif;color:#000000;font-size:12px;}
+textarea{scrollbar-face-color:#BCD1DC;scrollbar-highlight-color:#3299CB;scrollbar-shadow-color:#005680;scrollbar-3dlight-color:#B0E6F9;scrollbar-arrow-color:#297FA9;scrollbar-track-color:#297FA9;scrollbar-darkshadow-color:#003E5B;font-size:8pt;color:#000000;border:1px solid;font-family:verdana,arial, helvetica, serif;background-color:#E1E8F0;}
+.meaction{color:#FF0000;}
+.windowbg, #preview_body{background-color:#93BCD3;font-size:11px;font-family:Verdana, arial, helvetica, serif;background-image:url('//foro.elhacker.net/YaBBImages/fondo_obscuro.gif');}
+.windowbg2{background-color:#D0DFE7;font-size:11px;font-family:Verdana, arial, helvetica, serif;color:#000000;background-image:url('//foro.elhacker.net/YaBBImages/fondo_claro.gif');}
+.windowbg3{background-color:#CFCFCF;font-size:11px;font-family:Verdana, arial, helvetica, serif;color:#000000;}
+.titlebg{color:#E1E8F0;font-size:12px;font-weight:bold;background-color:#006699;height:25px;background-image:url('//foro.elhacker.net/YaBBImages/titlebg.gif');}
+.text1{font-style:normal;font-weight:bold;font-size:12px;color:#DEE7EF;}
+.catbg{background-color:#DEE7EF;color:#000000;font-weight:bold;font-size:12px;}
+.bordercolor{background-color:#006699;font-size:11px;font-family:Verdana, arial, helvetica, serif;}
+.quote{border:#003E5B 1px solid;font-size:11px;font-family:Verdana, Arial, helvetica, serif;color:#000000;background-color:#E1EBF0;}
+.code{font-size:12px;font-family:Courier New, Verdana, Arial, helvetica, serif;color:#000000;background-color:#EAECED;}
+TD{font-family:Verdana;color:#000000}
+lines{background-color:#006699;}
+.poll{font-size:12px;font-family:Arial;background-color:#DEE7EF;color:black;}
+.forumline{background-color:#FFFFFF;border:1px #006699 solid;}
+input{font-size:8pt;color:#000000;border:1px solid;font-family:verdana,arial, helvetica, serif;background-color:#E1E8F0;}
+checkbox{font-size:8pt;color:#000000;border:0px solid;font-family:verdana,arial, helvetica, serif;background-color:#E1E8F0;}
+select{font-size:7pt;color:#000000;border:1px solid;font-family:verdana,arial, helvetica, serif;background-color:#E1E8F0;}
+.geshi{color:#000000;background-color:#eaeced;font-family:courier new, verdana, arial;font-size:12px;border:1px solid #000000;margin:1px auto 1px auto;padding:1px;width:94%;overflow:auto;white-space:pre;}
+a.posted:link{text-decoration:none;color:#006699;background-color:transparent;}
+a.posted:visited{text-decoration:none;color:#006699;background-color:transparent;}
+a.posted:hover{text-decoration:underline;}
+a[href^="http://rapidshare"]:hover:before{content:url('//foro.elhacker.net/images/alerta.gif');}
+.smalltext img{max-width:300px;max-height:400px;}
+.signature img{max-width:500px;max-height:300px;}

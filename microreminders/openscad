@@ -1,0 +1,92 @@
+General
+ - Preview F5
+ - Compile F6
+ - comentaris // /* */
+ - measures in milimeters
+ - it is posible to configure openscad to autocompile if it detects that
+   the opened file has been modified by an external program. Therefore
+   it's possible to use an external editor with highlight.
+
+
+Variables
+// WARNING //
+Currently it's not possible to do assignments at any place (the only places are file top-level and module top-level). If you need it inside the for loop, for example, you need to use the assign() module.
+// WARNING //
+Variables are calculated at compiler time! They are more like constants, not
+variables.
+
+ - undef -> undefined value, like null (but this is not nan!)
+ - openscad doesn't distinguish between floating point and integer types
+ - non typed language
+ - nan and inf are not predefined numbers
+ - x != x to test if x is nan
+ - booleans: true, false, &&, ||, !
+ - values that count as false: false, 0, -0, "", [], undef
+ - nan count as true
+ - vector = [x,y,z]; 
+ - matrix [
+      [cos(angle), -sin(angle)],
+      [sin(angle),  cos(angle)]
+     ];
+ - 
+
+
+
+Modifiers
+ - color([1,0,0.5]) simpleobject; # values from color 0-1
+ - color("red")
+ - color("red", alpha) -> alpha channel 0-1 transparency
+ - translate([x,y,z]) { simpleobject }
+ - rotate([x,y,z]) { simpleobject }
+
+Debugging
+ - ! simpleobject -> only show this object
+ - * simpleobject -> hide this object
+ - # simpleobject -> show this object used for an intersection (shows 
+   simpleobject altough it should disapear). Only usefull inside a difference
+   function.
+
+Simple objects
+  common vars
+    - center = true -> center simple object
+    - $fn = integer -> number of faces
+ - cube: cube([x,y,z]);
+ - cylinder(r=integer, h=integer) -> r = radious, h = height. Tip: use $fn to 
+   build triangles, phentagons and other regular polygons.
+ - sphere
+ - polyhedron(points = [[x,y,z], [x,y,z], ... ], triangles = [ [p1,p2,p3], [p3,p4,p4],... ])
+ 
+
+Operations with objects
+ - difference { simpleobject1; simpleobject2 }
+ - union {simpleobject1; simpleobject2 }
+ - mirror([0,0,1]) { simpleobject; ... } -> set 1 to the axis you want to 
+   perform the mirror. In this case, Z axis.
+ - hull { simpleobjects } -> minimum enclosing convex polygon arround simpleobjects
+ - minkowski { simpleobjet1; simpleobject2 } it copies the simpleobject2 to
+   the vertices of simpleobject1 and then it applies a hull. it's usefull
+   to round corners of a object.
+ - linear_extrude(height, center) { polygon (points) }  -> polygon creates
+   a 2d object. (with F6, openscad shows us that is a 2d object by chaning
+   the color of the geometry). Linear_extrude grows the 2d object to the 
+   third axis till the specified height.
+
+
+
+Modules
+ - use<module_name_file.scad> -> to import the modules of the file
+ - module modulename (var1, var2, var3) {
+     // code here
+   }
+ - module modulename (var1=defaultvalue1, var2=defaultvalue2, var3=..) {
+     // code here
+   }
+ - to call it, invoke it as a normal function.
+
+functions
+ - echo("Hello world!")
+
+
+
+
+ - range of values: [start: increment: end] or [start : end] -> [1 : 5]

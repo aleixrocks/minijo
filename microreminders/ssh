@@ -1,0 +1,27 @@
+SSH FORWARDING
+
+ssh -X user@host: starts a forwarding daemon on "host" that will redirect
+the X protocol to the machine on the ssh client. Then, the ssh client
+will send the received instructions to the local X server. This looks like
+the ssh client has graphical interface. Some options should be turned on
+on the configuration, search somewhere.
+
+To X forward an entire desktop:
+  - xinit -- :1 (on a ctrl-Alt-F1). This starts a new xserver on 
+    display 1.
+  - return to (ctrl-Alt-F7)
+  - export DISPLAY=:1  #Set the display to run the next graphical apps
+  - ssh -X user@host
+  - run startx, gnome-session, startlxde, ...
+  - change to ctrl-Alt-? where ? can be 1,2,3,... In one of those there
+    is the remote desktop!
+
+
+When ssh hangs: <enter>~. to close it
+
+Entering ~? during a session should give you a list. Some examples:
+
+~ followed Ctrl-Z suspends the session,
+~& puts it directly into background,
+~# gives a list of forwarded connections in this session.
+If you want to simply enter a tilde at the beginning of a line, you have to double it: ~~.

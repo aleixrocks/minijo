@@ -1,0 +1,5 @@
+Parameters
+ - All by value by default, but remember that a[] is the same as *a. So arrays are passed "by reference".
+
+Structs
+ - operator "=" copy entire struct

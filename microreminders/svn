@@ -1,0 +1,25 @@
+llistar contingut: svn list URL
+
+
+Nou Repositori
+svn import carpeta_local URL_remota
+
+Manipulacio
+svn move URL_repo/carpeta_origen URL_repo/carpeta_desti -> Mou fitxer
+svn mkdir URL -> crea directori
+
+
+Logs
+ - svn log -> veure tots els logs
+ - svn log [-l|--limit] 5 -> veure 5 ultims logs
+
+Conflictes
+ - tc -> their conflicts. Et quedes amb la seva
+ - mc -> mine conflicts. Et quedes amb la teva.
+
+Revisions
+ - svn update -r 666 file -> converteix file a la versio de la revisio 666
+ - svn cat -r 666 file | less -> simplement veu file de la revisio 666
+ - svn diff -r PREV:HEAD -> diff entre el ultim commit i el penultim
+ - dvn diff -r numRevisio:{2012-6-12} -> es pot fer servir tant com 
+	HEAD, PREV, numero de la revisio o data en el format especificat.

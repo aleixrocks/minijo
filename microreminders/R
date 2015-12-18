@@ -1,0 +1,213 @@
+MISC
+ - #!/usr/bin/Rscript -> script
+
+
+Read/Write
+ - load("whatever") -> restore an image of R variables
+ - save.image("whatever") -> save an image with all R variables
+ - source("whatever") -> loads a R script.
+
+Management
+ - variable$attribut -> accedir a atribut de data frame
+ - attribut(variable) -> igual que el anterior, es pot elegir
+ - aux = dd[,-1] -> copy to aux all rows except the column 1
+ - consultes: a[b == 3 | b == 4] = x -> a and b must have the same lenght, for each row of b that meet the conditions specified, the rows of a will be modified by x. 'b' can be 'a'.
+ - vector[,1:n] -> return of all rows of vector, the columns from 1 to n.
+ - Seleccionar mes de una columna de un dataframe dd[,c("col1","col2")]
+ - Afegir columna a un dataframe dd$novaColuman = columna
+ - myrules = sort(rules, by = "lift") -> ordenar taula per certa columna
+ - rep(x, times) -> repeat x times
+ - t(x) -> transpose
+ - nrow(dd) -> number of rows
+ - ncol(dd) -> number of columns
+
+
+
+
+Essencials
+ - summary(x) -> minim, maxim, mediana, mitjana, Quartils
+ - hist(x) -> histogram
+ - plot(x,y) -> graph
+ - dd = data.frame(x,y) -> creates a data frame
+ - objects() -> list declared variables
+ - attributes(x) -> return all information keep inside x
+ - sapply(variable, nomFuncio) -> aplica nomFuncio a totes les variables (pot ser matriu, vector, data frame...)
+ - tapply(vector,index,function) vector and index have the same length. index is a vector of categorical like "positive" and "negative". break vector in as much sets as labels as index each one as each one, so we break vector in group "postitive" and "negative" and then we apply function to each set.
+ - help(x) -> help!!!
+ - attach(dataFrame) -> make variables inside dataframe acessible out of the dataframe, actually, makes a copy.
+ - table(Variable==0) -> make a table evaluating the condition (in this case ==) of each row in variable that meet the condition.
+ - levels(var) -> levels return the names of the different categories of var which must be a qualitative variable. We may see levels(var) as a simple variable, we can change current labels for others: levels(var) = c("positiu","negatiu")
+
+
+Plot 
+ - plot(ac1$rs[,1],ac1$rs[,2],col=dd$preferida); -> pinta cada categoria de un color (preferida te la mateixa longitud que acl). numera de 1 a levels(preferida)
+ - legend("topright",c("alfa","beta"),pch=1,col=seq(1,length(levels(dd$preferida)))); -> llegenda en el plot anterior, de 1 a longitud levels.
+ - axis(side=4, pos= 0, labels = F, col="gold");
+ - arrows(ze, ze, ac1$cs[1:3,1], ac1$cs[1:3,2], length = 0.07,col="blue");
+ - text(ac1$cs[1:3,1],ac1$cs[1:3,2],labels=etiq,col="darkblue");
+ - points(ac1$csup[,1],ac1$csup[,2],pch=16,col="orange");
+ - x11() -> crea una nova finestra on dibuixar.
+ - par(mfcol=c(x,y)) -> crea una finestra subdividida en x files i y columnes on podem dibuixar una gràfica a cada una de les celes (només fent un plot normalment i ja esta)
+ - png(filename="./name.png") -> sequence of instructions that saves graph as image.
+   plot(fit)
+   dev.off()
+   png(filename="./graph.png", width = 7200, height = 1600, units = 'px', res=100);
+ - plot(..., xlab="lala", ylab="lele", xlim=c(xmin,xmax), ylim=c(ymin, ymax))
+
+
+Lists
+ - a = list() -> crea list
+ - a = c(a, one="element one");
+   a = c(a, two="element two"); -> add named elements to list
+
+
+
+
+Algoritms Cool
+ - knn(train,test,cl) -> k-nearest neighbour. train i test matriu de vectors de caracteristiques. cl te la mateixa mida que train i representa la classe de cada fila de train. test no sabem de quin tipus es cada fila. El valor de retorn es el tipus de cada fila de test.
+ - oneway.test(varscontinues~varscategoriques) -> ANOVA. The returned object has the attribute $p.value.
+ - chisq.test(varcategoriques1,varcategoriques2) -> chi square test. Returned value has the attribute $p.value.
+ - prcomp(dcon,scale=T) -> apply principal component analysis of dcon (list of continuous variables). If dcon has 7 continuous variables, each new vector of the rotation matrix has 7 components too. So, the rotation matrix is a squared matrix of n X n where n is the number of variables of dcon.
+	- $x returns the original data multiplied by the
+	rotation matrix.
+	- biplot(Psi,U) -> plot all variables in a two dimensional space.
+	Where U is the new axis coordinates and Psi is the rotated cloud 
+	of points.
+	- Recall that prcomp return the rotation matrix which rows are 
+	the vectors of the new coordinate system expressed in terms of 
+	the fixed coordinate system (PC). So, we can use it to plot the
+	projection of the variables in a 2D or 3D space:
+	 - plot(pc1$rotation[,1],pc1$rotation[,2],type="none",
+		xlim=c(min(pc1$rotation[,1],0),max(pc1$rotation[,1],0)));
+	 - arrows(ze, ze, pc1$rotation[,1],pc1$rotation[,2],length = 0.07)
+ - acm(vark, resp) -> rekcon acm algoritm. The algoritm itself is not included in R package. 
+	- mca$rs -> coordenades dels individus en la nova base
+	- mca$cs -> coordeandes dels centres de gravetat de cada modalitat den la nova base.
+	- mca$csup -> cooredandes dels centres de gravetat de cada modalitat de var. suplementàries en la nova base.
+	- mca$vaps -> valors propis (indiquen inercia acomulada), estan reescalats i no sumen 1.
+ - kmeans(Psi,k) -> k-means algoritm. Psi must be factorial coordinates.
+ - d = dist(x, method = "euclidean") -> reckon distance of the given matrix. Thera are several methods to compute the distance.
+ - hclust(d, method="ward") -> hierarchical clustering. Where d is a distance matrix. You can specify other methods than ward.
+	- cutree(h1,nc) -> cut the tree where h1 is a object of hclust and nc, where we want to cut.
+	Returns a list where the i-element says at which cluster owns the i row of the original matrix.
+	- To plot the clusters, recall color option of plot which says for every point which color has
+	to be colored: plot(Psi[,1],Psi[,2],col=c1). Where c1 is the return value of cutree.
+
+
+Regression
+ - fit = lm(y~x) -> y=x*b_0 + b_1 -> R trobara b_0 i b_1
+ - abline(fit) -> plot regression
+
+Association rules
+ - image(varAssociation) -> prints graph chachi
+ - transactionInfo(transaction) -> returns name, timestamp and whatever about transaction.
+ - inspect(transaction) -> ???
+ - itemFrequencyPlot(Epub, support=0.01, cex.names = 0.7)-> plots frequency for each item. cex.names is for plotting names well.
+ - rules = apriori (Epub, parameter = list (support=0.001, confidence=0.6)) -> apriori
+ - inspect(rules) -> to see the rules itself
+ - myrules@quality[,3] > 300 -> quality de les regles
+
+
+
+Arithmetic
+ - cumsum(vector) -> cumulative sum.
+
+Altres
+ - rnorm(x) -> genera x nombres aletaoris
+ - sort(x) -> ordena llista de nombres
+ - is.factor(x) -> retorna true si la variable es categorica
+ - is.na(x) -> return true if NA
+ - Var = as.factor(Var) -> declare categorical
+ - levels(var) -> return levels from categorical
+ - levels(Dictamen) = c("positivo","negativo") -> rename numeric levels (1,2) for strings (positivo, negativo)
+ - row.names(var) -> names of rows, we can assign values here. If there is no assigned value, by default return the index (1,2,4,...)
+ - paste(a,b) -> concatenates a and b. if a and/or b numeric, the result is still a string
+ - factor(varWithLevels, levels=c(3,4,2,1)) -> reorder the levels of the var varWithLevels. Levels can be strings.
+ - legend("topright",c("alfa","don'tknow"),pch=1,col=seq(1,length(levels(dd$preferida)))); -> afegir llegenda a plot ordenada.
+ - as.numeric(c) -> convert categorical variables to numeric
+
+
+Packages
+ - install.packages("gdata",lib="/home/arn/pckgR")
+ - library("gdata",lib.loc="/home/arn/pckgR/")
+
+
+Control de fluxe
+ - Bucles
+	for (i in 1:X) {
+	        whatever men
+	}
+
+
+
+
+
+Vocabulary
+ - factor -> variable categorica
+
+Special Data types
+ - NA -> missing data
+ - matrix -> poden tenir noms a les files (row.names) i a les columnes (colnames)
+
+
+
+Examples
+
+#Plot with limits. It is posible to specify xlim and ylim on plot arguments
+  # First print two points not visible "type='n'". The points are the tow first
+  # arguments of plot. Next, print with line, the lines of the graph.
+  plot(c(0,maxtrain),c(0,maxerror), type='n',main="title",xlab="",ylab="",axes=FALSE)
+
+#Delete repetitions of experiments which at least one of its values is NaN
+  # Get row index that are NaN (x)
+  condition = test1$PERCENTAGE_ERRORS == ' x'
+  # Sum in groups of N
+  aux = (tapply(condition, (seq_along(condition)-1) %/% N, sum))
+  # Repeat each number in the vector N times
+  aux = rep(aux,each=N)
+  # Integer to bool
+  aux = aux < 1
+  # Substract rows
+  test1 = test1[aux,]
+
+#Specify y axis granularity / scale
+  plot(c(0,maxtrain),c(0,maxerror), type='n',main="title",xlab="",ylab="",axes=FALSE)
+  axis(1) # Print x axis
+  axis(2, at=seq(0,100, y_step)) # Print y axis, Specify y_steps desired
+  box() # Print surrounding box
+
+#Plot with limits multiple lines / graphs into the same image
+  title=paste(entorn_name, hmmtype,sep=''); # Set image title
+  png(filename=paste("img_test1 ",title,'.png',sep='')); # create image file .png
+  # Create a vector of colors for the lines of the graph. tgauss is number of colors here.
+  colors=rainbow(length(tgauss)); 
+
+  # Get max error rate to plot the limits
+  condition = ( WAVDIRNAME==entorn & HMMTYPE==hmmtype ) # specify a condition for the data frame
+  maxerror = max(ERROR_MEAN[condition], na.rm=TRUE) # na.rm to ignore NaN
+  y_step = 5 # y axis step
+  if ( maxerror < 10 ) { # to visualize better the values if y axis small
+          maxerror = 10
+          y_step = 2
+  }
+
+  # Plot the image specifying the y axis scale interval
+  plot(c(0,maxtrain),c(0,maxerror), type='n',main=title,xlab="",ylab="",axes=FALSE)
+  axis(1)
+  axis(2, at=seq(0,100, y_step))
+  box()
+
+  # Get the values and actually plot lines
+  i = 1
+  for (ngau in tgauss) {
+          condition = (WAVDIRNAME==entorn & HMMTYPE==hmmtype & NUMBER_GAUSSIANS ==ngau)
+          y=ERROR_MEAN[condition]
+          x=NUMBER_TRAIN_FILES[condition]
+          lines(x,y, type='o', col=colors[i])
+          i = i + 1;
+  }
+  legend("topright",tgauss,col=colors,lty=1);
+  dev.off();
+
+
+

@@ -1,0 +1,67 @@
+# Terminates the script and print message $1
+abort() {
+        echo "Aplication aborted: $1" 1>&2
+        exit 1;
+}
+
+# Check if current user is root
+check_root_identity() {
+        if [ "$(id -u)" != "0" ]; then
+                abort "This script must be run as root"
+        fi
+}
+
+# Attempts to umount $1 device. It tries to umount it COUNT_MAX times. Between attempts it will 
+# sleep some seconds. If the device could not be unmounted, a prompt will ask the user what to do.
+# The user can retry to unmount COUNT_MAX times more, open a shell to unmount manually or abort.
+try_to_umount() {
+        # Check if $1 is really mounted
+        TEST=`mount | grep $1`
+        if [ "$TEST" = ""  ]; then
+                return
+        fi
+
+        cd
+        sync
+
+        COUNT_MAX=3
+        COUNT=0
+        while true; do
+                umount $1 && break
+
+                echo "trying again..."
+                sleep 7
+                COUNT=$(( COUNT + 1 ))
+                # If tried more than COUNT_MAX times
+                if [ $COUNT -eq $COUNT_MAX ]; then
+                        echo "I can't umount $1"
+                        echo "The command 'lsof | grep $1' reports: "
+                        lsof | grep $1
+                        echo ""
+                        # Prompt user forn an action
+                        while true; do
+                                echo -n "What would you like to do? [ (r)etry | (s)hell | (a)bort ] "
+                                read ANS
+                                if [ "$ANS" = "r" ]; then
+                                        COUNT=0
+                                        break
+                                fi
+                                if [ "$ANS" = "s" ]; then
+                                        echo "Opening a shell, please umount $1 manually and then type 'exit'"
+                                        sh
+                                        TEST=`mount | grep $1`
+                                        if [ "$TEST" = ""  ]; then
+                                                echo "$1 unmounted! Thank you oh user hero!"
+                                                return
+                                        fi
+                                        echo "$1 is already mounted."
+                                fi
+                                if [ "$ANS" = "a" ]; then
+                                        abort "can't umount $1"
+                                fi
+                        done
+                fi
+        done
+        echo "$1 unmounted!"
+}
+

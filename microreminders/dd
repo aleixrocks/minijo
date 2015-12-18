@@ -1,0 +1,9 @@
+PROGRESS
+
+see progress once dd is already started:
+  watch -n5 'sudo kill -USR1 $(pgrep ^dd)'
+
+before starting dd
+  - install pv: sudo apt-get install pv
+  - usual usage: pv bigfile.iso | dd of=/dev/yourdevice
+  - general usage: dd if=/dev/urandom | pv | dd of=/dev/null

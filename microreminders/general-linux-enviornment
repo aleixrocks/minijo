@@ -1,0 +1,8 @@
+
+# use trash instead of rm. To delete things to trash instead that delete forever
+ - sudo apt-get install trash-cli
+ - trash file -> send file to trash
+ - list-trash -> show what's into trash
+ - restore-trash -> restore what's into the trash
+
+
