@@ -2,6 +2,20 @@ Basic
  - gnuplot scriptfile.gpi
  - gnuplot -p -e "command1; command2;..." p for persist windows after gnuplot dies
     e for accepting string as script.
+ - help command -> to get help
+
+TERMINALS
+ - the output produced by gnuplot depends on the terminal selected. It may vary
+   a lot among terminals!
+    - set terminal -> list available terminals
+    - set terminal {x11 | wxt | png} -> typical terminals. png produces an image, 
+      that needs to be saved with "set output 'filename'". The others display a 
+      window. Each type of terminal as also options. For instance, if dashed lines
+      are desired, it must be activated when selecting the terminal, but not all 
+      terminals support dashed lines. For instance, png do not support it, but
+      x11 does (when activated with "set terminal x11 dashed" and the type of
+      line is selected properly when plotting "plot 3 with lines lt 2"
+    
 
 READ FROM STDIN
  - gnuplot -p -e "plot '-'" introduce "e" to end input
