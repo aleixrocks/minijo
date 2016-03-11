@@ -1,0 +1,14 @@
+Views
+ - V: hierarchy view
+ - i: toggle display of idle tasks
+ - f: add or remove a field
+ - x: set in bold the sorted column
+ - b: backlight on the sorted columns(only if the sorted columns is in bold (X))
+ - 1 display all CPUs
+
+Sorting
+ - M: sort by memory
+ - P: sort by CPU usage
+ - T: sorty by time
+ - R: reverse sorting
+

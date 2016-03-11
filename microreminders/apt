@@ -1,0 +1,3 @@
+ - apt-cache search: search for a package
+ - apt-cache show: display information such as version, dependencies
+   and description

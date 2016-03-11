@@ -13,4 +13,12 @@ REGIONS
 
 DEATACH
  <Ctrl+a d> deatach
- 
+
+COPY TO CLIPBOARD
+ 1. <Ctrl+a> [ -> enter copy mode
+ 2. space -> start selecting
+ 3. space -> copy selected text
+ in a terminal inside screen:
+   4. cat | xsel -b 
+   5. <Ctrl+a> ] -> bulk screen buffer 
+   6. <Ctrl+d> -> send EOF 

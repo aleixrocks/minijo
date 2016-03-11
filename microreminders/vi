@@ -20,14 +20,21 @@ NAVIGATIN
  - e -> move to the end of the next word
  - b -> move to the start of the previous word.
 
+SEARCH
+ - /word -> search for word
+ - ?word -> search in reverse order
+ - while searching "n", to go to next one, or "N" to advace backwards
+ - set hligth -> highlight all found words
+ - set hligth! -> no higlight
+
 BUFERS
  - r file -> read file to vim buffer
  - r !command -> command output to vim buffer
 
 SELECT TEXT
-v -> mode seleccio text
-ctrl v -> selecciona per columnes
-V -> selecciona linea sencera
+ - v -> mode seleccio text
+ - ctrl v -> selecciona per columnes
+ - V -> selecciona linea sencera
 
 ADD TEXT IN FRONT OF SELECTION
  - seleccioinar per columnes
@@ -36,24 +43,45 @@ ADD TEXT IN FRONT OF SELECTION
  - ESC 
 
 BASIC USAGE
-d -> cortar
-p -> pegar
-y -> copiar
-
-u -> undo
-ctrl R -> redo
+ - d -> cortar
+ - p -> pegar
+ - y -> copiar
+ - u -> undo
+ - ctrl R -> redo
 
 JUMP MATCHING BRACKETS
  - The % key can be used for the following: ([{}]), /**/, #if #ifdef, #else...
 
 TABS
-:tabe file -> open file in a new tab
-:tabn, tabp -> tabnext and tabprevious
-gt, gT -> next tab, previous tab
-ngt -> jump to tab "n"
-ZZ -> save and close tab
-:tabm [i | +i | -i] -> move tab to i (absolute) or current+i(-i) (relative)
+ - :tabe file -> open file in a new tab
+ - :tabn, tabp -> tabnext and tabprevious
+ - gt, gT -> next tab, previous tab
+ - ngt -> jump to tab "n"
+ - ZZ -> save and close tab
+ - :tabm [i | +i | -i] -> move tab to i (absolute) or current+i(-i) (relative)
 
+BUFFERS
+ - :ls -> list of current buffers
+ - :e ../myfile -> open new file
+ - :b myfile -> switch file
+ - :b# -> switch last visited file
+ - :bp -> previous
+ - :bn -> next
+ - :bn -> (n number) move to nth
+ - :b<filename> -> move to filename
+
+WINDOWS
+ - Ctrl-w s -> split horizontaly
+ - Ctrl-w v -> split vertically
+ - Ctrl-w w -> switch between windows
+ - Ctrl-w h (or j or k or l) to navigate between windows
+ - Ctrl-w c -> close current window
+ - Ctrl-w o -> close all windows but the current one
+
+SESSIONS
+ - mksession! ~/today.ses -> save session
+ - vim -S ~/today.ses -> load session
+ - qa -> quit everything
 DELETE
  - D -> from cursor to end of line (same as d$)
  - d0 -> from cursor to start of line (it takes some time to execute)

@@ -1,6 +1,16 @@
 MISC
  - #!/usr/bin/Rscript -> script
+ - or execute with: Rscript name.r
 
+Packages
+ - install.packages("gdata",lib="/home/arn/pckgR")
+ - library("gdata",lib.loc="/home/arn/pckgR/")
+
+Rcommander
+ - library(Rcmdr) -> load Rcmdr main window. Go to tools ->
+   load Rcmdr plugin(s) -> select plugin to load
+ - library(RcmdrPlugin.IPSUR) -> Rcomander window with IPSUR plugin
+   already loaded
 
 Read/Write
  - load("whatever") -> restore an image of R variables
@@ -11,7 +21,9 @@ Management
  - variable$attribut -> accedir a atribut de data frame
  - attribut(variable) -> igual que el anterior, es pot elegir
  - aux = dd[,-1] -> copy to aux all rows except the column 1
- - consultes: a[b == 3 | b == 4] = x -> a and b must have the same lenght, for each row of b that meet the conditions specified, the rows of a will be modified by x. 'b' can be 'a'.
+ - consultes: a[b == 3 | b == 4] = x -> a and b must have the same lenght, 
+   for each row of b that meet the conditions specified, the rows of a will 
+   be modified by x. 'b' can be 'a'.
  - vector[,1:n] -> return of all rows of vector, the columns from 1 to n.
  - Seleccionar mes de una columna de un dataframe dd[,c("col1","col2")]
  - Afegir columna a un dataframe dd$novaColuman = columna
@@ -21,8 +33,29 @@ Management
  - nrow(dd) -> number of rows
  - ncol(dd) -> number of columns
 
+FILES
+ - file.show(filename) -> show filename
+ - read.table("filename",header=[TRUE|FALSE]) -> read file, returns data frame
 
+Strings
+ - paste(a,b) -> concatenates a and b. if a and/or b numeric, the result is 
+   still a string
+ - paste("a",  "b",  sep="") -> no separator.
+ - paste(1:5) -> result is a list of strings
+ - paste(1:5,  collapse="") -> result is a string with no separation
 
+DataFrames
+ - transform(dataframe, column=operation) -> create "column" by applying
+   "operation", for example: companiesData <- transform(companiesData, 
+   margin = (profit/revenue) * 100). where profit and revenue are 
+   companiesData columns.
+   Another example to classify rows of df in categories:
+   table_v1_cat=transform(taula_v1,cat=ifelse(x1 < -1,"-1",
+        ifelse(x1 < -0.5, "-0.5",
+        ifelse(x1 < 0,    "0",
+        ifelse(x1 < 0.5,  "0.5",
+        ifelse(x1 < 1,    "1","inf"))))))
+ - as.data.frame(object) <- convert object to dataframe
 
 Essencials
  - summary(x) -> minim, maxim, mediana, mitjana, Quartils
@@ -31,29 +64,47 @@ Essencials
  - dd = data.frame(x,y) -> creates a data frame
  - objects() -> list declared variables
  - attributes(x) -> return all information keep inside x
- - sapply(variable, nomFuncio) -> aplica nomFuncio a totes les variables (pot ser matriu, vector, data frame...)
- - tapply(vector,index,function) vector and index have the same length. index is a vector of categorical like "positive" and "negative". break vector in as much sets as labels as index each one as each one, so we break vector in group "postitive" and "negative" and then we apply function to each set.
+ - sapply(variable, nomFuncio) -> aplica nomFuncio a totes les variables (pot 
+   ser matriu, vector, data frame...)
+ - tapply(vector,index,function) vector and index have the same length. index 
+   is a vector of categorical like "positive" and "negative". break vector 
+   in as much sets as labels as index each one as each one, so we break 
+   vector in group "postitive" and "negative" and then we apply function to 
+   each set.
+ - list(array) -> returns a list of factors
  - help(x) -> help!!!
- - attach(dataFrame) -> make variables inside dataframe acessible out of the dataframe, actually, makes a copy.
- - table(Variable==0) -> make a table evaluating the condition (in this case ==) of each row in variable that meet the condition.
- - levels(var) -> levels return the names of the different categories of var which must be a qualitative variable. We may see levels(var) as a simple variable, we can change current labels for others: levels(var) = c("positiu","negatiu")
-
+ - attach(dataFrame) -> make variables inside dataframe acessible out of the 
+   dataframe, actually, makes a copy.
+ - table(Variable==0) -> make a table evaluating the condition (in this case ==)
+   of each row in variable that meet the condition.
+ - levels(var) -> levels return the names of the different categories of var 
+   which must be a qualitative variable. We may see levels(var) as a simple 
+   variable, we can change current labels for others: 
+   levels(var) = c("positiu","negatiu")
+ - complete.cases(vector or matrix or df) -> return for each row value 
+   is not null or if its null
 
 Plot 
- - plot(ac1$rs[,1],ac1$rs[,2],col=dd$preferida); -> pinta cada categoria de un color (preferida te la mateixa longitud que acl). numera de 1 a levels(preferida)
- - legend("topright",c("alfa","beta"),pch=1,col=seq(1,length(levels(dd$preferida)))); -> llegenda en el plot anterior, de 1 a longitud levels.
+ - plot(ac1$rs[,1],ac1$rs[,2],col=dd$preferida); -> pinta cada categoria de 
+   un color  (preferida te la mateixa longitud que acl). numera de 1 a 
+   levels(preferida)
+ - legend("topright",c("alfa","beta"),pch=1,
+   col=seq(1,length(levels(dd$preferida)))); -> llegenda en el plot anterior, 
+   de 1 a longitud levels.
  - axis(side=4, pos= 0, labels = F, col="gold");
  - arrows(ze, ze, ac1$cs[1:3,1], ac1$cs[1:3,2], length = 0.07,col="blue");
  - text(ac1$cs[1:3,1],ac1$cs[1:3,2],labels=etiq,col="darkblue");
  - points(ac1$csup[,1],ac1$csup[,2],pch=16,col="orange");
  - x11() -> crea una nova finestra on dibuixar.
- - par(mfcol=c(x,y)) -> crea una finestra subdividida en x files i y columnes on podem dibuixar una gràfica a cada una de les celes (només fent un plot normalment i ja esta)
- - png(filename="./name.png") -> sequence of instructions that saves graph as image.
-   plot(fit)
-   dev.off()
-   png(filename="./graph.png", width = 7200, height = 1600, units = 'px', res=100);
+ - par(mfcol=c(x,y)) -> crea una finestra subdividida en x files i y columnes 
+   on podem dibuixar una gràfica a cada una de les celes (només fent un plot 
+   normalment i ja esta)
+ - png(filename="./name.png") -> sequence of instructions that saves graph 
+   as image.
+     plot(fit)
+     dev.off()
+     png(filename="./graph.png",width=7200,height = 1600,units = 'px',res=100);
  - plot(..., xlab="lala", ylab="lele", xlim=c(xmin,xmax), ylim=c(ymin, ymax))
-
 
 Lists
  - a = list() -> crea list
@@ -61,6 +112,96 @@ Lists
    a = c(a, two="element two"); -> add named elements to list
 
 
+Arithmetic
+ - cumsum(vector) -> cumulative sum.
+
+Altres
+ - rnorm(x) -> genera x nombres aletaoris
+ - sort(x) -> ordena llista de nombres
+ - is.factor(x) -> retorna true si la variable es categorica
+ - is.na(x) -> return true if NA
+ - Var = as.factor(Var) -> declare categorical
+ - levels(var) -> return levels from categorical
+ - levels(Dictamen) = c("positivo","negativo") -> rename numeric levels 
+   (1,2) for strings (positivo, negativo)
+ - row.names(var) -> names of rows, we can assign values here. If there is 
+   no assigned value, by default return the index (1,2,4,...)
+ - factor(varWithLevels, levels=c(3,4,2,1)) -> reorder the levels of the var 
+   varWithLevels. Levels can be strings.
+ - legend("topright",c("alfa","don'tknow"),pch=1,
+   col=seq(1,length(levels(dd$preferida)))); -> afegir llegenda a plot ordenada.
+ - as.numeric(c) -> convert categorical variables to numeric
+
+
+Control de fluxe
+ - Bucles
+	for (i in 1:X) {
+	        whatever men
+	}
+
+Vocabulary
+ - factor -> variable categorica
+
+Special Data types
+ - NA -> missing data
+ - matrix -> poden tenir noms a les files (row.names) i a les columnes (colnames)
+
+########################################################
+######################## Algorithms ####################
+########################################################
+
+Chi-Square Test
+ - Theory: Two kind of tests:
+    - Test of godness of fit: check if a vector of data fits a certain 
+      distribution such as poision, exponential, etc...
+    - Test of independence of variables: You have two random variables
+      and you want to know if they are related somehow.
+   For both kind of tests, we have to group our data in categories so 
+   we can build an histogram with it. For the best fit test, if we have 
+   continuous data from 10 to 20, we should group it in ranges of 2 elements 
+   (10-12, 12-14, etc). for instance:
+
+      cat     Freq
+      10-12   49
+      12-14   34
+      14-16   47
+      16-18   38
+      18-20   32
+
+   This can be done with the command:
+
+      taula_v1_cat=transform(taula_v1,cat=
+        ifelse(x1 <  12, "10-12",
+        ifelse(x1 <= 14, "12-14",
+        ifelse(x1 <= 16, "14-16",
+        ifelse(x1 <= 18, "16-18",
+        ifelse(x1 <= 20, "18-20","inf"))))))
+
+   For the independent test, we need to build a table of categories such as: 
+
+            Freq None Some 
+      Heavy    7    1    3 
+      Never   87   18   84 
+      Occas   12    3    4 
+      Regul    9    1    7
+
+   This can be done with the command:
+
+      library(MASS)       # load the MASS package 
+      tbl = table(survey$Smoke, survey$Exer) 
+
+ - two types of tests: tests of independence and test of godness of fit. Both
+   calculated with the same R function. Which test is performed dependes on 
+   how the input data is given.
+    - chisq.test(x, y = NULL, correct = TRUE,
+                 p = rep(1/length(x), length(x)), rescale.p = FALSE,
+                 simulate.p.value = FALSE, B = 2000)
+    - If ‘x’ is a matrix with one row or column, or if ‘x’ is a vector
+      and ‘y’ is not given, then a _goodness-of-fit test_ is performed. The
+      parameter p is the distribution that we want to test our data against.
+    - If ‘x’ is a matrix with at least two rows and columns, it is taken
+      as a two-dimensional contingency table and test of independence is done.
+ 
 
 
 Algoritms Cool
@@ -108,55 +249,15 @@ Association rules
  - myrules@quality[,3] > 300 -> quality de les regles
 
 
-
-Arithmetic
- - cumsum(vector) -> cumulative sum.
-
-Altres
- - rnorm(x) -> genera x nombres aletaoris
- - sort(x) -> ordena llista de nombres
- - is.factor(x) -> retorna true si la variable es categorica
- - is.na(x) -> return true if NA
- - Var = as.factor(Var) -> declare categorical
- - levels(var) -> return levels from categorical
- - levels(Dictamen) = c("positivo","negativo") -> rename numeric levels (1,2) for strings (positivo, negativo)
- - row.names(var) -> names of rows, we can assign values here. If there is no assigned value, by default return the index (1,2,4,...)
- - paste(a,b) -> concatenates a and b. if a and/or b numeric, the result is still a string
- - factor(varWithLevels, levels=c(3,4,2,1)) -> reorder the levels of the var varWithLevels. Levels can be strings.
- - legend("topright",c("alfa","don'tknow"),pch=1,col=seq(1,length(levels(dd$preferida)))); -> afegir llegenda a plot ordenada.
- - as.numeric(c) -> convert categorical variables to numeric
-
-
-Packages
- - install.packages("gdata",lib="/home/arn/pckgR")
- - library("gdata",lib.loc="/home/arn/pckgR/")
-
-
-Control de fluxe
- - Bucles
-	for (i in 1:X) {
-	        whatever men
-	}
-
-
-
-
-
-Vocabulary
- - factor -> variable categorica
-
-Special Data types
- - NA -> missing data
- - matrix -> poden tenir noms a les files (row.names) i a les columnes (colnames)
-
-
-
-Examples
+##############################################################
+######################### Examples ###########################
+##############################################################
 
 #Plot with limits. It is posible to specify xlim and ylim on plot arguments
   # First print two points not visible "type='n'". The points are the tow first
   # arguments of plot. Next, print with line, the lines of the graph.
-  plot(c(0,maxtrain),c(0,maxerror), type='n',main="title",xlab="",ylab="",axes=FALSE)
+  plot(c(0,maxtrain),c(0,maxerror), type='n',main="title",xlab="",ylab="",
+  axes=FALSE)
 
 #Delete repetitions of experiments which at least one of its values is NaN
   # Get row index that are NaN (x)
