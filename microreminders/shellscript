@@ -7,6 +7,8 @@ VARIABLES BASH
  - $? -> estat final d'execucio de lultim programa
  - IFS -> Internal field separator. The value used to split between "objects" when using "in",
    for exemple.
+ - !:1 -> argument one of the last command executed
+ - !:1-2 -> arguments one and two of the last command executed
 
 CONTROL DE FLUX
 

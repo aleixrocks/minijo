@@ -20,16 +20,16 @@ NAVIGATIN
  - e -> move to the end of the next word
  - b -> move to the start of the previous word.
 
+ - `` -> backtick goes back to the same location on the line
+ - '' -> apostrophe goes back to the start of the line. 
+
 SEARCH
  - /word -> search for word
  - ?word -> search in reverse order
  - while searching "n", to go to next one, or "N" to advace backwards
  - set hligth -> highlight all found words
  - set hligth! -> no higlight
-
-BUFERS
- - r file -> read file to vim buffer
- - r !command -> command output to vim buffer
+ - noh -> stop highligting, but it will highlight againt the next search
 
 SELECT TEXT
  - v -> mode seleccio text
@@ -69,6 +69,9 @@ BUFFERS
  - :bn -> next
  - :bn -> (n number) move to nth
  - :b<filename> -> move to filename
+ - :r file -> read file to vim buffer
+ - :r !command -> command output to vim buffer
+ - :bd -> delete buffer
 
 WINDOWS
  - Ctrl-w s -> split horizontaly
@@ -97,6 +100,46 @@ FOLDING
  - zA -> toggle all levels
  - zM -> close all on file
  - zR -> opens all on file
+
+AUTO SPLIT LINES
+ - gq{motion} % format the line that {motion} moves over
+ - {Visual}gq % format the visually selected area
+ - gqq        % format the current line
+ - :help gq and :help gw -> more info
+ - :set tw=80 -> will give you auto line break when exceeded during typing. It
+   is used in gq too, though if disabled gq breaks on window size or 79
+   depending on which comes first.
+
+SPACES TO TABS
+ - :set tabstop=2      " To match the sample file
+ - :set noexpandtab    " Use tabs, not spaces
+ - :%retab!            " Retabulate the whole file
+
+
+
+CTAGS SUMMARY
+ - Description: Go to function definition and omnicompletion
+ - ctags -R . -> generate ctags db from root folder
+ - set tags=./tags -> load in vim
+ - <C-]> go to definition
+ - <C-t> return
+
+CSCOPE SUMMARY
+ - Definition: Go to symbol definition and find symbol usages
+ - cscope -Rb -> generate db. -b to avoid interactive prompt
+ - Put cursor over symbol and type <Ctrl \ symbol> where symbol can be: 
+    - 's' for 'find all uses of symbol X'. 
+    - 'g' finds the global definition(s) of a symbol 
+    - 'c' finds all calls to a function 
+    - 'f' opens the filename under the cursor (note: since Cscope 
+              by default parses all C header files it finds in /usr/include, 
+              you can open up most standard include files with this). 
+  - "CTRL-t" -> go back
+  - "CTRL-spacebar symbol" -> split horizontally
+  - "CTRL-spacebar CTRL-spacebar s" (just hold down the CTRL key and 
+       tap the spacebar twice). Window split vertically.
+
+
 
 CTAGS vs CSCOPE
 
@@ -165,18 +208,4 @@ CSCOPE
        cscope_maps.vim script and change Vim's timeout settings as described 
        in the comments [actually, I generally recommend that you turn off 
        Vim's timeouts]. This doesn't work with old Vims
-
-AUTO SPLIT LINES
- - gq{motion} % format the line that {motion} moves over
- - {Visual}gq % format the visually selected area
- - gqq        % format the current line
- - :help gq and :help gw -> more info
- - :set tw=80 -> will give you auto line break when exceeded during typing. It
-   is used in gq too, though if disabled gq breaks on window size or 79
-   depending on which comes first.
-
-SPACES TO TABS
- - :set tabstop=2      " To match the sample file
- - :set noexpandtab    " Use tabs, not spaces
- - :%retab!            " Retabulate the whole file
 
