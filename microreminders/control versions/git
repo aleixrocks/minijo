@@ -82,3 +82,13 @@ Conflictes
   i eliminar les marques de conflicte >>>>>>> <<<<<<<<< ======= tot solucionant 
   el problema manualment.
 
+SUBMODULES
+ - git submodule add git_url_here [folder_path]: Binds the project to the 
+   folder.
+ - git clone --recursive git_url_here: clone project with submodules. Cloning
+   witouth --recursive neither automatically initiates nor downloads submodules.
+ - git submodule update --remote [submodulen_name]: fetch and update submodule
+   data. If a submodule_name is not specified, all submodules will be updated.
+ - changes in a submodule have to be individually commited inside the submodule.
+ - git push --recurse-submodules=on-demand: First, pushes all submodules, and
+   then, pushes the main projects. 

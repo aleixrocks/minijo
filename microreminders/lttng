@@ -1,0 +1,35 @@
+SESSION MANAGEMENT
+ - sudo lttng-sessiond & : start tracing daemon. sudo is only necessary if 
+   tracing the kernel.
+ - lttng create my-session: Start a tracing session inside the tracing daemon
+   of name my-session. Multiple sessions can be created.
+ - lttng create my-session --output PATH: Specify output path.
+ - lttng list: Display existing tracing sessions.
+ - lttng set-session my-sesion: Set current session.
+ - lttng destroy my-session: Destroy session (it's secure, trace is not lost).
+ - lttng start: start tracing (set events and channels before that!)
+ - lttng stop: stop trcing
+
+EVENTS
+ - lttng list some-session: list events
+ - lttng disable-event 
+ - lttng enable-event OPTIONS. Where options are:
+     - Domain: From where to events are taken:
+         - Kernel: --kernel -k
+         - User space: --userspace - u
+         - java.util.logging: --jul -j
+         - log4j: --log4j -l
+     - Instrumentation points: Which kind of events (if none, tracepoint is 
+       default):
+         - Tracepoint: --tracepoint name
+         - Dyanmic probes: --probe name
+         - Function entry/exit: --function name 
+         - System call entry/exit: --syscall [name | --all]
+     - Log level: Log level to match.
+         - From 0 to specific log level: --loglevel
+         - Specific log level: --loglevel-only
+     - Filter: c like expression to filter events.
+         - e.g. --filter 'irq == 28 || irq == 17'
+
+
+
