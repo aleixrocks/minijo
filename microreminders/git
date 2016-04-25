@@ -25,6 +25,7 @@ mostrar log
 - git log --prety=[oneline|short|full|fullest]
 - git log --pretty=format:"%h - %an, %ar : %s" -> ben resumit
 - git log --pretty=format:"%h %s" --graph -> grapfic chachi
+- git log --oneline --graph --all --decorate -> perfect
 
 filtrar log
 - GUI gitk
