@@ -1,0 +1,48 @@
+ctrl-b -> basic combo
+config -> ~/.tmux.conf
+
+MANAGING
+ - tmux -2 -> start with 256 colors enabled
+
+SESSIONS
+ - ctrl-b s -> show sessions
+ - tmux ls -> show sessions
+ - tmux new -s session-name -> create new session
+ - tmux a -> connect to first available session
+ - tmux a -t session-name -> connect to session
+ - tmux detach -> detach
+ - ctrl-b d-> deteach
+ - tmux kill-session -t session-name -> kill
+ - kill-window -> kill window
+
+Windows
+ - c -> create new window
+ - , -> rename the current window
+ - w -> list windows
+ - . -> move the windows to an unoccupied index
+ - % -> split horizontally
+ - " -> split vertically
+ - n -> change to the next window
+ - p -> change to the previous window
+ - 0-9 -> select windows 0 through 9
+ - f -> find windows
+ - & -> kill windows
+
+Panes
+ - % -> split horizontally
+ - " -> split vertically
+ - z -> toggle zoom
+ - q -> show pane number
+ - o -> toggle between panes
+ - } -> swap with next pane
+ - { -> swap with previous pane
+ - ! break the pane out of the window
+ - x kill the current pane
+ - space - toggle between layouts
+
+Copy Mode
+ - [ -> enter copy mode 
+ - space -> start selecting
+ - enter -> end and exit
+ - use vim bindings to move arroun
+ - configure vim bindings: setw -g mode-keys vi

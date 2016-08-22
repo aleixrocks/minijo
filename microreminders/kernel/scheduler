@@ -1,0 +1,199 @@
+Introduction
+
+The Linux scheduler does not directly operate on processes, but works with
+schedulable entities. Such an entity is represented by struct sched_entity
+
+There are different scheduling algorithms inside the kernel implemented behind
+the struct sched_class. which contains hooks (pointers) to functions,
+implemented inside different classes that must be called in case of a
+corresponding event.
+
+The fields are as follows:
+- enqueue_task: called when a task enters a runnable state. It puts the
+  scheduling entity (task) into the run queue and increments the nr_running
+  (number of runnable processes in a run queue) variable;
+- dequeue_task: when a task is no longer runnable, this function is called to
+  keep the corresponding scheduling entity out of the run queue. It also
+  decrements the nr_running variable;
+- yield_task: called when a task wants to voluntarily give up CPU, but not
+  going out of runnable state. Basically this means a dequeue followed by an
+  enqueue;
+- check_preempt_curr: this function checks if a task that entered runnable
+  state should preempt the currently running task. Called, for example, from
+  wake_up_new_task(...);28
+- pick_next_task: this function chooses the most appropriate task eligible to
+  run next. Note, that this is not the same as enqueuing and dequeuing tasks;
+- set_curr_task: this function is called when a task changes its scheduling
+  class or task group;
+- task_tick: mostly called from time tick functions; it might lead to process
+  switch. This drives the running preemption;
+- task_fork and task_dead: notify the scheduler that a new task was spawned or
+  died, respectively.
+The kernel decides, which tasks go to which scheduling classes based on their scheduling policy
+(SCHED_*) and calls the corresponding functions. Processes under SCHED_NORMAL,
+SCHED_BATCH and SCHED_IDLE are mapped to fair_sched_class, provided by CFS. SCHED_RR
+and SCHED_FIFO associate with rt_sched_class, real-time scheduler.
+
+
+The policy filed in task_struct holds the scheduling policy of a task:
+basically means special scheduling decisions for some particular group of
+processes (longer timeslices, higher priorities, etc.). Current Linux kernel
+version supports five types of policies:
+
+- SCHED_NORMAL: the scheduling policy that is used for regular tasks;
+- SCHED_BATCH: does not preempt nearly as often as regular tasks would, thereby
+    allowing tasks to run longer and make better use of caches but at the cost
+    of interactivity. This is well suited for batch jobs (CPU-intensive batch
+    processes that are not interactive);
+ - SCHED_IDLE: this is even weaker than nice 19 (means a very low priority;
+     process priorities are discussed later in this chapter), but it is not a
+     true idle task. Some background system threads obey this policy, mainly
+     not to disturb normal way of things;
+ - SCHED_FIFO and SCHED_RR are for soft real-time processes. Handled by
+     real-time scheduler in <kernel/sched/rt.c> and specified by POSIX standard.
+     RR implements round robin method, while SCHED_FIFO uses first in first out
+     queuing mechanism.
+
+CFS (Completly fair scheduler) SCHED_NORMAL
+
+Linux’s CFS scheduler does not directly assign timeslices to processes.
+Instead, in a novel approach, CFS assigns processes a proportion of the
+processor. Therefore, the amount of processor time that a process receives is a
+function of the load of the system. This assigned proportion is further
+affected by each process’s nice value. The nice value acts as a weight,
+changing the proportion of the processor time each process receives.  Processes
+with higher nice values (a lower priority) receive a deflationary weight,
+yielding them a smaller proportion of the processor; processes with smaller
+nice values (a higher priority) receive an inflationary weight, netting them a
+larger proportion of the processor.
+
+In Linux, under the new CFS scheduler, the decision is a function of how much
+of a proportion of the processor the newly runnable processor has consumed. If
+it has consumed a smaller proportion of the processor than the currently
+executing process, it runs immediately, preempting the current process. If not,
+it is sched- uled to run at a later time.
+
+EXAMPLE
+
+Consider a system with two runnable tasks: a text editor and a video
+encoder.The text editor is I/O-bound because it spends nearly all its time
+waiting for user key presses.  Despite this, when the text editor does receive
+a key press, the user expects the editor to respond immediately. Conversely,
+the video encoder is processor-bound. Aside from reading the raw data stream
+from the disk and later writing the resulting video, the encoder spends all its
+time applying the video codec to the raw data, easily consuming 100% of the
+processor.
+
+The crucial concept is what happens when the text editor wakes up.  The CFS
+notes that it is allotted 50% of the processor but has used considerably less.
+Specifically, CFS determines that the text editor has run for less time than
+the video encoder. Attempting to give all processes a fair share of the
+processor, it then preempts the video encoder and enables the text editor to
+run. The text editor runs, quickly processes the user’s key press, and again
+sleeps, waiting for more input. As the text editor has not con- sumed its
+allotted 50%, we continue in this manner, with CFS always enabling the text
+editor to run when it wants and the video encoder to run the rest of the time.
+
+IMPLEMENTATION
+
+Main shceduling function are in kernel/sched/core.c
+Main CFS implementation in kernel/sched/fair.c
+
+A red-black tree is used to keep track of runnable tasks.
+
+The struct task_struct contains all the information related with a single
+process. Inside it, the struct sched_entity (with name "se") keeps information
+related with the CFS.
+
+The most important is the vruntime variable which accounts the weigthed runtime
+for the process. i.e. the amount of CPU used by that process with respect to
+the other processes. The next process to be run, is the one whose vruntime is
+smaller.
+
+The main scheduling entry point is the function schedule() in
+kernel/sched/core.c. It can be called from:
+
+ *   1. Explicit blocking: mutex, semaphore, waitqueue, etc.                     
+ *                                                                               
+ *   2. TIF_NEED_RESCHED flag is checked on interrupt and userspace return       
+ *      paths. For example, see arch/x86/entry_64.S.                             
+ *                                                                               
+ *      To drive preemption between tasks, the scheduler sets the flag in timer  
+ *      interrupt handler scheduler_tick().                                      
+ *                                                                               
+ *   3. Wakeups don't really cause entry into schedule(). They add a             
+ *      task to the run-queue and that's it.                                     
+
+The function scheduler_tick() is executed by the timer. It checks wheter the
+current running task should be preempted by another task and sets the 
+TIF_NEED_RESCHED flag.
+
+The function pick_next_task() returns the next process to be run among all
+schedulers and returns it.
+
+
+PREEMPTION
+
+User preemption can occur
+  - When returning to user-space from a system call
+  - When returning to user-space from an interrupt handler
+
+Kernel preemption can occur
+  - When an interrupt handler exits, before returning to kernel-space
+  - When kernel code becomes preemptible again
+  - If a task in the kernel explicitly calls schedule()
+  - If a task in the kernel blocks (which results in a call to schedule())
+
+After an interrupt, __schedule() is called if the interrupt occurred in 
+preemptible context (preempt_count == 0). When an interrupt returns, it
+calls the assembly function ret_from_intr on the files 
+arch/x86/kernel/entry_[32|64].s. This function calls preempt_schedule_irq 
+inside kernel/sched/core.c which calls __schedule().
+
+REAL TIME POLICIES
+
+implemented in kernel/sched/rt.c
+
+A real time process always preempts a non real time process (SCHED_NORMAL).
+
+SCHED_FIFO: SCHED_FIFO implements a simple first-in, first-out scheduling
+  algorithm without timeslices.A runnable SCHED_FIFO task is always scheduled
+  over any SCHED_NORMAL tasks.  When a SCHED_FIFO task becomes runnable, it
+  continues to run until it blocks or explic- itly yields the processor; it has
+  no timeslice and can run indefinitely. Only a higher prior- ity SCHED_FIFO or
+  SCHED_RR task can preempt a SCHED_FIFO task.Two or more SCHED_FIFO tasks at the
+  same priority run round-robin, but again only yielding the processor when they
+  explicitly choose to do so. If a SCHED_FIFO task is runnable, all tasks at a
+  lower priority cannot run until it becomes unrunnable.
+
+SCHED_RR: The same as SCHED_FIFO but with timeslices (round robin)
+
+Both real-time scheduling policies implement static priorities.The kernel does
+not cal- culate dynamic priority values for real-time tasks.This ensures that a
+real-time process at a given priority always preempts a process at a lower
+priority.
+
+Real-time priorities range inclusively from zero to MAX_RT_PRIO minus 1. By
+default, MAX_RT_PRIO is 100—therefore, the default real-time priority range is
+zero to 99.This priority space is shared with the nice values of SCHED_NORMAL
+tasks:They use the space from MAX_RT_PRIO to ( MAX_RT_PRIO + 40) . By default,
+this means the –20 to +19 nice range maps directly onto the priority space from
+100 to 139.
+
+
+
+TIMER
+
+scheduler_tick() in kernel/sched/core.c is a timer interrupt handler that
+checkes the current runtime of the running process and sets a flag indicating
+that a reschedule is needed if necessary.
+
+schedule() in kernel/sched/core.c is the main schedule function that takes
+the apporpiate task in the run queue and does a context_swtich()
+
+
+FUNCTIONS
+
+ - activate_task -> add task to runqueue. it will call the enqueue_task function
+     which is dependent on the specific scheduler class.
+

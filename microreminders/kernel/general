@@ -1,0 +1,14 @@
+When an application executes a system call, we say that the kernel is
+executing on behalf of the application. Furthermore, the application is 
+said to be executing a system call in kernel-space, and the kernel is 
+running in process context.This relationship that applications call into 
+the kernel via the system call interface is the fundamental manner in which 
+applications get work done.
+
+in Linux, we can generalize that each processor is doing exactly one of three 
+things at any given moment (without exceptions):
+  - In user-space, executing user code in a process
+  - In kernel-space, in process context, executing on behalf of a 
+    specific process
+  - In kernel-space, in interrupt context, not associated with a process, 
+    handling an interrupt

@@ -1,0 +1,2 @@
+ - # {macro argument} -> replaces {macro argument} by a string
+ - {token}##{token} -> concatenate tokens

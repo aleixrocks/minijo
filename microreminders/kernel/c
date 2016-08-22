@@ -1,0 +1,11 @@
+Modifiers
+ - volatile -> the variable must be loaded from memory each time it is
+   referenced instead of being loaded in a register and continue using the
+   register on the following operations.
+
+Pointers 
+ - const int *iptr -> is a pointer to a read-only integer. Herewith, a pointer
+   can be changed, but an integer cannot. 
+
+ - int * const iptr -> is a constant pointer to an integer, where an int can be
+   changed, but a pointer cannot be put to point elsewhere.

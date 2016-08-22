@@ -1,6 +1,7 @@
 SESSION MANAGEMENT
  - sudo lttng-sessiond & : start tracing daemon. sudo is only necessary if 
    tracing the kernel.
+ - sudo lttng-sessiond --extra-kmod=umfd : enable custom tracepoints
  - lttng create my-session: Start a tracing session inside the tracing daemon
    of name my-session. Multiple sessions can be created.
  - lttng create my-session --output PATH: Specify output path.
@@ -11,7 +12,8 @@ SESSION MANAGEMENT
  - lttng stop: stop trcing
 
 EVENTS
- - lttng list some-session: list events
+ - lttng list some-session: list events for session 
+ - lttng list --kernel: all kernel events
  - lttng disable-event 
  - lttng enable-event OPTIONS. Where options are:
      - Domain: From where to events are taken:

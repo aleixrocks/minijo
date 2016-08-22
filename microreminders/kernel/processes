@@ -1,0 +1,33 @@
+The kernel stores the list of processes in a circular doubly linked list 
+called the task list. Each element in the task list is a process descriptor 
+of the type struct task_struct , which is defined in <linux/sched.h>.
+The process descriptor contains all the information about a specific process.
+
+ - current : macro that points to the current process task_struct
+
+ - task_struct
+     - parent: pointer to parent's task_struct
+     - children: list of children tasks.
+
+
+
+TASKS MANAGE
+
+ - iterate over a process’s children with
+     struct task_struct *task;
+     struct list_head *list;
+
+     list_for_each(list, &current->children) {
+         task = list_entry(list, struct task_struct, sibling);
+         /* task now points to one of current’s children */
+     }
+
+ - To obtain the next task in the list, given any valid task, use
+     list_entry(task->tasks.next, struct task_struct, tasks)
+
+ - On each iteration, task points to the next task in the list:
+     struct task_struct *task;
+     for_each_process(task) {
+         /* this pointlessly prints the name and PID of each task */
+         printk(“%s[%d]\n”, task->comm, task->pid);
+     }

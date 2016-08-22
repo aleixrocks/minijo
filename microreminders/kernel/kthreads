@@ -1,0 +1,14 @@
+include/linux/kthread.h
+kernel/kthread.c
+
+kernel thread can be created only by another kernel thread.The kernel handles 
+this automatically by forking all new kernel threads off of the kthreadd kernel 
+process
+
+FUNCTIONS
+ - kthread_create() -> creates a new kthread. It adds a request to create a kthread
+     which is resolved by the kernel thread "kthreadd"
+
+
+OTHERS
+ - ps -ef -> show kernel threads

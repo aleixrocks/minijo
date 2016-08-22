@@ -90,4 +90,10 @@ INTERRUPTIONS
      }
 
 
+PARSE OPTIONS
+ - search for getopts
  
+
+PRACTICAL EXAMPLES
+ - find | grep -o '\.[a-z]*$'| sort |uniq -c|sort -nr -> list files by type and
+   count them. Thanks to Dani!

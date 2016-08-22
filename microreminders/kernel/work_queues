@@ -1,0 +1,38 @@
+There are two worker-pools, one for normal work items and the other
+for high priority ones, for each possible CPU and some extra
+worker-pools to serve work items queued on unbound workqueues - the
+number of these backing pools is dynamic.
+
+Each worker-pool bound to an actual CPU implements concurrency
+management by hooking into the scheduler.  The worker-pool is notified
+whenever an active worker wakes up or sleeps and keeps track of the
+number of the currently runnable workers.  Generally, work items are
+not expected to hog a CPU and consume many cycles.  That means
+maintaining just enough concurrency to prevent work processing from
+stalling should be optimal.  As long as there are one or more runnable
+workers on the CPU, the worker-pool doesn't start execution of a new
+work, but, when the last running worker goes to sleep, it immediately
+schedules a new worker so that the CPU doesn't sit idle while there
+are pending work items.  This allows using a minimal number of workers
+without losing execution bandwidth.
+
+Keeping idle workers around doesn't cost other than the memory space
+for kthreads, so cmwq holds onto idle ones for a while before killing
+them.
+
+There are no threads dedicated to any specific workqueue. Instead, there is a
+global pool of threads attached to each CPU in the system. When a work item is
+enqueued, it will be passed to one of the global threads at the right time (as
+deemed by the workqueue code). One interesting implication of this change is
+that tasks submitted to the same workqueue on the same CPU may now execute
+concurrently
+
+RESCUER thread
+
+Also new with Tejun's patch is the concept of "rescuer" threads. In a tightly
+resource-constrained system, it may become impossible to create new worker
+threads. But any existing threads may be waiting for the results of other tasks
+which have not yet been executed. In that situation, everything will stop cold.
+To deal with this problem, some special "rescuer" threads are kept around. If
+attempts to create new workers fail for a period of time, the rescuers will be
+summoned to execute tasks and, hopefully, clear the logjam.

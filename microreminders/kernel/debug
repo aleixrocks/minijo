@@ -1,0 +1,96 @@
+
+GENERAL
+ - system.map -> fiel generated at compile time which contains the assresses 
+   of functions inside the image
+ - Oops -> the stack is printed from the bottom to the top.  ksmoops
+   saved_oops.txt -> decodes an undecoded oops trace  by using system.map
+ - check current log level: 
+
+      $ cat /proc/sys/kernel/printk
+           7       4       1       7
+           current default minimum boot-time-default
+ - kern-tree/Documentation/sysrq.txt -> sysrq info
+ - kern-tree/Documentation/printk-formats.txt -> printk formats
+
+DEBUG FUNCTION
+
+ - printk(KERN_LOG_LEVEL printf like format) -> like printf
+ - BUG(condition) -> if condition, print oops
+ - BUG_ON(condition) -> wraps its assertion in an unlikely() statement.
+ - BUILD_BUG_ON(condition) If the provided statement evaluates to true at 
+   compile time, the compilation aborts with an error.
+ - panic(printk like message) -> Prints an error message and then halts the 
+   kernel
+ - dump_stack() -> dumps the contents of the registers and a function back 
+   trace to the console
+
+MAGIC SysRq Key
+
+ Special combinations of keys enable you to communicate with the kernel
+ regardless of what else it is doing.
+ 
+ - echo 1 > /proc/sys/kernel/sysrq -> enable sysrq
+ - echo 8 > /proc/sys/kernel/printk -> change log level (see above)
+ - switch to tty (ctrl-alt Fx)
+ - sysrq = alt_right + ImprPant
+
+ - sysrq - h -> print help
+ - sysrq - [reisub] -> raising elephants is so utterly boring" or REInicia SUBnormal" is a
+   sysrq combination to securely restart the machine.
+
+ - Inside qemu:
+    - ctrl-alt 2 -> switch to qemu console
+    - sendkey alt_r-sysrq-h -> send sysrq h (use tab to autocomplete)
+    - ctrl_alt 1 -> return to emulation
+
+KERNEL DEBUG OPTIONS
+
+ Some of the options are rather useful, enabling slab layer debugging,
+ high-memory debugging, I/O mapping debugging, spin-lock debugging, and
+ stack-overflow checking.  One of the most useful settings, however, is
+ sleep-inside-spinlock checking, which actu- tally does much more.
+ 
+ Thanks to kernel preemption, the kernel has a central atomicity counter.The
+ kernel can be set such that if a task sleeps while atomic, or even does
+ something that might sleep, the kernel prints a warning and provides a back
+ trace. Potential bugs that are detectable include calling schedule() while
+ holding a lock, issuing a blocking memory allocation while holding a lock, or
+ sleeping while holding a reference to per-CPU data.This debugging
+ infrastructure catches a lot of bugs and is highly recommended.  The following
+ options make the best use of this feature:
+ 
+ CONFIG_PREEMPT=y
+ CONFIG_DEBUG_KERNEL=y
+ CONFIG_KALLSYMS=y
+ CONFIG_DEBUG_SPINLOCK_SLEEP=y
+
+DELAYING PRINTK
+
+ To print a debug message (or whatever you are doing) only every 2 seconds in
+ this example:
+ 
+ if (time_after(jiffies, prev_jiffy + 2*HZ)) {
+   prev_jiffy = jiffies;
+   printk(KERN_ERR “blah blah blah\n”);
+ }
+ 
+ Another option is to use printk_ratelimit() which allows only one message every
+ 5 seconds but allows an initial burst of up to ten messages before that cap is
+ enforced.These parameters are tunable via the printk_ratelimit and
+ printk_ratelimit_burst sysctl , respec- tively.
+ 
+ if (error && printk_ratelimit())
+   printk(KERN_DEBUG “error=%d\n”, error);
+
+BINARY SEARCH WITH GIT
+
+ - git bisect start
+ - git bisect bad <revision>
+ - git besect good <revision>
+ - < now git chekcouts a commit in the middle of bad and good history>
+ - git bisect [good | bad] -> stash revision as good or bad
+ - < now gits checkouts another directory based on your answer >
+
+KGDB
+ - start qemu with -s option, then start a gdb instance with the vmlinux image
+   and connect to the remote virtual machine with "target remote localhost:1234"

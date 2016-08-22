@@ -1,0 +1,11 @@
+CMDLINE 
+ - cat /proc/cmdline -> display kernel parameters at boot time
+ - {kern_tree}/Documentation/kernel_parameters.txt -> list of kernel parameters
+ - echo "1" > /proc/sys/kernel/sysrq -> enable all sysrq
+ - echo "t" > > /proc/sysrq-trigger -> execute sysrq "t"
+ - cat /proc/sys/kernel/printk -> print loglevel in order (current default
+   minimum boot-time-default
+
+
+PROC AND SYS AND BOOT
+ - /boot/config-* -> kernel compilation options

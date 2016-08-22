@@ -1,0 +1,251 @@
+ATOMIC OPERATIONS
+  - They are architecture dependent. The operations common to all architectures
+    are defined at <asm/atomic.h>
+  - The basic data type is atomic_t
+      atomic_t v; /* define v */
+      atomic_t u = ATOMIC_INIT(0); /* define u and initialize it to zero */
+      atomic_set(&v, 4); /* v = 4 (atomically) */
+      atomic_add(2, &v); /* v = v + 2 = 6 (atomically) */
+      atomic_inc(&v); /* v = v + 1 = 7 (atomically) */
+      atomic_dec(&v); /* v = v - 1 = 5 (atomically) */
+      atomic_read(&v); /* to convert an atomic_t to an int */
+      int atomic_dec_and_test(atomic_t *v) /* dec and test. if zero -> true */
+  - There are variants of this functions for 64 bits, but: For portability
+    between all Linux’s supported architectures, develop- ers should use the
+    32-bit atomic_t type.The 64-bit atomic64_t is reserved for code that is both
+    architecture-specific and that requires 64-bits.
+  - There are also bit level atomic functions. Check for them at <asm/bitops.h>
+    What bit atomic operation means? assume you issue two atomic bit
+    operations: Initially set the bit and then clear the bit. Without atomic
+    operations, the bit might end up cleared, but it might never have been set. 
+    The set operation could occur simultaneously with the clear operation and 
+    fail. The clear operation would succeed, and the bit would emerge cleared as
+    intended. With atomic operations, however, the set would actually occur—there
+    would be a moment in time when a read would show the bit as set—and then the
+    clear would execute and the bit would be zero.
+     
+SPIN LOCKS, SEMAPHORES and MUTEX summary
+
+  Requirement 				Recommended Lock
+  ===============================================================
+  Low overhead locking 			Spin lock is preferred.
+  Short lock hold time 			Spin lock is preferred.
+  Long lock hold time 			Mutex is preferred.
+  Need to lock from interrupt context 	Spin lock is required.
+  Need to sleep while holding lock 	Mutex is required.
+  No sleep, ++readers --writers         Sequential spin lock is better.
+ 
+SPIN LOCKS
+ - They are kind ofkernel mutex that wait in a busy loop rather than blocking.
+   All spin locks disable preemption but not all of them disable interrupts.
+ - Architecutre-dependent code in <asm/spinlock.h>, the usable interfaces are
+   defined in <linux/spinlock.h>      
+ - The basic use is:
+     DEFINE_SPINLOCK(mr_lock);
+     spin_lock(&mr_lock);
+     /* critical region */
+     spin_unlock(&mr_lock);
+     --------
+  - Spin lock types:
+      - DEFINE_SPINLOCK(mr_lock); -> create a local spinlock
+      - spin_lock_init() -> create a dynamic spinlock (not in stack)
+      - spin_lock(&mr_lock) -> simply lock
+      - spin_unlock(&mr_lock) -> simply unlock
+      - spin_lock_irq(&mr_lock) -> disable irq and lock (not recommended)
+      - spin_unlock_irq(&mr_lock) -> enable irq and lock (not recommended)
+      - spin_lock_irqsave(&mr_lock, flags) -> saves the irq state, disables
+        interrupts, ackiure the lock and disables preemption. 
+      - spin_unlock_irqrestore(&mr_lock, flags) -> unlock the lock, restore the
+        irq state (wich  may or may not enable preemption) and enable
+        preemption.
+      - spin_trylock() -> Immediately return 0 if contended, otherwise return
+        non-zero and lock.
+      - spin_is_locked() -> It simple checks whether lock is conteneded (return
+        nonzero) or not (return nonzero) 
+      - spin_lock_bh(), spin_unlock_bh() -> lock and disables/enables botthom
+        halves. Useful when we don't want a bottom half to preempt process
+        context which share data with some botthom half.
+ - reader-writter spin locks
+      - Useful when we want to allow concurrent read of a data structure as far
+        as nobody is writing it. 
+          - DEFINE_RWLOCK(mr_rwlock);
+          - read_lock(&mr_rwlock);
+          - /* critical section (read only) */
+          - read_unlock(&mr_lock);
+          //// writter code path ////
+          - write_lock(&mr_rwlock);
+          - /* critical section (read and write) */     
+          - write_unlock(&mr_lock);
+     - Write and read functions have also the irq and irqsave/irqrestores 
+       variants.
+     - it is safe for a reader to obtain its lock multiple times. This is used
+       in interrupt handerls that only read to avoid disabling interrupts.
+       More info at LKD3 p188.
+     - If the read lock is held and a writer is waiting for exclusive ac- cess,
+       readers that attempt to acquire the lock continue to succeed.The
+       spinning writer does not acquire the lock until all readers release the
+       lock. Therefore, a sufficient number of readers can starve pending 
+       writers
+ - To debug spin_locks:
+     - CONFIG_DEBUG_SPINLOCK -> checks for the use of uninitialized spin locks
+       and unlocking a lock that is not yet locked.
+     - CONFIG_DEBUG_LOCK_ALLOC -> futher checks, I don't now which yet
+ - On uniprocessors machines, the locks compile away and do not exist; they
+   simply act as markers to disable and enable kernel preemption. If kernel
+   preemption is turned off, the locks compile away entirely.
+ - lock data not code. If we have struct foo, lock it with foo_lock.
+
+SEMAPHORES
+ - semaphores in Linux are sleeping locks.
+ - They can allow an arbitrary number of lock holders.
+ - Architecutre-dependent implementation at <asm/semaphore.h>
+ - Because a thread of execution sleeps on lock contention, semaphores must be
+   obtained only in process context because interrupt context is not 
+   schedulable.
+ - Semaphores do not disable preemption, so they don't affect schedule latency.
+ - Terminology:
+     - usage count or count -> internal sempahore counter
+     - binary semaphore or mutex -> count = 1
+     - counting semaphore -> count > 1
+     - down a semaphore -> decrement counter
+     - up a semaphore -> increment semaphroe
+ - usage:
+     - initialization
+       - struct semaphore name;
+       - sema_init(&name, count);
+       or
+       - sema_init(sem, count) -> dinamic alloc, sem is a pointer.
+       or 
+       - static DECLARE_MUTEX(name) -> semaphore count = 1 static
+       or
+       - init_MUTEX(sem) -> mutex dynamic
+    - locking and unlocking 
+       - down_interruptible() -> tries to ackquire the lock and put the thread
+         to sleep as TASK_INTERRUPTIBLE if is not possible. If a signal is 
+         received, the function returns -EINTR. This is the prefered way.
+       - down() -> as down_interruptible() but thread is put to sleep as
+         TASK_UNINTERRUPTIBLE. This is bad, you can't kill it easily.
+       - down_trylock() -> to try to lock withouth blocking (if possible
+         lock and returns zero, otherwise non-zero)
+       - up() -> release semaphore
+    - read-write semaphores
+       - declared in <linux/rwsem.h>
+       - This semaphores are uninterruptible mutexes (count=1).
+       - It has its own structre: struct rw_semaphore
+       - It has its own api such as the normal semaphores
+       - It has the special function downgrade_write() to convert an acquired
+         write lock to a read lock atomically.
+
+MUTEX
+  - It behaves as a binary semaphore (it sleeps) but it's more efficient and
+    it's interface simpler. It's better to use a mutex than a sempahore if
+    possible (just one acces to critical section)
+  - usage:
+     - DEFINE_MUTEX(name); -> static
+     - mutex_init(&mutex); -> dynamic mutex
+     - mutex_lock(&mutex); -> lock
+     - mutex_unlock(&mutex); -> unlock
+     - mutex_try_unlock(&mutex); -> tries to acquire, one if succesfull, zero
+       otherwise.
+     - mutex_is_locked(&mutex); -> return one if locked, zero otherwise
+  - Important details:
+     - lock and unlock must be done in the same context
+     - It cannot be copies, hand initialized or reinitialized. It must be 
+       managed by the official API.
+     - CONFIG_DEBUG_MUTEXES -> kernel check mutex constrains to ease debugging
+
+COMPLETION VARIABLES
+ - The same as pthread conditional variables. Signal a locked mutex to wake up.
+ - Defined at <linux/completion.h>
+ - usage:
+     - DECLARE_COMPLETION(mr_comp); -> init static
+     - init_completion() -> dynamic
+     - wait_for_completion() -> wait for completion variable, sleeps.
+     - complete() -> wake up all sleeping threads waiting on wait_for_completion
+
+BIG KERNEL LOCK (BKL)
+ - Welcome to the redheaded stepchild of the kernel.
+ - Its use is completly discouraged, forbidded for new users. But still fairly
+   used inside the kernel.
+ - It is a global lock, recursive and seemingly released and acquired when the
+   task holding it is removed from the runnable queue and added again
+   respectively.
+ - Defined in <linux/smp_lock.h>
+ - usage:
+     - lock_kernel();
+       /*
+       * Critical section, synchronized against all other BKL users...
+       * Note, you can safely sleep here and the lock will be transparently
+       * released. When you reschedule, the lock will be transparently
+       * reacquired. This implies you will not deadlock, but you still do
+       * not want to sleep if you need the lock to protect data here!
+       */
+     - unlock_kernel();
+     - kernel_locked(); Returns nonzero if lock is held and zero otherwise
+SEQUENTIAL LOCK
+ - lightweight spin lock mechanism useful when a data structure is shared among
+   a lot of readers and few writers. 
+ - What it does? Just one writter thread can be writting at the same time.
+   Multiple readers are allowed inside the lock. If a reader is inside the
+   lock, a writer can enter and invalidate the value read. If a writer is inside
+   the lock, the reader will enter but it will have to spin again. 
+ - How it works? When the lock or the unlock functions are called for the write
+   operation, an internal counter is incremented. Initially the internal
+   counter is 0. Hence, even values mean that a write operation is in progress,
+   odd values means that no body is writting. When a reader takes the lock it
+   keeps a copy of the counter. When it tries to release the lock, it compares the
+   old value with the new one. If they are equal, we know that any writer has
+   entered or exit the critical region. Otherwise, we have to read again until
+   they are equal. When the values are equal, if they are even we know that there
+   were any writter inside. If they are even, there was a writer inside and we
+   have to read again. Awesome!
+ - usage:
+     - seqlock_t mr_seq_lock = DEFINE_SEQLOCK(mr_seq_lock);
+     /////// writer //////
+     - write_seqlock(&mr_seq_lock);   // increment counter
+     - /* write lock is obtained... */
+     - write_sequnlock(&mr_seq_lock); // increment counter again
+     /////// reader //////
+     - do {
+         seq = read_seqbegin(&mr_seq_lock);         // read counter
+         /* read data here ... */
+       } while (read_seqretry(&mr_seq_lock, seq));  // read counter & compare
+
+PREEMTION ENABLE AND DISABLE
+ - Disable and enable the hability to preempt the current process for another
+   one with higher priority. If the current process block with preemption 
+   disabled, the response is undefined, so don't do it!
+ - Preemtion calls are recursive (a counter that increments and decrements).
+   When the counter is zero, the kernel is preemptive. If it is greater than 
+   zero is not.
+ - usage:
+     - preempt_disable() -> Disables preemption.
+     - preempt_enable() -> Enable preemption. It might schedule another
+       process at this right point!
+     - preempt_enable_no_resched() -> enable preepmtion but does not check for
+       any pending reschedules.
+     - preempt_count() -> return preemtpion counter 
+ - The preemption counter is in fact a set of counters keept together in a 
+   single integer. See them at <linux/preempt_mask.h>. 
+
+BARRIERS
+ - A barrier is a set of instructions from the processor to the compiler to 
+   avoid instruction reordering.
+ - It looks like its a quite complicted subject. More doc on
+   Documentation/memory-barriers.txt
+ - x86 processors do not ever reorder writes (out-of-order stores).
+ - Once a barrier is found, such as rmb() for read or wmb() for writes, 
+   all loads or stores (respectively) after the call won't execute until
+   all loads or stores before the call have finished.
+ - usage:
+    - rmb() -> Prevents loads from being reordered across the barrier
+    - read_barrier_depends() -> Prevents data-dependent loads from being
+      ordered across the barrier.
+    - wmb() -> Prevents writes from being reordered across the barrier
+    - mb() -> Prevents loads and stores from being reordered
+    - smp_rmb() -> rmb() on SMP and barrier() on UP
+    - smp_read_barrier_depends() -> read_barrier_depends() on SMP and 
+      provides barrier() on UP
+    - smp_wmb(), smp_mb() -> provide their omonimous on SMP or barrier() on UP
+    - barrier() -> Prevents the compiler from optimizing stores or loads
+      across barriers.

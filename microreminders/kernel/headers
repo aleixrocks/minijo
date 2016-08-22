@@ -1,0 +1,35 @@
+KERNEL HEADERS
+
+ - Kernel source files cannot include outside headers, just as they cannot 
+   use outside libraries.
+ - The base files are located in the include/ directory in the root of the 
+   kernel source tree. For example, the header file <linux/inotify.h> is 
+   located at include/linux/inotify.h in the kernel source tree.
+ - A set of architecture-specific header files are located in 
+   arch/<architecture>/include/asm in the kernel source tree. For example, 
+   if compiling for the x86 architecture, your architec-ture-specific headers 
+   are in arch/x86/include/asm . Source code includes these headers via just 
+   the asm/ prefix, for example <asm/ioctl.h> .
+ - Because system calls are not usual functions they don't have the usual
+   header file. It's internal header file is include/kernel/syscalls.h but this
+   is not exported to userspace.  To call them, the recommended way is using a
+   wrapper library such as the glibc. 
+     - System calls are not called as usual functions, instead a special machine
+       instruction is used (depends on the architecture) which do not need even
+       a stack to pass the arguments. In fact, to call a system call directly some
+       assembly is needed, altough the generic syscall() function can be used. This
+       function takes the number of the syscall, puts the arguments in registers,
+       does de context switch (to jump to kernel space code) and sets errno 
+       when returning. See man syscall and man syscalls. 
+
+KERNEL HEADERS ON USERSPACE
+ - The kernel exposes some headers to user space for some old applications that
+   needs them, altough its use is discouraged if possible. These includes where
+   time ago mixes with kernel include files but on 2012 a guy separeted the user
+   includes in another folder. Now all headers located at the **/uapi folder
+   (for user api) are copied to /usr/include/linux
+
+GLIBC HEADERS
+ - The glibc headers files are located at /user/include/${ARCH}-linux-gnu/
+   If the include looks like <sys/eventfd.h>, then the file is located at
+   /user/include/${ARCH}-linux-gnu/sys/eventfd.h. 

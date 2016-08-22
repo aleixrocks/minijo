@@ -1,0 +1,58 @@
+main directory: /sys/kernel/debug/tracing
+
+ - cat available_tracers -> display available tracers
+ - echo function_graph > current_tracer -> set current tracer
+ - cat current_tracer -> display current tracer
+ - echo 0 > tracing_on -> disables tracing
+ - echo 1 > tracing_on -> enables tracing
+ - cat trace | head -10 -> display the trace of all cpus
+ - cat per_cpu/cpu0/trace -> display the trace for cpu0
+ - echo "hello world" > trace_maker -> set marker on trace from userland at the
+   time of writting
+ - echo 50 > buffer_size_kb -> set buffer size per cpu
+ - sysrq-z -> trigger ftrace dump
+
+TRACERS
+ - function -> records entry to functions, a bit hard to folow
+ - function_graph -> records entry and exit to functions
+     - "+" that is there is an annotation marker. 
+     - Duration is greater than 10 microseconds, a "+" is shown.
+     - Duration is greater than 100 microseconds a "!" will be displayed.
+
+trace_printk()
+ - used just like printk, but doesn't write to the screen but to the ftrace
+   buffer. Hence, the overhead is way less (from several ms to a thenth of a ms)
+ - it's output appears as comments in the function_graph tracer
+
+STACK TRACE
+ It doesn't use the ftrace buffer, but its infrastructe. No overhead only if
+ tracing is disabled. It doesn't track interrupt stacks because they have their
+ own stack and it's not easy
+ - echo 1 > /proc/sys/kernel/stack_tracer_enabled -> enable stack tracer. 
+ - add "stacktrace" to the kernel boot parameters -> to see max size during boot
+ - cat stack_max_size -> print max stack size
+ - echo 0 > stack_max_size -> reset max stack size
+ - cat stack_trace -> print stack record of each function
+
+IMPLEMENTATION DETAILS
+
+To use ftrace, enable:
+
+    CONFIG_FUNCTION_TRACER
+    CONFIG_FUNCTION_GRAPH_TRACER
+    CONFIG_STACK_TRACER
+    CONFIG_DYNAMIC_FTRACE
+
+When CONFIG_DYNAMIC_FTRACE is configured the call is converted to a NOP at boot
+time to keep the system running at 100% performance. During compilation the
+mcount() call-sites are recorded. That list is used at boot time to convert
+those sites to NOPs. Since NOPs are pretty useless for tracing, the list is
+saved to convert the call-sites back into trace calls when the function (or
+function graph) tracer is enabled.
+
+The function graph tracer hijacks the return address of the function in order
+to insert a trace callback for the function exit. This breaks the CPU's branch
+prediction and causes a bit more overhead than the function tracer. The closest
+true timings only occur for the leaf functions.
+
+

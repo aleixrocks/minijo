@@ -5,4 +5,12 @@
  - list-trash -> show what's into trash
  - restore-trash -> restore what's into the trash
 
+# Move arround with hotkeys
+ - ctl-a: go to the beginning of line in bash
+ - ctl-e: go to end of line in bash
 
+# check system limits
+ - ulimit -a
+
+# check hotkeys associated to interrupts
+ - stty -a

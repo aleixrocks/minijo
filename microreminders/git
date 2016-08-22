@@ -26,6 +26,11 @@ mostrar log
 - git log --pretty=format:"%h - %an, %ar : %s" -> ben resumit
 - git log --pretty=format:"%h %s" --graph -> grapfic chachi
 - git log --oneline --graph --all --decorate -> perfect
+- git log foo..bar -> show only branch bar (equivalent to bar ^foo)
+- git log foo...bar -> show branch foo and bar withouth ancestors 
+  (equivalent to foo bar --not $(git merge-base --all foo bar))
+- git log foo bar -> show both foo, bar and ancestors.
+- git blame file -> display author of each line of file
 
 filtrar log
 - GUI gitk
@@ -38,6 +43,11 @@ filtrar log
   Readme.txt (tambe pot ser un directori). Fixarse en els espais de "--" 
   es important.
 
+diff
+- git diff foo..bar -> difference between commit foo and bar (equivalent
+  to git diff foo bar)
+- git diff foo...bar -> difference between common ancestor and bar
+  (equivalent to git diff $(git merge-base foo bar) bar)
 
 Rectificar
 - git commit --amend -> substitueix el ultim commit (per si ens hem deixat de 
@@ -51,6 +61,9 @@ Rectificar
   seu estat del ultim commit (vaja, que desfa els canvis locals)
 - git reset --soft <SHA-1>  -> posiciona el HEAD al commit que li haguem 
   indicat amb el sha
+- git clean -xdn -> clear all non tracked files (files in gitignore -x, even
+  directoreis -d) but just simulate it. Run with -f instead of -n to actually 
+  remove.
 - git reset --hard -> COMPTE!!!! es carrega el tree i torna al estat del comit 
   que li indiguem amb part del SHA
 
@@ -84,12 +97,17 @@ Conflictes
   el problema manualment.
 
 SUBMODULES
- - git submodule add git_url_here [folder_path]: Binds the project to the 
-   folder.
- - git clone --recursive git_url_here: clone project with submodules. Cloning
-   witouth --recursive neither automatically initiates nor downloads submodules.
- - git submodule update --remote [submodulen_name]: fetch and update submodule
-   data. If a submodule_name is not specified, all submodules will be updated.
- - changes in a submodule have to be individually commited inside the submodule.
- - git push --recurse-submodules=on-demand: First, pushes all submodules, and
-   then, pushes the main projects. 
+ - fetch data
+     - git submodule init: initialize local submodule info in .git/config
+     - git submodule udpate: fetch submodule data
+     - git clone --recursive git_url_here: clone project with submodules. Cloning
+       witouth --recursive neither automatically initiates nor downloads submodules.
+     - git submodule update --remote [submodulen_name]: fetch and update submodule
+       data. If a submodule_name is not specified, all submodules will be updated.
+ - add submodule
+     - git submodule add git_url_here [folder_path]: Binds the project to the 
+       folder.
+ - commit changes
+     - changes in a submodule have to be individually commited inside the submodule.
+     - git push --recurse-submodules=on-demand: First, pushes all submodules, and
+       then, pushes the main projects. 

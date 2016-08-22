@@ -1,0 +1,158 @@
+
+TOP HALVES
+======================
+
+IRQ: Interrupt Requests number. IRQ zero is timer interrupt, for instance.
+ISR: Interrupt Service Routine. Function that handles interrupt
+Interrupt context or atomic contest: context in which an interrupt is executing,
+  it is unable to block.
+Top half: interrupt handler
+Bottom Half: deferred interrupt work
+
+Functions
+
+do_IRQ() -> the first function called by the kernel once an interrupt happens
+request_irq(..) : register a new irq. Careful! it can sleep because of kmalloc!
+
+
+Interrupt return value
+
+An interrupt handler can return two special values, IRQ_NONE or IRQ_HANDLED.
+The former is returned when the interrupt handler detects an interrupt for
+which its device was not the origina- tor.The latter is returned if the
+interrupt handler was correctly invoked, and its device did indeed cause the
+interrupt.Alternatively, IRQ_RETVAL(val) may be used. If val is nonzero, this
+macro returns IRQ_HANDLED . Otherwise, the macro returns IRQ_NONE .
+
+Reentrancy and Interrupt Handlers
+
+Interrupt handlers in Linux need not be reentrant. When a given interrupt
+handler is execut- ing, the corresponding interrupt line is masked out on all
+processors, preventing another interrupt on the same line from being received.
+Normally all other interrupts are enabled, so other interrupts are serviced,
+but the current line is always disabled. Consequently, the same interrupt
+handler is never invoked concurrently to service a nested interrupt. This
+greatly simplifies writing your interrupt handler.
+
+Shared handlers (shouldn't be called shared interrupt lines?)
+
+When the kernel receives an interrupt, it invokes sequentially each registered
+handler on the line.Therefore, it is important that the handler be capable of
+distinguishing whether it generated a given interrupt.The handler must quickly
+exit if its associated device did not generate the interrupt.This requires the
+hardware device to have a status register (or similar mechanism) that the
+handler can check. Most hardware does indeed have such a feature.
+
+Interrupt Context
+
+Interrupt context, on the other hand, is not associated with a process.The
+current macro is not relevant (although it points to the interrupted
+process).Without a backing process, interrupt context cannot sleep—how would it
+ever reschedule? Therefore, you cannot call certain functions from interrupt
+context. If a function sleeps, you cannot use it from your interrupt
+handler—this limits the functions that one can call from an interrupt handler.
+
+Stack
+
+interrupt handlers were given their own stack, one stack per processor, one
+page in size.This stack is referred to as the interrupt stack.
+
+Schedule
+
+After an interrupt, __schedule() is called if the interrupt occurred in 
+preemptible context (preempt_count == 0). When an interrupt returns, it
+calls the assembly function ret_from_intr on the files 
+arch/x86/kernel/entry_[32|64].s. This function calls preempt_schedule_irq 
+inside kernel/sched/core.c which calls __schedule().
+
+
+Interrupt control
+
+To disable interrupts locally for the current processor (and only the current
+processor) and then later reenable them, do the following:
+
+  local_irq_disable();
+  /* interrupts are disabled .. */
+  local_irq_enable();
+
+But if you are not shoude whether interrupts where disabled before because 
+kernel paths are complicated, you can use:
+
+  unsigned long flags; # the following are defines which will modify flags variable
+  local_irq_save(flags);
+  /* interrupts are now disabled */
+  local_irq_restore(flags); /* interrupts are restored to their previous state */
+
+This save and restore calls must be done in the same function because flags 
+contains stack info in the SPARC architecutre.
+
+irqs_disabled() : Defined in <asm/system.h> , returns nonzero if the
+  interrupt system on the local processor is disabled. Otherwise, it returns zero.
+in_interrupt() : returns 1 if in interrupt context (top half or bottom half)
+in_irq() : return 1 if in interrupt context
+Files/statitics
+
+/proc/interrupts -> show # interrupcs of each type for CPU. The third col- umn
+is the interrupt controller handling this interrupt. XT-PIC corresponds to the
+standard 2 As an exercise, after reading Chapter 11 can you tell how long the
+system has been up (in terms of HZ ), knowing the number of timer interrupts
+that have occurred?  www.it-ebooks.infoInterrupt Control PC programmable
+interrupt controller. On systems with an I/O APIC, most interrupts would list
+IO-APIC-level or IO-APIC-edge as their interrupt controller.
+
+
+
+BOTTOM HALFS
+==========================
+Three types: softirqs, tasklets and work queues. do you need to sleep for any
+reason? Then work queues are your only option. Otherwise, tasklets are
+preferred. Only if scalability becomes a concern do you investigate softirqs.
+Softirqs
+
+Each registered softirq consumes one entry in the array. Consequently, there
+are NR_SOFTIRQS registered softirqs.The number of registered softirqs is
+statically determined at compile time and cannot be changed dynamically.The
+kernel enforces a limit of 32 registered softirqs; in the current kernel,
+however, only nine exist
+
+The softirq handlers run with interrupts enabled and cannot sleep. A softirq
+never preempts another softirq.The only event that can preempt a softirq is an
+interrupt handler.Another softirq—even the same one—can run on another
+processor, however. While a handler runs, softirqs on the current processor are
+disabled.Another processor, however, can exe- cute other softirqs. If the same
+softirq is raised again while it is executing, another proces- sor can run it
+simultaneously.This means that any shared data—even global data used only
+within the softirq handler—needs proper locking (as discussed in the next two
+chapters).  This is an important point, and it is the reason tasklets are
+usually preferred.
+
+Softirqs are reserved for the most timing-critical and important bottom-half
+processing on the system. Currently, only two subsystems—networking and block
+devices—directly use softirqs.Additionally, kernel timers and tasklets are
+built on top of softirqs. If you add a new softirq, you normally want to ask
+yourself why using a tasklet is insufficient.Tasklets are dynamically created
+and are simpler to use because of their weaker locking require- ments, and they
+still perform quite well. Nonetheless, for timing-critical applications that
+can do their own locking in an efficient way, softirqs might be the correct
+solution.
+
+TASKLETs
+
+The raison d’être to softirqs is scalability. If you do not need to scale to
+infinitely many processors, then use a tasklet.Tasklets are essentially
+softirqs in which multiple instances of the same handler cannot run
+concurrently on multiple processors.
+
+As an optimization, a tasklet always runs on the processor that scheduled it—mak-
+ing better use of the processor’s cache, you hope.
+
+The softirq kernel threads are awakened whenever do_softirq() detects an executed
+kernel thread reactivating itself.
+
+WORK QUEUES
+
+Work queues defer work into a kernel thread—this bottom half always runs in
+process context.Thus, code deferred to a work queue has all the usual benefits
+of process context.  Most important, work queues are schedulable and can
+therefore sleep. If the deferred work needs to sleep, work queues are used. If
+the deferred work need not sleep, softirqs or tasklets are used

@@ -1,3 +1,8 @@
  - apt-cache search: search for a package
  - apt-cache show: display information such as version, dependencies
    and description
+ - dpkg -L package: show all files from a package
+
+INSTALLING FROM SRC
+ - Instead of "make install", run "sudo checkinstall" to generate a .deb 
+   which will allow you to remove the package in the future.

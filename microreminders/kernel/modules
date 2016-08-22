@@ -1,0 +1,162 @@
+ - block devices or blkdevs, accessed by block device node
+ - char devices or cdevs, accessed by character device node
+ - network devices or ethernet devices. They break the Unix's "everything is a
+   file" principle and are noa accessed via a device node but with a special
+   interface called the socket API.
+ - Miscellaneous devices or miscdevs. Are simplified character devices.
+ - pseudo devices, they are not hardware devices, such as /dev/random
+
+BASICS
+ - basic structure
+     #include <linux/module.h>  /* needed for all modules */
+     #include <linux/kernel.h>  /* needed for KERN_ALERT */
+
+     static int hello_init(void)
+     {
+     	printk(KERN_ALERT “I bear a charmed life.\n”);
+     	return 0;
+     }
+     
+     /*
+     * hello_exit – the exit function, called when the module is removed.
+     */
+     static void hello_exit(void)
+     {
+     	printk(KERN_ALERT “Out, out, brief candle!\n”);
+     }
+     
+     module_init(hello_init); // register init function
+     module_exit(hello_exit); // register exit function
+     MODULE_LICENSE(“GPL”);   // specify liscence. It's not only informative
+     MODULE_AUTHOR(“Shakespeare”); // autor
+     MODULE_DESCRIPTION(“A Hello, World Module”); // descritpion
+ - Modules built into the kernel will execute the init function during boot time
+   and will never execute the exit function.
+ - Static functions are only visible on the compilation unit (file with
+   resolved includes) where are defined.
+ - Modules can only use exported symbols inside the core declared as 
+     int get_pirate_beard_color(struct pirate *p) {
+         return p->beard.color;
+     }
+     EXPORT_SYMBOL(get_pirate_beard_color);
+   or as EXPORT_SYMBOL_GPL, which will be able to be called only for GPL
+   modules.
+
+MODULE PARAMETERS
+ - module_param( name , type , perm );
+     - name is the name of both the parameter exposed to the user and the
+       variable holding the parameter inside your module.
+     - type -> argument holds the parameter’s data type; one of byte , short ,
+       ushort , int , uint , long , ulong , charp , bool , or invbool. These
+       types are, respectively, a byte, a short integer, an unsigned short
+       integer, an integer, an unsigned integer, a long integer, an unsigned long
+       integer, a pointer to a char , a Boolean, and a Boolean whose value is inverted
+       from what the user specifies.The byte type is stored in a single char and the
+       Boolean types are stored in variables of type int . The rest are stored in the
+       corresponding primitive C types. 
+     - perm -> specifies the permissions of the corresponding file in sysfs.The
+       permissions can be speci- fied in the usual octal format, for example
+       0644 (owner can read and write, group can read, everyone else can read),
+       or by ORing together the usual S_Ifoo defines, for exam- ple S_IRUGO |
+       S_IWUSR (everyone can read; user can also write).A value of zero
+       disables the sysfs entry altogether.
+
+     - You must declare the variable before using the macro as a global var. 
+          static int allow_live_bait = 1;
+          module_param(allow_live_bait, bool, 0644); /* a Boolean type */
+ - module_param_named( name , variable , type , perm )
+    - Used to have the internal variable named differently than the
+      external parameter.
+ - module_param_string( name , string , len , perm ); 
+    - To decalre a string,
+        static char *name;
+        module_param(name, charp, 0);
+      but is also possible to ask the kernel to copy data into an array
+        static char species[BUF_LEN];
+        module_param_string(specifies, species, BUF_LEN, 0);
+ - module_param_array(name, type, nump, perm);
+     - accept a comma-separated list of parameters stored in a C array. nump is
+       a pointer to an integer in which the kernel stores the number of entries
+       stored into the array.
+         static int fish[MAX_FISH];
+         static int nr_fish;
+         module_param_array(fish, int, &nr_fish, 0444);
+ - module_param_array_named( name , array , type , nump , perm );
+     - The same as the above but with different name for the static var
+ - Describe module parameters
+     static unsigned short size = 1;
+     module_param(size, ushort, 0644);
+     MODULE_PARM_DESC(size, “The size in inches of the fishing pole.”);
+
+
+
+COMPILATION GENERAL
+ - To compile modules run 
+       make modules -> compile
+       make modules_install -> install modules in /lib/modules/<kernel-version/kernel
+
+COMPILATION OF A NEW MODULE
+ - Inside the kernel tree
+     - Select the directory inside drivers/ where you want to place your files,
+       for instance drivers/char
+     - If your module is made of two files (more or less) place the files on
+       a directory altoghether with other modules. Otherwise, create a folder
+       for your module, for instance /drivers/char/fishing.
+     - Edit the drivers/char/Makefile and add the line:
+         obj-m += fishing/  # compile always
+       so the makefile will descend into your folder. To compile the module 
+       when the CONFIG_FISHING_POLE option is set:
+         obj-$(CONFIG_FISHING_POLE) += fishing/ # compile when option is on
+     - Add a new makefile on drivers/char/fishing/Makefile and write:
+         obj-m += fishing.o 
+       or
+         obj-$(CONFIG_FISHING_POLE) += fishing.o 
+     - If the module has multiple source files:
+         obj-$(CONFIG_FISHING_POLE) += fishing.o
+         fishing-objs := fishing-main.o fishing-line.o
+     - To add specific C flags for this files, add:
+         EXTRA_CFLAGS += -DTITANIUM_POLE
+     - If the files where not placed on a new directory, simply add the above
+       lines on the top Makefile.
+     - The final module will be named fishing.ko
+     - Compile the kernel as usual (but enable the CONFIG option if used!)
+     - To add the module to the menuconfig (Kbuild system):
+         - Use an existing Kconfig file or create a new one and source it from 
+           the previous Kconfig file on the directory hierarchy with:
+             source “drivers/char/fishing/Kconfig”
+         - Add to the Kconfig file:
+             config FISHING_POLE
+                 [tristate | bool] “Fish Master 3000 support” [if OPTION]  
+                 default n # default option (n/y/m)
+                 [depends on FISHTANK && !TOXIC] # Fishtank must be enabled and toxic disabled first
+                 [select BAITH] # Automatically selected if FISHING_POLE is selected
+                 help
+                     If you say Y here, support for the Fish Master 3000 with computer
+                     interface will be compiled into the kernel and accessible via a
+                     device node. You can also say M here and the driver will be built as a
+                     module named fishing.ko.
+
+                     If unsure, say N.
+          - tristate means that this module can be installed as module (m), 
+            built into the kernel (Y) or not buitd (N).
+          - bool means that this module can be build into the kernel (Y) or
+            not (N)
+          - The [if OPTION] means that only if OPTION is set, the entiry entry
+            will be visible on the menuconfig.
+  - Outside the kernel
+     - Create a folder, put your source there and create a makefile just like
+       in the "Inside the kernel tree" form.
+     - Invoke make from your module folder as
+         make -C /kernel/source/location SUBDIRS=$PWD modules
+       the -C option is to change directory before building.
+     
+COMMANDS FOR MODULE MANIPULATION
+  - depmod -> (command) auto generate module dependency info for an already
+    running kernel to be used for other module mainipulation commands. This is
+    typically done by Linux distributions at boot time.
+  - insmod <module>.ko -> load module withouth cheking dependencies nor anything.
+  - rmmod <module> -> unload already loaded module
+  - modprobe <module> [ module parameters ] -> load module and resolve 
+    dependencies.
+  - modprobe -r <module> -> unload module. Also unload dependent and unused 
+    modules

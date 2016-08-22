@@ -1,0 +1,22 @@
+MEMORY
+kernel memory is not pageable.Therefore, every byte of memory you
+consume is one less byte of available physical memory. 
+
+FLOATING POINT
+Don't use it! The kernel needs to trap itself to enter in floating
+point mode and it's complex. So don't do it (altough it can be done)
+
+STACK
+The kernel stack is small and fixed
+
+if (likely(success)) { ... }   : the branch is likely to be taken
+if (unlikely(success)) { ... } : the branch is unlikely to be taken
+
+BUILD_BUG_ON(condition): the compiler will fail if condition is meet,
+  it must be something that hte preprocessor can manage. If its meet,
+  no code at all is generated.
+
+kmalloc : allocate memory in user space or kernel space from kernel space.
+
+anon_inode_getfile: create an anonymous inode for files that don't have a
+  directory entry.

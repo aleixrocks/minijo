@@ -1,0 +1,134 @@
+ - ? -> display key bindings
+ - cntl + L -> redraw screen
+
+Moving around entry-based menus
+ - j or <Down> -> <next-entry>	move to the next entry
+ - k or <Up> -> <previous-entry>	move to the previous entry
+ - z or <PageDn> -> <page-down>	go to the next page
+ - Z or <PageUp> -> <page-up>	go to the previous page
+ - = or <Home> -> <first-entry>	jump to the first entry
+ - * or <End> -> <last-entry>	jump to the last entry
+ - q -> <quit> exit the current menu
+ - ? -> <help> list all keybindings for the current menu
+
+Moving around page-based menus
+ - J or <Return> -> <next-line> scroll down one line
+ - <Backspace> -> <previous-line> scroll up one line
+ - K, <Space> or <PageDn> -> <next-page> move to the next page
+ - or -> <PageUp> <previous-page> move the previous page
+ - <Home> -> <top> move to the top
+ - <End> -> <bottom> move to the bottom
+
+Reading a message (while inside the index, where the list of messages is shown)
+ - <Return>	display-message
+ - <Tab>	jump to the next new or unread message
+ - d	delete the current message
+ - D	delete messages matching a pattern
+ - u	undelete-message
+ - U	undelete messages matching a pattern
+ - l	show messages matching a pattern
+ - q	save changes and exit
+ - x	abort changes and exit
+ - v	view-attachments
+ - T	tag messages matching a pattern
+ - c	change to a different mailbox
+ - N	mark message as new
+ - @	show the author's full e-mail address
+ - $	save changes to mailbox
+ - /	search
+ - o	change the current sort method
+ - O	reverse sort the mailbox
+ - Esc /	search-reverse
+ - Esc c	change to a folder in read-only mode
+ - C	copy the current message to another mailbox
+ - Esc C	decode a message and copy it to a folder
+ - Esc s	decode a message and save it to a folder
+ - F	mark as important
+ - s	save-message
+ - t	toggle the tag on a message
+ - Esc t	toggle tag on entire message thread
+ - ^T	untag messages matching a pattern
+
+Pager options (while inside the message)
+ - <Return>	go down one line
+ - <Space>	display the next page (or next message if at the end of a message)
+ - -	go back to the previous page
+ - n	search for next match
+ - S	skip beyond quoted text
+ - T	toggle display of quoted text
+ - ?	show keybindings
+ - /	regular expression search
+ - Esc /	backward regular expression search
+ - \	toggle highlighting of search matches
+ - ^	jump to the top of the message
+
+Additional options while in threaded mode (chained messages)
+ - ^D	<delete-thread>	delete all messages in the current thread
+ - ^U	<undelete-thread>	undelete all messages in the current thread
+ - ^N	<next-thread>	jump to the start of the next thread
+ - ^P	<previous-thread>	jump to the start of the previous thread
+ - ^R	<read-thread>	mark the current thread as read
+ - Esc d	<delete-subthread>	delete all messages in the current subthread
+ - Esc u	<undelete-subthread>	undelete all messages in the current subthread
+ - Esc n	<next-subthread>	jump to the start of the next subthread
+ - Esc p	<previous-subthread>	jump to the start of the previous subthread
+ - Esc r	<read-subthread>	mark the current subthread as read
+ - Esc t	<tag-thread>	toggle the tag on the current thread
+ - Esc v	<collapse-thread>	toggle collapse for the current thread
+ - Esc V	<collapse-all>	toggle collapse for all threads
+ - P	<parent-message>	jump to parent message in thread
+
+Sending email (on the index)
+ - m	<compose>	compose a new message
+ - r	<reply>	reply to sender
+ - g	<group-reply>	reply to all recipients
+ - L	<list-reply>	reply to mailing list address
+ - f	<forward>	forward message
+ - b	<bounce>	bounce (remail) message
+ - Esc k	<mail-key>	mail a PGP public key to someone
+
+Sendign email (on the compose page, after editing the message)
+ - a	<attach-file>	attach a file
+ - A	<attach-message>	attach message(s) to the message
+ - Esc k	<attach-key>	attach a PGP public key
+ - d	<edit-description>	edit description on attachment
+ - D	<detach-file>	detach a file
+ - t	<edit-to>	edit the To field
+ - Esc f	<edit-from>	edit the From field
+ - r	<edit-reply-to>	edit the Reply-To field
+ - c	<edit-cc>	edit the Cc field
+ - b	<edit-bcc>	edit the Bcc field
+ - y	<send-message>	send the message
+ - s	<edit-subject>	edit the Subject
+ - S	<smime-menu>	select S/MIME options
+ - f	<edit-fcc>	specify an “Fcc” mailbox
+ - p	<pgp-menu>	select PGP options
+ - P	<postpone-message>	postpone this message until later
+ - q	<quit>	quit (abort) sending the message
+ - w	<write-fcc>	write the message to a folder
+ - i	<ispell>	check spelling (if available on your system)
+ - ^F	<forget-passphrase>	wipe passphrase(s) from memory
+
+Message status flags
+ - D	message is deleted (is marked for deletion)
+ - d	message has attachments marked for deletion
+ - K	contains a PGP public key
+ - N	message is new
+ - O	message is old
+ - P	message is PGP encrypted
+ - r	message has been replied to
+ - S	message is signed, and the signature is successfully verified
+ - s	message is signed
+ - !	message is flagged
+ - *	message is tagged
+ - n	thread contains new messages (only if collapsed)
+ - o	thread contains old messages (only if collapsed)
+
+Message recipient flags
+ - +	message is to you and you only
+ - T	message is to you, but also to or CC'ed to others
+ - C	message is CC'ed to you
+ - F	message is from you
+ - L	message is sent to a subscribed mailing list
+
+

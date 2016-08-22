@@ -1,0 +1,44 @@
+opaque type (such as pid_t) is a data type whose physical representation is 
+unknown or irrelevant.
+
+
+LISTS
+  - Declare a struct list_head inside the your struct
+
+      struct fox {
+        unsigned long
+        unsigned long
+        bool
+        struct list_head
+      };
+
+  - Initialize the struct with INIT_LIST_HEAD
+
+      struct fox *red_fox;
+      red_fox = kmalloc(sizeof(*red_fox), GFP_KERNEL);
+      red_fox->tail_length = 40;
+      red_fox->weight = 6;
+      red_fox->is_fantastic = false;
+      INIT_LIST_HEAD(&red_fox->list);
+
+  - If static, the compiler can initialize it for you
+      struct fox red_fox = {
+        .tail_length = 40,
+        .weight = 6,
+        .list = LIST_HEAD_INIT(red_fox.list),
+      };
+ - Operate the list
+     - static LIST_HEAD(fox_list): initialize a new list head named fox_list
+     - list_add(struct list_head *new, struct list_head *head): add element
+     - list_add_tail(struct list_head *new, struct list_head *head): add before
+     - list_del(struct list_head *entry): delete element
+     - list_del_init(struct list_head *entry): delete and reinitialize (so you
+       can use the list_head inside the struct again)
+ - Traverse the list
+     - list_for_each_entry(pos, head, member) {}: pos is the struct with the
+       list_head, head is the head of the list and member the name of the 
+       list_head inside your struct.
+     - list_for_each_entry_safe(pos, next, head, member): Allows to delete
+       the element "pos" while traversing. "next" keeps a copy for the next
+       element in case "pos" is deleted.
+ - look at include/linux/list.h for all definitions.

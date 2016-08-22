@@ -19,9 +19,15 @@ NAVIGATIN
  - w -> move to the start of the next word
  - e -> move to the end of the next word
  - b -> move to the start of the previous word.
+ - ctl-u -> half page up
+ - ctl-d -> half page down
+ - z. -> move view so that the cursor is in the middle of the screen
 
  - `` -> backtick goes back to the same location on the line
  - '' -> apostrophe goes back to the start of the line. 
+ - [{ -> jump to beginning of a function
+ - ]} -> jump to the end of a function
+ - [(, ]) -> jump to start/beginning of pharentesis
 
 SEARCH
  - /word -> search for word
@@ -32,15 +38,17 @@ SEARCH
  - noh -> stop highligting, but it will highlight againt the next search
 
 SELECT TEXT
- - v -> mode seleccio text
- - ctrl v -> selecciona per columnes
- - V -> selecciona linea sencera
+ - v -> enter visual mode to select text
+ - ctrl v -> select per columns
+ - V -> select entire lines
+ - :'<, '>!command -> send selected text to command and replace it by its ouput
+   - :'<, '>!colmun -t -> arranges the input text by columns
 
 ADD TEXT IN FRONT OF SELECTION
  - seleccioinar per columnes
  - presionar I
  - escriure (nomes es veura a la primera columna
- - ESC 
+ - ESC
 
 BASIC USAGE
  - d -> cortar
@@ -85,10 +93,19 @@ SESSIONS
  - mksession! ~/today.ses -> save session
  - vim -S ~/today.ses -> load session
  - qa -> quit everything
+
 DELETE
  - D -> from cursor to end of line (same as d$)
  - d0 -> from cursor to start of line (it takes some time to execute)
  - d w -> delete from the current cursor to the beginning of th next word
+ - c i [<,>,{,},(,),"] -> "cange inner quote". delete everything within 
+   "", <>, {} or () and enter edit mode.
+ - d t <char> -> delete from cursor to <char> excluding <char>
+ - d f <char> -> delte from cursor to <char> including <char>
+ - d T <char> -> delete from <char> to cursor excluding <char>
+ - d F <char> -> delte from <char> to cursor including <char>
+ - daw : delete a word (under cursor)
+ - caw : change a word (under cursor. delete it and enter insert mode)
 
 FOLDING
  - set foldingmethod=syntax -> turn on folding
@@ -115,12 +132,11 @@ SPACES TO TABS
  - :set noexpandtab    " Use tabs, not spaces
  - :%retab!            " Retabulate the whole file
 
-
-
 CTAGS SUMMARY
  - Description: Go to function definition and omnicompletion
  - ctags -R . -> generate ctags db from root folder
  - set tags=./tags -> load in vim
+ - ctrl-p (or n) -> autocompletion
  - <C-]> go to definition
  - <C-t> return
 

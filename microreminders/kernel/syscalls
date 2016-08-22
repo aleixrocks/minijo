@@ -1,0 +1,13 @@
+Every syscall has an associated identifier which is defined in the file
+
+  arch/x86/syscalls/syscall_64.tbl
+
+for the x86_64 architecture.
+
+
+The header of a syscall implementation is defined in a macro. Therefore,
+when searching for a syscall implementation, search for the macro. For 
+instance, 
+
+SYSCALL_DEFINE3(lseek, unsigned int, fd, off_t, offset, unsigned int, whence)    
+for the lseek syscall with three parameters.
