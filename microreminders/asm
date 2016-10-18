@@ -1,0 +1,28 @@
+INTEL VS AT&T
+
+  In Intel syntax there are no register prefixes or immed prefixes. In AT&T
+  however registers are prefixed with a '%' and immed's are prefixed with a
+  '$'.  Intel syntax hexadecimal or binary immed data are suffixed with 'h' and
+  'b' respectively. Also if the first hexadecimal digit is a letter then the
+  value is prefixed by a '0'.
+  
+  Example:
+    Intex Syntax
+      instr	dest,source
+      mov	eax,1
+      mov	ebx,0ffh
+      int	80h
+    
+    AT&T Syntax
+      instr 	source,dest
+      movl	$1,%eax
+      movl	$0xff,%ebx
+      int 	$0x80
+
+BASICS
+ - instr source, dest -> direction of operands
+    - movl $0xff,%ebx
+ - instr %segreg:disp(base,index,scale),foo -> [base+index*scale+disp] -> memory operands
+    - subl -0x20(%ebx,%ecx,0x4),%eax -> [ebx+ecx*4h-20h]
+
+

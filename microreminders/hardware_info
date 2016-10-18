@@ -1,0 +1,6 @@
+ - /proc/meminfo -> info about memory
+ - /proc/cpu_info -> info about cpu
+ - lscpu -> info about cpu
+ - lshw -> list all hardware
+ - lstopo -> list sockets, nodes, cpus, threads-per cpu and cache memory
+ - lstopo --of fig map.fig; xfig map.fig; (File->export)

@@ -21,6 +21,12 @@ NAVIGATIN
  - b -> move to the start of the previous word.
  - ctl-u -> half page up
  - ctl-d -> half page down
+ - ctl-b -> move screen up one page
+ - ctl-f -> move screen down one page
+ - ctl-y -> move screen up one line
+ - ctl-e -> move screen down one line
+ - ctl-O -> move to last cursor position
+ - ctl-I -> move to next cursor position (after ctl-O)
  - z. -> move view so that the cursor is in the middle of the screen
 
  - `` -> backtick goes back to the same location on the line
@@ -28,6 +34,8 @@ NAVIGATIN
  - [{ -> jump to beginning of a function
  - ]} -> jump to the end of a function
  - [(, ]) -> jump to start/beginning of pharentesis
+ - { -> go to beginning of paragraph
+ - } -> go to end of paragraph
 
 SEARCH
  - /word -> search for word
@@ -43,6 +51,7 @@ SELECT TEXT
  - V -> select entire lines
  - :'<, '>!command -> send selected text to command and replace it by its ouput
    - :'<, '>!colmun -t -> arranges the input text by columns
+ - vip -> select current pharagraph
 
 ADD TEXT IN FRONT OF SELECTION
  - seleccioinar per columnes
@@ -126,11 +135,16 @@ AUTO SPLIT LINES
  - :set tw=80 -> will give you auto line break when exceeded during typing. It
    is used in gq too, though if disabled gq breaks on window size or 79
    depending on which comes first.
+ - vip -> select current pharagraph (useful for formatting)
 
 SPACES TO TABS
  - :set tabstop=2      " To match the sample file
  - :set noexpandtab    " Use tabs, not spaces
  - :%retab!            " Retabulate the whole file
+
+ENCODING
+ - set encoding=utf-8      -> The encoding displayed.
+ - set fileencoding=utf-8  -> The encoding written to file.
 
 CTAGS SUMMARY
  - Description: Go to function definition and omnicompletion

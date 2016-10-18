@@ -1,5 +1,5 @@
 KERNEL HEADERS
-
+ - The official info is located in Documentation/kbuild/headers_install.txt
  - Kernel source files cannot include outside headers, just as they cannot 
    use outside libraries.
  - The base files are located in the include/ directory in the root of the 
@@ -23,8 +23,10 @@ KERNEL HEADERS
        when returning. See man syscall and man syscalls. 
 
 KERNEL HEADERS ON USERSPACE
- - The kernel exposes some headers to user space for some old applications that
-   needs them, altough its use is discouraged if possible. These includes where
+ - The kernel exposes some headers to user space to be used by the libc to know
+   which system calls are available, the struct definitions for their argumets
+   and needed flags.
+   These includes where
    time ago mixes with kernel include files but on 2012 a guy separeted the user
    includes in another folder. Now all headers located at the **/uapi folder
    (for user api) are copied to /usr/include/linux

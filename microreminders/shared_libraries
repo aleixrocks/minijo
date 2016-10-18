@@ -1,0 +1,37 @@
+BASIC
+ - man ld.so -> information about the linux loader, such as the loader order
+ - LD_LIBRARY_PATH=<path_to_lib> <binary> -> The loader ld.so will search in
+   <path_to_lib> for its shared libraries when loading <binary>. The loader
+   might load diferent libraries from another path if the path has more
+   priority. The priorities are listed in man ld.so.
+
+TOOLS
+ - nm <object-file> -> list object symbols. See man nm for a description of the
+   listed flags.
+ - objectdump -t -> the same as above, but with more symbols
+ - ldd <binary-file> -> list dynamic libiraries of an executable file or library
+ - lddtree -a <binary-file>-> the same as above but recursive. -a stans for
+   all, including repeated libraries.
+ - ldd -v <binary-files>-> Show version information of libraries
+ - ldd is basically a scprit equivalent to:
+     LD_TRACE_LOADED_OBJECTS=1 /lib/ld.so.1 <binary_file>
+ - readelf -d <binary-file> -> Displays the content of the file's dynamic
+   section, if it has one. (where the runtime path (RPATH) is explicityly
+   written (the path to the library to load). If there is no RPATH, then,
+   the loader will search for the library somewhere else following the order
+   specified in man ld.so)
+ - objdump --debuggins <binary> -> return list of debugging symbols if compiled
+   with -g. useful to check whether it was compiled with debugging symbols or
+   not.
+
+LINKER
+ - -rpath=<path_to_lib_dir> -> Specify the path to the lib dir that will be
+   used to search for runtime libraries (i.e. the ones linket at runime when
+   running the program). The libraries found here will be hardcoded inside the
+   binary.
+ - -dynamic-linker=<path_to_dynamic_linker> -> Specify the path to a custom
+    synamic linker to use.
+
+COMPILER
+ - gcc -Wl,<option1>,<option2>,... -> pass <optionX> to the linker
+ - gcc -Xlinker <option1> -Xlinker <option2> ... -> pass <optionX> to the linker

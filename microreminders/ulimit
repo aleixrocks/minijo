@@ -1,0 +1,18 @@
+ BASIC
+ - The ulimit tools is used to set per-process limits such as maximum number of
+   threads.
+ - The limits can be set using the bash built-in "ulimit" (search it on the
+   bash man page) and will only affect the processes started on this bash
+   session.
+ - The file /etc/security/limits.conf holds the limits for the entire system.
+ - There are hard and soft limits. The soft limit is the maximum value that a
+   non-privileged user can set. The hard limit is the maximum value that a
+   privileged user can set. Both limits can be changed.
+ - It is possible to specify "unlimited" (without quotes) to do not limit a
+   given option.
+
+ULIMIT COMMANDS
+ - ulimit -H<option> -> check hard limit for <option> (such as -l for locked mem)
+ - ulimit -S<option> -> check soft limit (such as -l for locked mem)
+ - ulimit -H<option> value -> set hard limit (such as -l for locked mem)
+ - ulimit -S<option> value -> set soft limit (such as -l for locked mem)

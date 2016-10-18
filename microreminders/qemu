@@ -1,0 +1,4 @@
+CREATE DISK IMAGE
+ - qemu-img create -f qcow2 <disk_name> 50G -> create disk image
+ - qemu-system-x86_64 -cdrom iso_image -boot order=d -drive file <disk_name> -m 1024 -vga vmware -enable-kvm -> install iso image into disk
+ - qemu-system-x86_65 -drive file <disk_name> -m 1024 -vga vmware -enable-kvm -> run disk

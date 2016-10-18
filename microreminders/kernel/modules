@@ -1,3 +1,5 @@
+ - A driver (module) implements one ore more devices (/dev/something1
+   /dev/something2)
  - block devices or blkdevs, accessed by block device node
  - char devices or cdevs, accessed by character device node
  - network devices or ethernet devices. They break the Unix's "everything is a
@@ -41,6 +43,8 @@ BASICS
      EXPORT_SYMBOL(get_pirate_beard_color);
    or as EXPORT_SYMBOL_GPL, which will be able to be called only for GPL
    modules.
+ - The return value of init function, is an error code.  which should be
+   defined in <linux/errno.h>. 
 
 MODULE PARAMETERS
  - module_param( name , type , perm );
@@ -49,17 +53,20 @@ MODULE PARAMETERS
      - type -> argument holds the parameter’s data type; one of byte , short ,
        ushort , int , uint , long , ulong , charp , bool , or invbool. These
        types are, respectively, a byte, a short integer, an unsigned short
-       integer, an integer, an unsigned integer, a long integer, an unsigned long
-       integer, a pointer to a char , a Boolean, and a Boolean whose value is inverted
-       from what the user specifies.The byte type is stored in a single char and the
-       Boolean types are stored in variables of type int . The rest are stored in the
-       corresponding primitive C types. 
+       integer, an integer, an unsigned integer, a long integer, an unsigned
+       long integer, a pointer to a char , a Boolean, and a Boolean whose value
+       is inverted from what the user specifies.The byte type is stored in a
+       single char and the Boolean types are stored in variables of type int .
+       The rest are stored in the corresponding primitive C types. 
      - perm -> specifies the permissions of the corresponding file in sysfs.The
-       permissions can be speci- fied in the usual octal format, for example
-       0644 (owner can read and write, group can read, everyone else can read),
-       or by ORing together the usual S_Ifoo defines, for exam- ple S_IRUGO |
+       permissions can be specified in the usual octal format, for example 0644
+       (owner can read and write, group can read, everyone else can read), or
+       by ORing together the usual S_Ifoo defines, for example S_IRUGO |
        S_IWUSR (everyone can read; user can also write).A value of zero
-       disables the sysfs entry altogether.
+       disables the sysfs entry altogether. These macros are defined at
+       <linux/stat.h>. if a parameter is changed by sysfs, the value of that
+       parameter as seen by your module changes, but your module is not
+       notified in any other way.
 
      - You must declare the variable before using the macro as a global var. 
           static int allow_live_bait = 1;
@@ -88,8 +95,53 @@ MODULE PARAMETERS
      module_param(size, ushort, 0644);
      MODULE_PARM_DESC(size, “The size in inches of the fishing pole.”);
 
+VERSIONING MACROS
+ - defined in include/version.h and included by include/modules.h
+ - When writting code dependent on version numbering, try to put all possible
+   ifdef's on the header files.
+ - UTS_RELEASE -> This macro expands to a string describing the version of this
+   kernel tree. For example, "2.6.10" .  LINUX_VERSION_CODE -> This macro
+   expands to the binary representation of the kernel version, one byte for
+   each part of the version release number. For example, the code for 2.6.10 is
+   132618 (i.e., 0x02060a). * With this information, you can (almost) easily
+   deter- mine what version of the kernel you are dealing with.
+ - KERNEL_VERSION(major,minor,release) -> This is the macro used to build an
+   integer version code from the individual num- bers that build up a version
+   number. For example, KERNEL_VERSION(2,6,10) expands to 132618. This macro is
+   very useful when you need to compare the current version and a known
+   checkpoint.
 
-
+MAJOR MINOR NUMBERS
+ - Documentation/devices.txt -> official list of statically assigned device
+   numbers.
+ - /proc/devices -> major number of registered devices
+ - The major number identifies the driver associated with the device. For
+   example, /dev/null and /dev/zero are both managed by driver 1, whereas
+   virtual consoles and serial terminals are managed by driver 4;
+ - The minor number determines which device is being referred to. Depending on
+   how your driver is written (as we will see below), you can either get a
+   direct pointer to your device from the kernel, or you can use the minor
+   number yourself as an index into a local array of devices.
+ - Macros
+    - MAJOR(dev_t dev) -> obtain major number
+    - MINOR(dev_t dev) -> obtain minor number
+    - MKDEV(int major, int minor) -> create dev_t from major and minor numbers.
+    - int register_chrdev_region(dev_t first, unsigned int count,
+      char *name); -> get one ore more (count) device numbers. It is better to 
+      dynamically allocate them with alloc_chrdev_region.
+        - first: Starting minor number (0, typically)
+        - count: Number of devices to allocate
+        - name: Visible name in /proc/devices and sysfs
+        - returns 0 if ok, negative otherwise.
+    - int alloc_chrdev_region(dev_t *dev, unsigned int firstminor,
+      unsigned int count, char *name) -> dynamically allocate major and minor
+      numbers. dev is an output only parameter and firstminor is the first minor
+      number.
+    - void unregister_chrdev_region(dev_t first, unsigned int count); ->
+      unregister device numbers.
+    - mknode -> create a device (/dev/) given a major and minor number. To know
+      the major number of a dynamically allocated device, parse /proc/devices
+      after loading the module.
 COMPILATION GENERAL
  - To compile modules run 
        make modules -> compile
@@ -157,6 +209,40 @@ COMMANDS FOR MODULE MANIPULATION
   - insmod <module>.ko -> load module withouth cheking dependencies nor anything.
   - rmmod <module> -> unload already loaded module
   - modprobe <module> [ module parameters ] -> load module and resolve 
-    dependencies.
+    dependencies. The module parameters can also be specified in the files 
+    located at /etc/modprobe.conf
   - modprobe -r <module> -> unload module. Also unload dependent and unused 
     modules
+
+
+FILE OPERATIONS
+ - Look at LDD p 49 for a brief description of the methods
+The File Structure
+ - Look at LDD3 p 53 for a brief description of the fields
+ - The operations associated with the file are keept in f_op. The kernel
+   assigns the pointer as part of its implementation of open and then reads it
+   when it needs to dispatch any oper- ations. The value in filp->f_op is never
+   saved by the kernel for later reference; this means that you can change the
+   file operations associated with your file, and the new methods will be
+   effective after you return to the caller. For example, the code for open
+   associated with major number 1 (/dev/null, /dev/zero, and so on) substitutes
+   the operations in filp->f_op depending on the minor number being opened.
+   This practice allows the implementation of several behaviors under the same
+   major number without introducing overhead at each system call. The abil- ity
+   to replace the file operations is the kernel equivalent of “method
+   overriding” in object-oriented programming.
+ - void * private_data -> We can use this pointer to hold any data that might
+   be interesting to preserve between system calls. We are free to use for
+   whatever we want.
+ INODE
+ - The inode structure is used by the kernel internally to represent files.
+   Therefore, it is different from the file structure that represents an open
+   file descriptor. There can be numerous file structures representing multiple
+   open descriptors on a single file, but they all point to a single inode
+   structure.
+ - dev_t i_rdev -> For inodes that represent device files, this field contains
+   the actual device number. Use iminor() and imajor() instead of manipulating
+   it directly.
+ - struct cdev *i_cdev -> struct cdev is the kernel’s internal structure that
+   represents char devices; this field contains a pointer to that structure when
+   the inode refers to a char device file.

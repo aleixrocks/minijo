@@ -1,0 +1,125 @@
+PAGES
+ - struct page -> main page struct at <linux/mm_types.h>. An instance of
+   this structure is created for every page on the system.
+ - The data structure’s goal is to describe physical memory, not the data
+   contained therein. Even if the data contained in the page continues to
+   exist, it might not always be associ- ated with the same page structure
+   because of swapping and so on.
+ - The kernel uses this structure to keep track of all the pages in the system,
+   because the kernel needs to know whether a page is free (that is, if the
+   page is not allocated). If a page is not free, the kernel needs to know who
+   owns the page. Possible owners include user-space processes, dynamically
+   allocated kernel data, static kernel code, the page cache, and so on.
+ - page_count() -> returns zero to indicate free page, positivte otherwise
+ - Alloc pages
+     - struct page * alloc_pages(gfp_t gfp_mask, unsigned int order) ->
+       allocates 2^order contiguous physical pages and returns a pointer to the
+       first page's page.
+     - unsigned long __get_free_pages(gfp_t gfp_mask, unsigned int order) -> it
+       works the same as alloc_pages(), except that it directly returns the
+       logical address of the first requested page. Because the pages are
+       contiguous, the other pages simply follow from the first.
+     - void * page_address(struct page *page) -> return logical address where
+       the given physical page resides.
+     - struct page * alloc_page(gfp_t gfp_mask); unsigned long
+       __get_free_page(gfp_t gfp_mask) -> the same as the others but only for
+       one page.
+     - unsigned long get_zeroed_page(unsigned int gfp_mask) -> Works he same as
+       __get_free_page(), except that the allocated page is zero-filled.
+ - Free pages
+     - You must be careful to free only pages you allocate. Passing the wrong
+       struct page or address, or the incorrect order , can result in
+       corruption. Remember, the kernel trusts itself. Unlike with user-space,
+       the kernel will happily hang itself if you ask it.
+     - void __free_pages(struct page *page, unsigned int order)
+     - void free_pages(unsigned long addr, unsigned int order)
+     - void free_page(unsigned long addr)
+
+PAGE FAULT
+ - major page fault: a page was not in main memory
+ - minor page fault: a page was in memory but it was not allocated for the
+   process asking for it. The kernel responds sharing the page.
+ - ps -eo min_flt, maj_flt,cmd -> list minor and major page faults for each
+   process on the system.
+ - /usr/bin/time -v <command> -> reports the number of major and minor page
+   faults for the execution of command.
+
+ZONES
+ - Why memory zones?
+    - Some hardware devices can perform DMA (direct memory access) to only
+      certain memory addresses.
+    - Some architectures can physically addressing larger amounts of memory
+      than they can virtually address. Consequently, some memory is not
+      permanently mapped into the kernel address space.
+ - Types of zones
+    - ZONE_DMA —This zone contains pages that can undergo DMA.
+    - ZONE_DMA32 —Like ZOME_DMA , this zone contains pages that can undergo
+      DMA.  Unlike ZONE_DMA , these pages are accessible only by 32-bit
+      devices. On some
+      archi- tectures, this zone is a larger subset of memory.
+    - ZONE_NORMAL —This zone contains normal, regularly mapped, pages.
+    - ZONE_HIGHMEM —This zone contains “high memory,” which are pages not
+      perma- nently mapped into the kernel’s address space.
+ - Sizes of zones on x86-32
+    - Zone Description Physical Memory
+    - ZONE_DMA DMA-able pages < 16MB
+    - ZONE_NORMAL Normally addressable pages 16–896MB
+    - ZONE_HIGHMEM Dynamically mapped pages > 896MB
+ - struct zone is defined in <linux/mmzone.h>
+ - For example, a 64-bit architecture such as Intel’s x86-64 can fully map and
+   handle 64-bits of memory.Thus, x86-64 has no ZONE_HIGHMEM and all physical
+   memory is contained within ZONE_DMA and ZONE_NORMAL .
+
+
+KMALLOC AND FRIENDS
+ - used to allocate byte-size chunks of memory. Defined at <linux/slab.h>
+ - kmalloc guarantees that the pages are physically and virtually contiguous.
+ - kmalloc() may allocate more than you asked, although you have no way of
+   knowing how much more! Because at its heart the kernel allocator is
+   page-based, some allocations may be rounded up to fit within the available
+   memory. The kernel never returns less memory than requested. If the kernel
+   is unable to find at least the requested amount, the allocation fails and
+   the function returns NULL .
+ - The kmalloc flags are defined in <linux/gfp.h>. There are three types:
+   action modifiers (how the kernel allocate the memory, for instance, we don't
+   want to sleep in interrupt context), zone modifiers (which zone it should be
+   allocated) and types (a combinatino of action and zone modifiers). Some
+   tipic type flags are:
+    - GFP_KERNEL: This is a normal allocation and might block. This is the
+      flag to use in process context code when it is safe to sleep. The
+      kernel will do whatever it has to do to obtain the memory requested by
+      the caller. This flag should be your default choice.
+    - GFP_ATOMIC: The allocation is high priority and must not sleep. This is
+      the flag to use in interrupt handlers, in bottom halves, while holding
+      a spinlock, and in other situations where you cannot sleep.
+    - GFP_USER: This is a normal allocation and might block. This flag is
+      used to allocate memory for user-space processes.
+    - GFP_DMA: This is an allocation from ZONE_DMA . Device drivers that need
+      DMA-able memory use this flag, usually in combination with one of the
+      preceding flags.
+ - If kmalloc cannot sleep, the allocation is restrictive in the memory it can
+   obtain for the caller. if no sufficient sized continguous chunk of memory
+   is available, the kernel is not likel to free memory.
+ - If kmalloc can sleep, then i can swap inactive pages to disk, flush dirty
+   pages to disk, and so on.
+ - kfree(const void *ptr) -> deallocate memory previously allocated with kmalloc
+    - kfree(NULL) -> it is safe 
+ - vmalloc() -> It allocates memory that is only virtually continguous and not
+   necessarily physically continguous. It does this by allocating potentially
+   noncontiguous chunks of physical memory and "fixing up" the page tables to
+   map the memory into a contiguous chunk of the logical address space. It is
+   declared at <linux/vmalloc.h> and defined in mm/vmalloc.c.
+    - Any regions of memory that hardware devices work with must exist as a
+      physically contiguous block and not merely a virtually contiguous one.
+    - For normal proccesses, is fine using memory that is only virtually
+      contiguous. In your programming, you never know the difference. All
+      memory appears to the kernel as logically contiguous.
+    - vfree(const void *addr) -> free memory. It can sleep.
+ - kmalloc is used more often than vmalloc even when non-continuous physical
+   pages are needed. This is because kmalloc is more efficient than vmalloc.
+   vmalloc refactors the page table and results in much greater TLB trashing.
+
+SLAB ALLOCATOR
+ - The kernel maintains an allocated pool of memory that is used to grab the
+   neccessary data from there when a memory allocation request arrive. This way
+   is not necessary to actually allocate data every time is requested.

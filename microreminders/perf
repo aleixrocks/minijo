@@ -1,0 +1,170 @@
+ 
+TYPES OF PERF INSTRUMENTATION
+ - counting events in-kernel context (perf stat), where a summary of counts is
+   printed by perf. This mode does not generate a perf.data file.
+ - sampling events (perf record), which writes event data to a kernel buffer,
+   which is read at a gentle asynchronous rate by the perf command to write to
+   the perf.data file. This file is then read by the perf report or perf script
+   commands.
+ - bpf programs on events, a new feature in Linux 4.4+ kernels that can execute
+   custom user-defined programs in kernel space, which can perform efficient
+   filters and summaries of the data. Eg, efficiently-measured latency
+   histograms.
+
+BASIC
+ - perf -> list all sub-commands
+ - perf list -> list all supported events
+ - perf list 'sched:*' -> list all sched realted events
+     - Software event -> kind of pure software counters
+     - Hardware event -> processors events provided by the CPU (PMU unit)
+     - Hadware cache events -> Hadware event with an aliass
+     - Tracepoint event -> kernel ftrace infrastructure
+ - By default perf captures events both in user and kernel space.
+ - By default, perf stat counts for all threads of the process and subsequent
+   child processes and threads. 
+ - If more events than hardware counters are specified, the kernel uses time-
+   multiplexing to share the counters (some time you, some time the other) and
+   the results are scaled. If this happens the word "scaled" is displayed on
+   the report
+ - Attaching to kernel threads is possible, though not really recommended.
+   Given that kernel threads tend to be pinned to a specific CPU, it is best
+   to use the cpu-wide mode.
+
+PREPRATION
+ - To get complete stack traces
+     - compile applications with -fno-omit-frame-pointer 
+     -   or use perf record -g dwarf
+     - compile kernel with CONFIG_FRAME_POINTER=y
+
+PERF STAT
+ - perf stat is used to count number of occurrences of events. It's value
+   is exact (if there are enough CPU counters). But it only report counts.
+ - perf stat <command> -> execute command and report statistics. By default,
+   all threads of <command> will be monitored regardless of the cpu where they
+   are executing.
+ - perf stat -B <command> display large numbers separeted with commas.
+ - perf stat -d <command> -> detailed mode, more info
+ - perf stat -e <event>:<u|k>,<event2>:<u|k> -> capture only the 
+   specified <events> running on userspace <u> or kernel space <k> or both <uk>
+     - perf stat -e cycles:u ls -> cycles on userspace
+ - perf stat -p pid  -> attach to running process.
+ - perf stat -r <num> <command> -> repeat command <num> times and show overall
+   performance metrics.
+ - perf stat -a <command> -> monitor per-CPU instead of per-process. All online
+   processors are monitored. The duration of the measurement is determined by
+   the execution of <command>. In other words, this measurement captures
+   execution of the dd process and anything else than runs at the user level on
+   all CPU.
+ - perf stat -a -C 0,2-3 <command> -> measure per-cpu on cpus 0, 2 and 3.
+ - perf stat -t<pid> <command>-> measure on thread with <pid>. If <command>
+   if specified, is used to determine execution time. It is useful to use it
+   with <sleep 3> to measure for three seconds.
+
+PERF PROFILE
+ - perf record -> record commands on system (such as top)
+ - perf record -F <freq> -> at the specified <freq> frequency, samples are
+   written to the kernel log buffer and a perf deamon reads it asyncronously
+   (loot at FLAME GRAPH below). It writes perf.data file with traces.
+ - -e,-a,-t,... of perf stat are also available here.
+ - perf record -F 99 -a -g -- sleep 30 -> sample stack dumps for a flame graph
+   for 30 seconds on all CPU's
+ - perf record -F 99 -p PID -> sample on-CPU functions for the specified PID at
+   99 Hertz, until ctrl-c
+ - Show saved data with perf record command, see below
+
+PERF RECORD
+ - perf report -> run on the same dir where perf.data is to show the data
+   recorded.
+ - perf report --stdio -> print data on screen as text
+ - perf report -n --sort comm --stdio -> plot data sorted by command
+
+PERF TOP
+ - perf top -F 49 -> sample cpu's and show top addresses and symbols
+ - perf top -F 49 -ns comm,dso -> sample cpu's and show top process names and
+   segments
+
+
+FLAME GRAPH (CREATED WITH PERF PROFILING)
+   The samples taken are the current stacks of the selected process. Hence,
+   perfs collecs snapshots of stack dumps over time. Then, for every stack dump,
+   starting from the first call to the last one, perf tryies to match calls.
+
+   For instance, if we have three samples of three different stacks for the
+   same process:
+
+      stack 1 (33%)  stack 2 (33%)  stack 3 (33%)
+     ---------------------------------------------
+ |    main()         main()         main()     -> match
+ |    second()       second()       another()  -> only two match and one differ
+ |    third()        third()                   -> only two match
+ v    forth()        another2()                -> only two match
+                     fifth()                   -> only one match
+   
+   It generates the following flame graph (now is upside down)
+
+                                  Flame graph
+ -----------------------------------------------------------------------------
+ |                             main() 3/3 (100%)                             |
+ -----------------------------------------------------------------------------
+ |               second() 2/3 (66%)                 |    another 1/3 (33%)   |
+ -----------------------------------------------------------------------------
+ |               third() 2/2 (100%)                 |
+ ----------------------------------------------------
+ |    forth() 1/2 (50%)   |  another2() 1/2 (50%)   |  
+ ----------------------------------------------------
+                          |    fifth() 1/1 (100%)   |
+                          ---------------------------
+
+   If we had two samples that looked exacltly as stack 1, one sample for
+   stack 2 and 5 samples for stack 3, then we will have
+
+      stack 1 (2/8)  stack 2 (1/8)  stack 3 (5/8)
+
+   Which would affect the result of the flame graph.
+
+   A real perf trace is shown below for the dd command. Percentages are for the
+   total amount of events instead instead of the relative amount of events for
+   each level on the stack as shown in the previous example. The perf report
+   output shows that 2,216 events were traced (disk I/O), 32% of which from a
+   dd command. These were issued by the kernel function blk_peek_request(), and
+   walking down the stacks, about half of these 32% were from the close()
+   system call.
+
+   Overhead       Command      Shared Object                Symbol
+   ........  ............  .................  ....................
+
+    32.13%            dd  [kernel.kallsyms]  [k] blk_peek_request
+                      |
+                      --- blk_peek_request
+                          virtblk_request
+                          __blk_run_queue
+                         |          
+                         |--98.31%-- queue_unplugged
+                         |          blk_flush_plug_list
+                         |          |          
+                         |          |--91.00%-- blk_queue_bio
+                         |          |          generic_make_request
+                         |          |          submit_bio
+                         |          |          ext4_io_submit
+                         |          |          |          
+                         |          |          |--58.71%-- ext4_bio_write_page
+                         |          |          |          mpage_da_submit_io
+                         |          |          |          mpage_da_map_and_submit
+                         |          |          |          write_cache_pages_da
+                         |          |          |          ext4_da_writepages
+                         |          |          |          do_writepages
+                         |          |          |          __filemap_fdatawrite_range
+                         |          |          |          filemap_flush
+                         |          |          |          ext4_alloc_da_blocks
+                         |          |          |          ext4_release_file
+                         |          |          |          __fput
+                         |          |          |          ____fput
+                         |          |          |          task_work_run
+                         |          |          |          do_notify_resume
+                         |          |          |          int_signal
+                         |          |          |          close
+                         |          |          |          0x0
+                         |          |          |          
+                         |          |           --41.29%-- mpage_da_submit_io
+     
+

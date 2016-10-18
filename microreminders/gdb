@@ -3,7 +3,10 @@ use -ggdb3. The number means 1 (less) 2 (medium) 3 (high) amount of info
 
 compile with -W - Wall. It gives more warnings.
 
-general
+GENERAL
+ - gdb -tui -> start gdb with text user interface. It's mandatory if you want
+   to use it, otherwise, a werid behaviour is expected such as not recognizing
+   ctl keybidings.
  - run -> run the program
      - you can specify argumentes here. to reset arguments type "set args"
  - continue -> continue execution
@@ -19,11 +22,18 @@ general
  - up, down -> go up and down on the stack frames
 
 MALDAD
+
  - attach processID -> debug an alreeady running process. The process
    will halt unitl gdb exit.
  - deatch -> deatach process so it can continue executing normaly
 
-Variables
+VARIABLES
+ - info variables -> list "All global and static variable names"
+ - info locals -> list "local variables of the current stack frame"
+ - info args -> list arguments of the current stack frame
+ - info registers (i r)  eax -> display register eax
+ - p $ead -> display register eax
+ - x/16xb $edx+0x14 -> print memory 0x14(%edx). See memory below.
  - print or p nomVar/nomFuncio -> print variable. Variable must be 
    abailable on the current context. We can flip context with "frame". 
    You can typecast a variable by typing print (char) variable.
@@ -37,7 +47,39 @@ Variables
  - set variable = value -> give value to variable
  - printf "X = %d, Y = %d\n",X,Y -> just like C
 
-Breakpoints
+
+MEMORY
+ - x/nfu addr or x addr -> Use the x command to examine memory. n, f, and u are
+   all optional parameters that specify how much memory to display and how to
+   format it; addr is an expression giving the address where you want to start
+   displaying memory. If you use defaults for nfu, you need not type the slash
+   ‘/’. Several commands set convenient defaults for addr.
+     - n, the repeat count. The repeat count is a decimal integer; the default
+       is 1. It specifies how much memory (counting by units u) to display. If
+       a negative number is specified, memory is examined backward from addr. 
+     - f, the display format. The display format is one of the formats used by
+       print (‘x’, ‘d’, ‘u’, ‘o’, ‘t’, ‘a’, ‘c’, ‘f’, ‘s’), and in addition ‘i’
+       (for machine instructions). The default is ‘x’ (hexadecimal) initially.
+       The default changes each time you use either x or print. 
+     - u, the unit size. The unit size is any of:
+         - b Bytes. 
+         - h Halfwords (two bytes). 
+         - w Words (four bytes). This is the initial default. 
+         - g Giant words (eight bytes).
+       Each time you specify a unit size with x, that size becomes the default
+       unit the next time you use x. For the ‘i’ format, the unit size is
+       ignored and is normally not written. For the ‘s’ format, the unit size
+       defaults to ‘b’, unless it is explicitly given. Use x /hs to display
+       16-bit char strings and x /ws to display 32-bit strings. The next use of
+       x /s will again display 8-bit strings. Note that the results depend on
+       the programming language of the current compilation unit. If the
+       language is C, the ‘s’ modifier will use the UTF-16 encoding while ‘w’
+       will use UTF-32. The encoding is set by the programming language and
+       cannot be altered. 
+     - addr, starting display address -> addr is the address where you want gdb
+       to begin displaying memory. It can be an operation such as: %edx + 0x14.
+
+BREAKPOINTS
  - break functionname/linenumber -> new breakpoint
  - condition numBreakpoint variaable1==variable2 -> make numBreakpoint 
    breakpoint execute only when condition is true.
@@ -49,15 +91,16 @@ Breakpoints
  - clear -> remove by its location
  - delete -> remove by its identifier
 
-List
+LIST
  - list or "l" -> list code
 	 - starting with some line number	(gdb) list 5,
-	 - ending with some line number	(gdb) list ,28
-	 - between two numbers:	(gdb) list 21,25
-	 - by function name:	(gdb) list f
-	 - functions in the other file:	(gdb) list CentralDiff
-	 - by filename and line number:	(gdb) list derivative.c:12
-	 - filename and function name:	(gdb) list derivative.c:ForwardDiff
+	 - ending with some line number		(gdb) list ,28
+	 - between two numbers:			(gdb) list 21,25
+	 - by function name:			(gdb) list f
+	 - functions in the other file:		(gdb) list CentralDiff
+	 - by filename and line number:		(gdb) list derivative.c:12
+	 - filename and function name:		(gdb) list derivative.c:ForwardDiff
+	 - list - -> print just before last printed
  - set listsize 5 -> change list size
 
 Localitzation
@@ -81,6 +124,8 @@ MULTI THREAD DEBUGGING
  - thread <name> -> assign name to thread
 
 GDB TEXT USER INTERFACE (GDBTUI)
+ - gdb -tui -> start gdb with TUI, mandatory or things won't work well if
+   tui mode is activated with gdb un withouth -tui.
  - These are the following available views (at most 2 windows)
      - source only,
      - assembly only,
@@ -88,70 +133,72 @@ GDB TEXT USER INTERFACE (GDBTUI)
      - source and registers, or
      - assembly and registers.
 
-key-bindings
- - C-x C-a, C-x a, C-x A -> Enter or leave the TUI mode. 
- - C-x 1 Use a TUI layout with only one window. The layout will either be
-   ‘source’ or ‘assembly’. When the TUI mode is not active, it will switch to
-   the TUI mode.
- - C-x 2 Use a TUI layout with at least two windows. When the current layout
-   already has two windows, the next layout with two windows is used. 
- - C-x o Change the active window (focus). 
- - C-x s Switch in and out of the TUI SingleKey mode that binds single keys to
-   gdb commands (to avoid use control).  
- - C-L Refresh the screen.
- - The following key bindings only work in the TUI mode to navigate source
-   <PgUp>, <PgDn>, <Up>, <Down>, <Left>, <Right>
+ - key-bindings
+    - C-x C-a, C-x a, C-x A -> Enter or leave the TUI mode. 
+    - C-x 1 Use a TUI layout with only one window. The layout will either be
+      ‘source’ or ‘assembly’. When the TUI mode is not active, it will switch to
+      the TUI mode.
+    - C-x 2 Use a TUI layout with at least two windows. When the current layout
+      already has two windows, the next layout with two windows is used. 
+    - C-x o Change the active window (focus). 
+    - C-x s Switch in and out of the TUI SingleKey mode that binds single keys to
+      gdb commands (to avoid use control).  
+    - C-L Refresh the screen.
+    - The following key bindings only work in the TUI mode to navigate source
+      <PgUp>, <PgDn>, <Up>, <Down>, <Left>, <Right>
+   
+ - commands
+   
+    - tui enable -> Activate TUI mode. 
+    - tui disable -> Disable TUI mode.
+    - info win -> List and give the size of all displayed windows. 
+    - layout <name> -> Changes which TUI windows are displayed. 
+        - next -> Display the next layout. 
+        - prev -> Display the previous layout. 
+        - src -> Display the source and command windows. 
+        - asm -> Display the assembly and command windows. 
+        - split -> Display the source, assembly, and command windows. 
+        - regs -> When in src layout display the register, source, and command
+            windows. When in asm or split layout display the register,  assembler, 
+            and command windows.
+   
+    - focus <name> -> Changes which TUI window is currently active for scrolling.
+      The name parameter can be any of the following:
+        - next -> Make the next window active for scrolling. 
+        - prev -> Make the previous window active for scrolling. 
+        - src -> Make the source window active for scrolling. 
+        - asm -> Make the assembly window active for scrolling. 
+        - regs -> Make the register window active for scrolling. 
+        - cmd -> Make the command window active for scrolling.
+   
+    - refresh -> Refresh the screen. This is similar to typing C-L. 
+    - tui reg <group> -> Changes the register group displayed in the tui register
+      window to group. If the register window is not currently displayed this command
+      will cause the register window to be displayed. The list of register groups, as
+      well as their order is target specific. The following groups are available on
+      most targets:
+        - next -> next one
+        - prev -> previous one
+        - general -> Display the general registers. 
+        - float -> Display the floating point registers. 
+        - system -> Display the system registers. 
+        - vector -> Display the vector registers. 
+        - all -> Display all registers.
+   
+    - update -> Update the source window and the current execution point. 
+    - winheight <name> [+|-]count -> Change the height of the window name by count 
+      lines. The name parameter: src, cmd, asm or regs 
+    - tabset nchars -> Set the width of tab stops to be nchars characters. This
+      setting affects the display of TAB characters in the source and assembly
+      windows.
+   
+ - search source file
+    - list *(function+offset) -> where offset is hexa 0x137 for instance and
+      function a function name.
 
-commands
 
- - tui enable -> Activate TUI mode. 
- - tui disable -> Disable TUI mode.
- - info win -> List and give the size of all displayed windows. 
- - layout <name> -> Changes which TUI windows are displayed. 
-     - next -> Display the next layout. 
-     - prev -> Display the previous layout. 
-     - src -> Display the source and command windows. 
-     - asm -> Display the assembly and command windows. 
-     - split -> Display the source, assembly, and command windows. 
-     - regs -> When in src layout display the register, source, and command
-         windows. When in asm or split layout display the register,  assembler, 
-         and command windows.
 
- - focus <name> -> Changes which TUI window is currently active for scrolling.
-   The name parameter can be any of the following:
-     - next -> Make the next window active for scrolling. 
-     - prev -> Make the previous window active for scrolling. 
-     - src -> Make the source window active for scrolling. 
-     - asm -> Make the assembly window active for scrolling. 
-     - regs -> Make the register window active for scrolling. 
-     - cmd -> Make the command window active for scrolling.
-
- - refresh -> Refresh the screen. This is similar to typing C-L. 
- - tui reg <group> -> Changes the register group displayed in the tui register
-   window to group. If the register window is not currently displayed this command
-   will cause the register window to be displayed. The list of register groups, as
-   well as their order is target specific. The following groups are available on
-   most targets:
-     - next -> next one
-     - prev -> previous one
-     - general -> Display the general registers. 
-     - float -> Display the floating point registers. 
-     - system -> Display the system registers. 
-     - vector -> Display the vector registers. 
-     - all -> Display all registers.
-
- - update -> Update the source window and the current execution point. 
- - winheight <name> [+|-]count -> Change the height of the window name by count 
-   lines. The name parameter: src, cmd, asm or regs 
- - tabset nchars -> Set the width of tab stops to be nchars characters. This
-   setting affects the display of TAB characters in the source and assembly
-   windows.
-
-search source file
- - list *(function+offset) -> where offset is hexa 0x137 for instance and
-   function a function name.
-
-altres comandes
- - comanda linux size: size of elements of an object file .o
- - comanda linux strip: extirpa trosos d'un executable, com la 
-   seccio .text or la symbol table
+OTHER COMMANDS
+    - command linux size: size of elements of an object file .o
+    - command linux strip: extirpa trosos d'un executable, com la 
+      seccio .text or la symbol table

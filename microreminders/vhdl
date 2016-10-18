@@ -1,0 +1,172 @@
+ - 2#1011# -> number 2011 is in base 2.
+ - 897_899 = 897899 -> underscore used to ease reading
+ - "VHDL" &
+   "Altera" -> split string in multiple lines.
+ - B"11", O"3", X"3" -> representation in binary, octal and hexadecimal
+   of the number 3. Although the number is the same, internally the
+   octal representation requires 3 bits, and the hexadecimal 4.
+ - Types examples
+    - type word is array (0 to 31) of BIT;
+    - type byte is array (NATURAL range 7 downto 0) of BIT;
+    - type arcoiris is (rojo,naranja,amarillo,verde,azul,índigo,violeta);
+    - type complejo is record real:INTEGER; imag : INTEGER; end record;
+    - type MVL4 is (‘X’, ‘0’, ‘1’, ‘Z’);
+ - TYPE name IS (element1, element2, ...)
+ - SUBTYPE name2 IS name RANGE element2 TO element 4
+ - TYPE integer IS RANGE -2147483648 TO 2147483647;
+ - SUBTYPE natural IS integer RANGE 0 TO integer'HIGH;
+ ARRAYS
+  - TYPE word_1 IS ARRAY (0 TO 31) OF BIT;
+  - TYPE word_2 IS ARRAY (31 DOWNTO 0) OF BIT;
+  - TYPE semaforo IS (verde,rojo,ama,amaroj,nada);
+  - TYPE alertas IS ARRAY (semaforo RANGE rojo TO nada) OF BIT; -> array of 
+    4 bits
+  - TYPE one_hot IS ARRAY (semaforo) OF BIT; -> array of 5 bits
+  - TYPE string IS ARRAY (positive RANGE <>) OF character; -> unconstrained
+ STRUCTS (RECORD)
+     TYPE fecha IS RECORD
+       dia: integer RANGE 1 TO 31;
+       mes: integer RANGE 1 TO 12;
+       año: integer RANGE 1900 TO 2100;
+     END RECORD fecha;
+OBJECTS
+ - there are 4 types of objects:
+     - constant:
+        - CONSTANT <nombre> : <tipo> [:= <expresion>];
+        - CONSTANT largocte : INTEGER := 16;
+     - variable: 
+        - Can only be declared in processes or programs, just before BEGIN
+        - VARIABLE <nombre> : <tipo> [:= <expresion>];
+        - VARIABLE largovar : INTEGER := 16;
+     - signal
+        - Can only be declared in the architecture section, just before BEGIN
+        - A signal is a bus.
+        - Signals are updated at the end of each simulation cycle, not when
+          the sentence is analyzed.
+	- It is important to define its range (XX : INTEGER RANGE uu DOWNTO dd
+	  (o dd TO uu)) otherwhise, 32 bits will be assigned by default and we
+	  might lose resources
+        - SIGNAL <nombre> : <tipo> [:= <expresion>];
+     - file
+        - FILE file_name: file_type_name [[OPEN mode] IS <string>];
+ATTRIBUTES
+ - Given the following signal m: IN STD_LOGIC_VECTOR(7 DOWNTO 0)
+   It's default attributes are:
+     - m‘HIGH is 7
+     - m‘LOW is 0
+     - m‘RIGHT is 0
+     - m‘LEFT is 7
+     - m‘RANGE is 7 DOWNTO 0
+     - m‘REVERSE RANGE is 0 TO 7
+     - m‘LENGTH is 8
+     - m’ASCENDING is falso
+   For signals S
+     - S’DELAYED (T) Generate a new signal that copies the value of S with a delay T
+     - S‘STABLE (T) Returns TRUE if S has not changed its value in T time
+     - S‘QUIET (T) Returns TRUE if no new values have been assigned in S for T time
+     - S‘TRANSACTION Is True if a new value has been asigned to S
+     - S‘LAST_EVENT Returns the time from the last event
+     - S‘EVENT Returns TRUE if S has changed
+   for enumerated types 
+     TYPE colores IS (rojo,amarillo,azul,verde,negro,blanco,rosa);
+     SUBTYPE oscuro IS colores RANGE azul TO negro;
+     - colores’SUCC (amarillo) devuelve azul
+     - colores’PRED (amarillo) devuelve rojo
+     - colores’POS (amarillo) devuelve 2
+     - colores’VAL (4) devuelve verde
+     - colores’LOW devuelve rojo
+     - colores’HIGH devuelve rosa
+     - colores’LENGTH devuelve 7
+     - oscuro’LEFT vale azul
+     - oscuro’RANGE vale azul TO negro
+     - oscuro’BASE’LEFT vale rojo
+     - oscuro’BASE’RANGE vale rojo TO rosa
+   Types with units, 
+     TYPE resistencia IS RANGE 0 TO 1E9
+     UNITS ohm; kohm = 1000ohm; Mohm = 1000kohm;
+     END UNITS resistencia;
+     - resistencia’LEFT = 0 ohm;
+     - resistencia’RIGHT = 1E9 ohm;
+     - resistencia’LOW = 0 ohm;
+     - resistencia’HIGH = 1E9 ohm;
+     - resistencia’ASCENDING = TRUE;
+     - resistencia’IMAGE (2 kohm) = “2000 ohm”;
+     - resistencia’VALUE (“5 Mohm”) = 5_000_000 ohm;
+   Other types
+     type index_range is range 21 downto 11;
+     - index_range’LEFT = 21;
+     - index_range’LOW = 11;
+     - index_range’ASCENDING = FALSE;
+     - index_range’VALUE (“20”) = 20;
+     - index_range’RIGHT = 11;
+     - index_range’HIGH = 21;
+     - index_range’IMAGE (14) = “14”;
+     type loglev is (unknown,low,undriven,high);
+     - loglev’LEFT = unknown;
+     - loglev’LOW = unknown;
+     - loglev’ASCENDING = TRUE;
+     - loglev’VALUE (“low”) = low;
+     - loglev’VAL(1) = low;
+     - loglev’RIGHT = high;
+     - loglev’HIGH = high;
+     - loglev’IMAGE (undriven) = “undriven”;
+     - loglev’IMAGE (undriven) = 2;
+     - loglev’SUCC (unknown) = low;
+
+OPERATORS
+ - logics: AND, OR, NAND, NOR, XOR, XNOR, NOT, for types BIT, BOOLEAN, and
+   arrays of these types.
+ - relationals: =, /=, <, <=, >, >=, operands of the same type and the result
+   is a BOOLEAN
+ - shift: SLL, SRL, SLA, SRA, ROL, ROR, where the left operand is a BIT or
+   BOOLEAN array and the right one an integer
+ - + and -. INTEGER. To work with BIT or BIT_VECTOR the concatenation operator
+   should be used or overload + and -
+ - Multiplication and division: *, /, MOD, REM. 
+   * and / are defined for integer and float. MOD and REM only for int. A physic
+   object can be * or / by a numeric type giving as a result a physic value.
+ - Miscelaneous: exponent (**) and absolute value (ABS)
+
+STD_LOGIC
+ - Possible values: ‘0’ , ’1’ , ’H’ , ’L’ , ’Z’ , ’U’ , ’X’ , ’W’ , ’-’
+
+LIBRARIES
+ - library IEEE; use IEEE.std_logic_1164.all; -> import type from library
+ - The IEEE std_logic_1164 package contains the STD_LOGIC and STD_LOGIC_VECTOR
+   which are commonly used to ?
+
+SIGNAL
+ - They are physical signals, wires
+ - Userd in Packages, entities and architectures
+ - SIGNAL temp : STD_LOGIC_VECTOR (7 downto 0);
+    - temp <= “10101010”; temp <= x”AA” ; (VHDL’93
+    - temp(7) <= ‘1’;
+    - temp (7 downto 4) <= “1010”;
+    - temp <= (others => ‘1’); -> assign one to all elements
+    - temp <= (7=>’0’,4=>’0’, others => ‘1’); -> mixed assignment
+ - Simple example
+
+    LIBRARY ieee;
+    USE ieee.std_logic_1164.all
+    ENTITY simp IS
+    PORT(r, t, g, h : IN STD_LOGIC; -- r,t,g,h are signals by default
+         qb : OUT STD_LOGIC);
+    END ENTITY simp;
+    ARCHITECTURE logic OF simp IS
+    SIGNAL qa : STD_LOGIC; -- qa is a "buried" signal to be used internally
+
+    BEGIN
+
+    qa <= r or t; -- this two sentences are executed concurrently!!
+    qb <= (qa and not(g xor h));
+
+    END ARCHITECTURE logic;
+ - conditional assignment
+    - q <=      a WHEN sela = '1'
+           ELSE b WHEN selb = '1'
+           ELSE c;
+    - WITH sel SELECT
+        q <= a WHEN "00",
+           b WHEN "01",
+           c WHEN "10",
+           d WHEN OTHERS; -- OTHERS is possible when dealing with STD_LOGIC

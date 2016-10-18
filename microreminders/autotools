@@ -1,0 +1,143 @@
+ - main files: configure.ac, Makefile.am and src/Makefile.am
+ - In essence, configure.ac check if there are programs installed on the system
+   and define variables such as AWK=/usr/bin/awk or HAVE_WCHAR. The makefile.am
+   uses this variables to speficy the programs, libraries and the compilation
+   order that must be followed.
+ 
+
+configure.ac
+ - Basic config
+    - AC_INIT([amhello], [1.0], [bug-report@address]) -> initalize Autoconf,
+      Specify package's name, version number and bug-report address.
+    - AM_INIT_AUTOMAKE([foreign -Wall -Werror]) -> Initialize Automake. Turn on
+      all Automake warnings and report them as errors. This is a foreign package,
+      foreign ignores some GNU coding standards such as requiring a ./README file.
+      Other options available.
+    - AC_PROG_CC -> Check for a C compiler
+    - AC_CONFIG_HEADERS([config.h]) -> Declare config.h as output header.
+    - AC_CONFIG_FILES([Makefile src/Makefile]) -> Declare Makefile and
+      src/Makefile as output files. See AC_CONFIG_FILES below for more info.
+    - AC_OUTPUT -> Actually output all declared files.
+ - Misc checks
+    - AC_PREREQ(VERSION) -> Require a minimum Autoconf version
+    - AC_CONFIG_SRCDIR(FILE) -> A safety check. FILE should be a distributed source
+      file, and this makes sure that 'configure' is not run from outer space. E.g.
+      AC_CONFIG_SRCDIR([src/main.c]).
+    - AC_CONFIG_AUX_DIR(DIRECTORY) -> Auxiliar scripts such as install-sh and
+      depcomp should be in DIRECTORY. E.g. AC_CONFIG_AUX_DIR([buld-aux])
+ - Program search
+    - AC_PROC_CC, AC_PROC_CXX, AC_PROC_F77, .. -> Compiler checks.
+    - AC_PROG_SED, AC_PROC_AWK, AC_PROC_LEX, .. -> Find good implementations and
+      set $SED, $YACC, $LEX, etc.
+    - AC_CHECK_PROGS(VAR, PROGS, [VAL-IF-NOT-FOUND]) -> Define VAR to the first
+      PROGS found, or to VAL-IF-NOT-FOUND otherwise.
+   
+          C_CHECK_PROGS([TAR], [tar gtar], [:])
+          if test "$TAR" = :; then
+              AC_MSG_ERROR([This package needs tar.])
+          fi
+ - Messages
+    - AC_MSG_ERROR(ERROR-DESCRIPTION, [EXIT-STATUS]) -> Print ERROR-DESCRIPTION
+      (also to config.log ) and abort ‘configure’.
+    - AC_MSG_WARN(ERROR-DESCRIPTION) -> Likewise, but don’t abort.
+ - Defines
+    - AC_DEFINE(VARIABLE, VALUE, DESCRIPTION) -> Output the following to config.h.
+
+          /* DESCRIPTION */
+          #define VARIABLE VALUE
+    - AC_SUBST(VARIABLE, [VALUE]) -> Define $(VARIABLE) as VALUE in Makefile.
+          AC_SUBST([FOO], [foo])  FOO=foo            AC_SUBST([FOO])
+                                  AC_SUBST([FOO])    FOO=foo
+      are all equivalent.
+    - AC_CHECK_LIB(LIBRARY, FUNCT, [ACT-IF-FOUND], [ACT-IF-NOT]) -> Check whether
+      LIBRARY exists and contains FUNCT.  Execute ACT-IF-FOUND if it does,
+      ACT-IF-NOT otherwise.
+
+          AC_CHECK_LIB([efence], [malloc], [EFENCELIB=-lefence])
+          AC_SUBST([EFENCELIB])
+
+      We would later use $(EFENCELIB) in the link rule.
+    - AC_CHECK_HEADERS(HEADERS...) -> Check for HEADERS and #define HAVE_HEADER_H
+      for each header found.
+          AC_CHECK_HEADERS([sys/param.h unistd.h])
+          AC_CHECK_HEADERS([wchar.h])
+      Might #define HAVE_SYS_PARAM_H, HAVE_UNISTD_H, and HAVE_WCHAR_H.
+          #if HAVE_UNISTD_H
+          #include <unistd.h>
+          #endif
+    - AC_CONFIG_FILES(FILES...) -> Automake creates FILE.in for each FILE that
+      has a FILE.am. It’s legitimate to process non-Makefiles too. Example
+      script.in:
+          #!/bin/sh
+          SED=’@SED@’
+          TAR=’@TAR@’
+          d=$1; shift; mkdir "$d"
+          for f; do
+          "$SED" ’s/#.*//’ "$f" \
+          >"$d/$f"
+          done
+          "$TAR" cf "$d.tar" "$d"
+      It is also legit to use it for any file such as
+          AC_CONFIG_FILES([script.sh:script.in])
+      Here the user has manually written script.in, and this rule will generate
+      script.sh. .in files are templates where @XYZ@ are placeholders for
+      AC SUBST([XYZ]) definitions. 
+      Makefile.ins also use @XYZ@ as placeholders but Automake makes all
+      XYZ=@XYZ@ definitions and you may simply use $(XYZ) as needed. more info
+    - AM CONDITIONAL(NAME, CONDITION) -> Declare conditional NAME. CONDITION
+      should be a shell instruction that succeeds iff NAME should be enabled.
+         configure.ac
+           AC_CHECK_HEADER([bar.h], [use_bar=yes])
+           AM_CONDITIONAL([WANT_BAR], [test "$use_bar" = yes])
+      Will enable WANT_BAR only if bar.h is present on the system. WANT_BAR
+      can be used on the makefiles.
+    
+    
+
+
+Makefile.am
+ - SUBDIRS = src -> build recursively in src/. They are built in the order
+   specified. The current directory is implicitly build after all directories
+   in SUBDIRS. But you can put '.' to override this, such as SUBIDRS=dira . dirb
+ - Nothing else is declared in the top Makfile, it is usually short.
+ - In each Makefile, ‘config.status’ will define $(srcdir): the path to
+   the matching source directory. The source path and the build path might be
+   different if the user has run configure in a separate directory.
+ - When referring to sources files or targets in Automake variables, you do not
+   have to worry about source vs. build, because ‘make’ will check both
+   directories.
+ - You may need $(srcdir) when specifying flags for tools, or writing custom
+   commands. E.g., to tell the compiler to include headers from dir/ , you
+   should write -I$(srcdir)/dir, not -Idir. (-Idir would fetch headers from the
+   build tree.
+ - We can use here the variables defined/generated in configure.ac sucha s
+      bin_PROGRAMS = foo
+      if WANT_BAR
+         bin_PROGRAMS += bar
+      endif
+      foo_SOURCES = foo.c
+      bar_SOURCES = bar.c
+
+src/Makefile.am
+ - compile program
+    - bin_PROGRAMS = hello -> The "hello" program whill be built on the "bin" dir.
+    - hello_SOURCES = main.c -> To build "hello" we need the sources "main.c"
+ - compile library
+    - lib_LIBRARIES = libfoo.a libbar.a -> These libraries will be 
+      installed in $(libdir). Also, library names must match lib*.a.
+    - libfoo_a_SOURCES = foo.c privfoo.h -> Private headers are not installed,
+      like ordinary source files.
+    - libbar_a_SOURCES = bar.c privbar.h
+    - include_HEADERS = foo.h bar $(includedir).
+    - noinst_LIBRARIES = libcompat.a -> do not install, only use them somewhere,
+      useful with LDADD.
+ - compile for a specific target (foo)
+    - foo_CFLAGS -> Additional C compiler flags
+    - foo_CPPFLAGS -> Additional preprocessor flags (-Is and -Ds)
+    - foo_LDADD -> Additional link objects, -ls and -Ls (if foo is a program)
+    - foo_LIBADD -> Additional link objects, -ls and -Ls (if foo is a library)
+    - foo_LDFLAGS -> Additional linker flags
+ - compile for anything
+    - LDADD = ../lib/libcompat.a -> added only at linking time
+    - AM_CPPFLAGS = -I$(srcdir)/../lib -> contains additional preprocessor flags
+    - The default value for foo_XXXFLAGS is $(AM_XXXFLAGS).

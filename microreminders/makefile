@@ -19,3 +19,4 @@
          - this will exectue only once. After the firs execution 
            /home/aleix/target will exists (touch $@) and make would avoid 
            further executions of the rule.
+ - make V=1 -> show exactly the commands used.

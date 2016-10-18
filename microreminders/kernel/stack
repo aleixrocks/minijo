@@ -1,0 +1,68 @@
+STACK PRESPECTIVE
+==========================================================================
+
+Stack seen from bottom to top (real view)
+
+                LOW MEM
+         
+  esp --> |-----------------|
+          |   local var 2   |  ^
+          |-----------------|  |
+          |   local var 1   |  |
+  ebp --> |-----------------|  |
+          |    saved EBP    |  |
+          |-----------------|  |
+          | return address  |  |
+          |-----------------|  |
+          |     Param 1     |  |
+          |-----------------|  |
+ func 2   |     Param 2     |  |
+     -----------------------------
+ func 1   |   local var 2   |  ^
+          |-----------------|  |
+          |   local var 1   |  |
+          |-----------------|  |
+          |    saved EBP    |  |
+          |-----------------|  |
+          | return address  |  |
+          |-----------------|  |
+          |     Param 1     |  |
+          |-----------------|  |
+          |     Param 2     |  |
+          |-----------------|
+     
+               HIGH MEM
+
+
+REGISTER VALUES
+==========================================================================
+ - ESP is the stack pointer. It always points to the top of the stack.
+ - EBP points to the own stack. Position below EBP (older) hold the function's
+   arguments. Positions above EBP (newer) hold the function's local variables.
+
+CALL CODE
+==========================================================================
+ push EAX            ; pass some register result
+ push byte[EBP+20]   ; pass some memory variable (FASM/TASM syntax)
+ push 3              ; pass some constant
+ call calc           ; the returned result is now in EAX
+
+// The call code is equivalent to:
+//   push eip + 2 ; return address is current address + size of two instructions
+//   jmp calc
+// The push code is equivalent to:
+//   sub esp, 4   ; "allocate" space for the new stack item
+//   mov [esp], X ; put new stack item value X in
+
+FUNCTION CODE
+==========================================================================
+calc:
+  push EBP            ; save old frame pointer
+  mov EBP,ESP         ; get new frame pointer
+  sub ESP,localsize   ; reserve place for locals
+  .
+  .                   ; perform calculations, leave result in EAX
+  .
+  mov ESP,EBP         ; free space for locals
+  pop EBP             ; restore old frame pointer
+  ret paramsize       ; free parameter space and return

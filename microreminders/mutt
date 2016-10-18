@@ -131,4 +131,22 @@ Message recipient flags
  - F	message is from you
  - L	message is sent to a subscribed mailing list
 
+Limits
+ - filter messages
+ - ~s <word> -> filter message with subject containing <word>
+ - ~d <2w -> messages less tahn two weeks old. Also: year, mont, week, day
+ - ~t <word> -> To: matches <word> (useful for sent-mail folders)
+ - ~O -> unread but not new messages
+ - ~N -> new messages
+ - ~U -> unread mesasges (both new and old)
+ - ~p -> messages addressed to you
+ - ~p ~U -> for messages to you that you don't have read yet
+ - . -> matches everything. In effect, remove the limit.
 
+Tagging
+ - l<limit> -> filter message maching <limit>
+ - T -> tag all current messages with *
+ - l. -> remove the limit
+ - ;<operation> -> apply operation to all tagged messaged, such as "d" for
+   delete or "W" to clear a flag
+ - $ -> commit changes

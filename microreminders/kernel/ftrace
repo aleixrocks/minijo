@@ -1,10 +1,11 @@
-main directory: /sys/kernel/debug/tracing
-
+BASIC
+ - Main doc file: Documentation/trace/ftrace.txt
+ - Main directory: /sys/kernel/debug/tracing
  - cat available_tracers -> display available tracers
  - echo function_graph > current_tracer -> set current tracer
  - cat current_tracer -> display current tracer
- - echo 0 > tracing_on -> disables tracing
  - echo 1 > tracing_on -> enables tracing
+ - echo 0 > tracing_on -> disables tracing
  - cat trace | head -10 -> display the trace of all cpus
  - cat per_cpu/cpu0/trace -> display the trace for cpu0
  - echo "hello world" > trace_maker -> set marker on trace from userland at the
@@ -33,6 +34,64 @@ STACK TRACE
  - cat stack_max_size -> print max stack size
  - echo 0 > stack_max_size -> reset max stack size
  - cat stack_trace -> print stack record of each function
+
+FILTERS
+ - filter by PID
+     - echo <pid> > set_ftrace_pid -> trace for only the specified <pid>
+     - echo -1 > set_ftrace_pid -> trace for any process in the system
+     - cat available_filter_functions -> list all available filter functions
+ - filter by function name
+     - echo <function_name> > set_ftrace_filter -> trace only <function_name>.
+       Multiple functions can be added to set_ftrace_filter
+     - echo <function_name> > set_ftrace_notrace -> trace all functions but
+       the ones written in set_ftrace_notrace.
+     - echo > [set_trace_filter|set_trace_notrace] -> remove all functions
+     - Is also posible to add them on the kernel command line:
+         - ftrace_notrace=rcu_read_lock,rcu_read_unlock
+         - ftrace_filter=kfree,kmalloc
+     - Wildcards on function names
+         - value*, *value* and *value
+         - echo 'set*' > set_ftrace_filter
+ - filter by module
+     - echo ':mod:tg3' > set_ftrace_filter -> trace only functions that belong
+       to the module tg3.
+ - stop tracing when function hits
+     - echo '<function_name:command[:cout]>' > set ftrace_filter -> when
+       function_name is executed at the beginning, the command is run (which
+       is typically traceoff or traceon). This will be executed "count" times
+       if specified or infinite otherwise.
+ - remove function from filter
+     - echo '!*lock*' >> set_ftrace_filter -> the '!' symbol removes function
+       listed in the filter file, wildcards are valid.
+
+
+FUNCTION PROFILING
+ - This doesn't takes samples but the actual values.
+ - If CONFIG_FUNCTION_GRAPH_TRACER is configured in the kernel, the function
+   profiler will use the function graph infrastructure to record how long a
+   function has been executing. If just CONFIG_FUNCTION_TRACER is configured,
+   the function profiler will just count the functions being called.
+ - The followign example includes the times that a function has been preempted
+   or schedule() was called and the task was swapped out:
+     - echo nop > current_tracer
+     - echo 1 > function_profile_enabled
+     - cat trace_stat/function0 | head
+ - The following example tells ftrace to ignore the time the task was
+   scheduled out. Disabling the function profiler and then re-enabling it causes
+   the numbers to reset. 
+     - echo 0 > options/sleep-time
+     - echo 0 > function_profile_enabled
+     - echo 1 > function_profile_enabled
+     - cat trace_stat/function0  | head
+ - Be aware of the graph-time option. By default it is enabled. When enabled,
+   the times for a function include the times of all the functions that were
+   called within the function. When disabled, the times only include the
+   execution of the function itself, and do not contain the times of functions
+   that are called from the function:
+     - echo 0 > options/graph-time
+     - echo 0 > function_profile_enabled
+     - echo 1 > function_profile_enabled
+     - cat trace_stat/function0  | head
 
 IMPLEMENTATION DETAILS
 

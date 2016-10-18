@@ -1,0 +1,16 @@
+BASIC
+ - pdflatex file.tex -> create pdf from file.tex
+ - \texttt{\_} -> to write _ character.
+ 
+
+TABLE
+
+  \begin{tabular}{l | l | l}
+  	Flag                    &  Value & Description \\
+  	\hline
+  	\texttt{SCHED\_UM\_WAKE}  &  0x2   & Returned from blocking, now is ready \\
+  	\texttt{SCHED\_UM\_BLOCK} &  0x4   & Voluntary blocked \\
+  \end{tabular}
+
+  {l | l | l} -> alignment
+  \hline -> horizontal line

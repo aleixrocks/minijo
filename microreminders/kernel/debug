@@ -3,7 +3,7 @@ GENERAL
  - system.map -> fiel generated at compile time which contains the assresses 
    of functions inside the image
  - Oops -> the stack is printed from the bottom to the top.  ksmoops
-   saved_oops.txt -> decodes an undecoded oops trace  by using system.map
+   saved_oops.txt -> decodes an undecoded oops trace  by using system.map.
  - check current log level: 
 
       $ cat /proc/sys/kernel/printk
@@ -12,9 +12,71 @@ GENERAL
  - kern-tree/Documentation/sysrq.txt -> sysrq info
  - kern-tree/Documentation/printk-formats.txt -> printk formats
 
-DEBUG FUNCTION
+UNDERSTANDING OOPS AND PANIC
+ - A out of memory Oops looks like:
 
+   pid uid tgid total_vm rss nr_ptes swapents oom_score_adj name
+
+   And the values means
+     - pid -> The process ID.
+     - uid -> User ID.
+     - tgid -> Thread group ID.
+     - total_vm -> Virtual memory use (in 4 kB pages)
+     - rss -> Resident memory use (in 4 kB pages)
+     - nr_ptes -> Page table entries
+     - swapents -> Swap entries
+     - oom_score_adj -> Usually 0; a lower number indicates the process will be
+       less likely to die when the OOM killer is invoked.
+
+STACK DUMP
+ - When a panic or an oops ocurr, the stack dump is printed. The execution
+   flows goes from the bottom to the top (the first function is on the bottom,
+   the last one at the top).
+ - If a "?" apperas on an entry, it means that it might not really be a
+   function. The kernel function that prints the stack dump 
+   (print_context_stack) uses two methods to print the stack at the same time.
+
+   The first one is to start at the top of the stack with a pointer and
+   examine all posible values one by one and check if they might look a kernel
+   return function. To do so, it checks if the value is in between the text
+   area of the kernel (the kernel code).
+
+   The second one is to follow the %ebp registers saved in the stack. (the ebp
+   register is used to acces the arguments and local varaibles of the current
+   function. Hence, the ebp points to the stack andvalues below ebp contain the
+   function parameters, values above it contain the function local variables.
+   The ebp value of each function frame is saves on the own stack, so given a
+   function frame A, the saved ebp registers on it points to the frame of the
+   function that called A. Therefore, following the ebp pointers, one can
+   follow the history of calls).
+
+   Now, when an address is found with the first method, it is compared with the
+   next expected ebp value. If they coincide, it means that the value is the
+   return addres from a function call. Otherwhise, a question mark is printed
+   to indicate that:
+
+      - either the address is not part of the call chain: it's just stale
+        values on the kernel stack, from earlier function calls. This is
+        the common case.
+      - or it is part of the call chain, but the frame pointer was not set
+        up properly within the function, so we don't recognize it.
+
+   This way we will always print out the real call chain (plus a few more
+   entries), regardless of whether the frame pointer was set up correctly
+   or not.
+
+   The most important property of this method is that we _never_ lose
+   information: we always strive to print _all_ addresses on the stack(s)
+   that look like kernel text addresses, so if debug information is wrong,
+   we still print out the real call chain as well - just with more question
+   marks than ideal.
+
+   More information on this at Documentation/x86/kernel-stacks.
+
+DEBUG FUNCTION
  - printk(KERN_LOG_LEVEL printf like format) -> like printf
+ - debug_show_held_locks(task_struct) -> show held locks for the given process,
+   only if CONFIG_LOCKDEP is enabled.
  - BUG(condition) -> if condition, print oops
  - BUG_ON(condition) -> wraps its assertion in an unlikely() statement.
  - BUILD_BUG_ON(condition) If the provided statement evaluates to true at 
@@ -23,9 +85,9 @@ DEBUG FUNCTION
    kernel
  - dump_stack() -> dumps the contents of the registers and a function back 
    trace to the console
+ - sched_show_task(prev) -> like dump_stack but more info.
 
 MAGIC SysRq Key
-
  Special combinations of keys enable you to communicate with the kernel
  regardless of what else it is doing.
  
@@ -43,26 +105,59 @@ MAGIC SysRq Key
     - sendkey alt_r-sysrq-h -> send sysrq h (use tab to autocomplete)
     - ctrl_alt 1 -> return to emulation
 
+COMPILATION CHECKS
+
+- make EXTRA_CFLAGS="-W" -> to get full set of warnings
+- make C=1 -> run sparse.  The "sparse" static analysis tool. sparse,
+  warns about confusion between user-space and
+  kernel-space addresses, mixture of big-endian and small-endian quantities,
+  the passing of integer values where a set of bit flags is expected, and so
+  on.  Sparse must be installed separately 
+- The "Coccinelle" tool (http://coccinelle.lip6.fr/) is able to find a wide
+  variety of potential coding problems; it can also propose fixes for those
+  problems.  Quite a few "semantic patches" for the kernel have been packaged
+  under the scripts/coccinelle directory; running "make coccicheck" will run
+  through those semantic patches and report on any problems found.  See
+  Documentation/coccinelle.txt for more information.
+
 KERNEL DEBUG OPTIONS
 
- Some of the options are rather useful, enabling slab layer debugging,
- high-memory debugging, I/O mapping debugging, spin-lock debugging, and
- stack-overflow checking.  One of the most useful settings, however, is
- sleep-inside-spinlock checking, which actu- tally does much more.
+ - Some of the options are rather useful, enabling slab layer debugging,
+   high-memory debugging, I/O mapping debugging, spin-lock debugging, and
+   stack-overflow checking.  One of the most useful settings, however, is
+   sleep-inside-spinlock checking, which actutally does much more.
+ - Thanks to kernel preemption, the kernel has a central atomicity counter.The
+   kernel can be set such that if a task sleeps while atomic, or even does
+   something that might sleep, the kernel prints a warning and provides a back
+   trace. Potential bugs that are detectable include calling schedule() while
+   holding a lock, issuing a blocking memory allocation while holding a lock,
+   or sleeping while holding a reference to per-CPU data.This debugging
+   infrastructure catches a lot of bugs and is highly recommended.  The
+   following options make the best use of this feature:
+
+     CONFIG_PREEMPT=y
+     CONFIG_DEBUG_KERNEL=y
+     CONFIG_KALLSYMS=y
+     CONFIG_DEBUG_SPINLOCK_SLEEP=y
  
- Thanks to kernel preemption, the kernel has a central atomicity counter.The
- kernel can be set such that if a task sleeps while atomic, or even does
- something that might sleep, the kernel prints a warning and provides a back
- trace. Potential bugs that are detectable include calling schedule() while
- holding a lock, issuing a blocking memory allocation while holding a lock, or
- sleeping while holding a reference to per-CPU data.This debugging
- infrastructure catches a lot of bugs and is highly recommended.  The following
- options make the best use of this feature:
- 
- CONFIG_PREEMPT=y
- CONFIG_DEBUG_KERNEL=y
- CONFIG_KALLSYMS=y
- CONFIG_DEBUG_SPINLOCK_SLEEP=y
+ - A lot of options lay under the "kernel hacking" submenu of menuconfig.
+    - ENABLE_WARN_DEPRECATED, ENABLE_MUST_CHECK, and FRAME_WARN to get an
+      extra set of warnings for problems like the use of deprecated interfaces
+      or ignoring an important return value from a function.  The output
+      generated by these warnings can be verbose, but one need not worry about
+      warnings from other parts of the kernel.
+    - DEBUG_OBJECTS will add code to track the lifetime of various objects
+      created by the kernel and warn when things are done out of order.  If
+      you are adding a subsystem which creates (and exports) complex objects
+      of its own, consider adding support for the object debugging
+      infrastructure.
+    - DEBUG_SLAB can find a variety of memory allocation and use errors; it
+      should be used on most development kernels.
+    - DEBUG_SPINLOCK, DEBUG_ATOMIC_SLEEP, and DEBUG_MUTEXES will find a
+  - Memory fault injection: Documentation/fault-injection/fault-injection.txt
+    number of common locking errors. Forces a percentage of memory operations
+    to fail so you can check if your code is robust to mem allocation failures.
+  - Locking checker (checks the __acquire and __release of locks)
 
 DELAYING PRINTK
 
@@ -94,3 +189,22 @@ BINARY SEARCH WITH GIT
 KGDB
  - start qemu with -s option, then start a gdb instance with the vmlinux image
    and connect to the remote virtual machine with "target remote localhost:1234"
+
+
+MY_DEBUG CONFIGURATION
+ - kernel hacking
+     - debug lockups and hungs
+	 - detect hung tasks (CONFIG_DETECT_HUNG_TASK): This detects when a
+	   task has been blocked for more than 120 seconds (by default) and
+	   prints its stack to stdout.  Enable lockdep to print also info about
+	   locks.
+     - KGDB kernel debugger
+         - KGDB: use kgdb over serial console (CONFIG_KGDB)
+         - KGDB_KDB: include kdb frontend for kgdb (KGDB_KDB)
+     - compile-time checks and compiler options
+         - Compile the kernel with debug info (CONFIG_DEBUG_INFO): Include
+	   debuging symbols for debuging (gcc -g option).
+         - compile the kernel with frame pointers (CONFIG_FRAME_POINTER):
+	   Generates a more accurate stack dump by keeping extra info.
+ - CONFIG_LOCKDEP -> info about locks. A lot of options have to be activated
+   for this to activate, no menu entry.

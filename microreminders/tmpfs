@@ -1,0 +1,2 @@
+Create a temporal ram file system
+ - mount -o size=16G -t tmpfs none /mnt/tmpfs

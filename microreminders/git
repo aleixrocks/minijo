@@ -96,8 +96,27 @@ Conflictes
   i eliminar les marques de conflicte >>>>>>> <<<<<<<<< ======= tot solucionant 
   el problema manualment.
 
+STASH
+ - git stash -> remove all changes to the last commit and save them as a stash.
+ - git pop -> pop the stash over the current commit
+ - git checkout stash@{0} -- <filename> -> restore the <filename> on the current
+   commit from the specified stash.
+
+CLEAN, DELETE, UNSTAGE, UNDO, ETC
+ - git reset -> clear the entire index (all git add files pending to be commited)
+ - git reset --hard -> return all tracked files to previous commit state
+ - git checkout -- file -> return file to last commit version
+ - git rm --cached [-r] <path> -> remove files or dirs on path of the git
+   tacked files. This doesn't remove the file.
+ - clean -dxfn -> delete directories (d), ignored files (x), do it (f), 
+   simulate it (n)
+
 SUBMODULES
  - fetch data
+     - git submodule update --init --recursive -> init and update all submodules
+       recursively.
+     - git submodule update --recursive -> update all modules recursively
+       withouth initializing them.
      - git submodule init: initialize local submodule info in .git/config
      - git submodule udpate: fetch submodule data
      - git clone --recursive git_url_here: clone project with submodules. Cloning
