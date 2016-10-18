@@ -1,4 +1,6 @@
 PROGRESS
+GNU coreutils 8.24+
+ - dd if=... of=.. status=progress
 
 see progress once dd is already started:
   watch -n5 'sudo kill -USR1 $(pgrep ^dd)'

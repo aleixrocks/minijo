@@ -1,0 +1,26 @@
+#!/bin/bash
+
+usage() {
+	echo "usage"
+	echo "  brg <bright_level>; bright_level > 100"
+	exit 1
+}
+
+
+#if [[ $EUID -ne 0 ]]; then
+#	echo "Only root can do that, yo"
+#	exit 1;
+#fi
+
+if [ $# -ne 1 ]; then
+	usage;
+	exit 1;
+fi
+
+if [ $1 -le 100 ]; then
+	echo "That's too dark, yo"
+	usage;
+	exit 1;
+fi
+
+echo $1 | sudo tee /sys/class/backlight/intel_backlight/brightness
