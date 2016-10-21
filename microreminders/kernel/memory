@@ -123,3 +123,9 @@ SLAB ALLOCATOR
  - The kernel maintains an allocated pool of memory that is used to grab the
    neccessary data from there when a memory allocation request arrive. This way
    is not necessary to actually allocate data every time is requested.
+ - The slab allocator is composed of caches. Each cache stores a particular
+   type of object, such as task_struct. Then, each cache is divided into
+   multiple slabs. A slab is a set of pysically contiguous pages, typically one.
+ - Each slab can be in one of the following states: empty, partial or full.
+   When allocating objects, firsts go the partial slabs, then empty. If there
+   are no empty slabs, then another one is allocated.
