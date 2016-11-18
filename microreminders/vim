@@ -16,9 +16,11 @@ NAVIGATIN
  - M -> move cursor to the middle of the current view
  - H -> move cursor to the top of the current view
  - L -> move cursor to the bottom of the current view
+ - W -> move to the start of the next WORD (any non white character)
  - w -> move to the start of the next word
  - e -> move to the end of the next word
  - b -> move to the start of the previous word.
+ - ge -> move the cursor to the end of the previous word
  - ctl-u -> half page up
  - ctl-d -> half page down
  - ctl-b -> move screen up one page
@@ -145,6 +147,9 @@ SPACES TO TABS
 ENCODING
  - set encoding=utf-8      -> The encoding displayed.
  - set fileencoding=utf-8  -> The encoding written to file.
+
+OTHERS
+ - J -> join current and next line into current line
 
 CTAGS SUMMARY
  - Description: Go to function definition and omnicompletion

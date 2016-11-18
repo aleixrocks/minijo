@@ -10,6 +10,8 @@ GENERAL
  - run -> run the program
      - you can specify argumentes here. to reset arguments type "set args"
  - continue -> continue execution
+ - step -> execute just one step entering inside functions
+ - next -> execute just one step without entering inside functions
  - help command -> help!
  - where (same as bt) -> print where you are.
  - when enter is pressed without typing a command, last comand is used.
@@ -22,7 +24,6 @@ GENERAL
  - up, down -> go up and down on the stack frames
 
 MALDAD
-
  - attach processID -> debug an alreeady running process. The process
    will halt unitl gdb exit.
  - deatch -> deatach process so it can continue executing normaly
@@ -90,6 +91,7 @@ BREAKPOINTS
  - enable n -> enable breakpoint n
  - clear -> remove by its location
  - delete -> remove by its identifier
+ - commands -> specify gdb commands to run when the breakpoint is reached.
 
 LIST
  - list or "l" -> list code
@@ -103,25 +105,33 @@ LIST
 	 - list - -> print just before last printed
  - set listsize 5 -> change list size
 
-Localitzation
+LOCALIZATION
  - frame -> returns frame where gdb is it. frame is the header of a 
    function call stored on the stack.
  - frame numFrame -> swtich to numFrame so variables are available.
+ - up n -> go up n frames
+ - down n -> go down n frames
  - where -> print where you are.
-
-Checkpoints
- - checkpoint -> store current process status
- - restart idcheckpoing -> restart program since checkpoint
- - info checkpoints -> list all chekpoints and idcheckpoints
-
-Others
- - call x() -> call function (yes! during execution time!)
-
+ - bt -> print stack trace
 
 MULTI THREAD DEBUGGING
  - info thread -> list current executing threads on cpu's
  - thread <thread-id> -> switch to selected thread
  - thread <name> -> assign name to thread
+
+CHECKPOINTS
+ - checkpoint -> store current process status
+ - restart idcheckpoing -> restart program since checkpoint
+ - info checkpoints -> list all chekpoints and idcheckpoints
+
+OTHERS
+ - call x() -> call function (yes! during execution time!)
+ - To run a program several times until it crashes:
+     - set pagination off # disable gdb output scroll buffer
+     - break exit
+     - commands
+     - run
+     - end
 
 GDB TEXT USER INTERFACE (GDBTUI)
  - gdb -tui -> start gdb with TUI, mandatory or things won't work well if

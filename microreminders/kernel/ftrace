@@ -115,3 +115,16 @@ prediction and causes a bit more overhead than the function tracer. The closest
 true timings only occur for the leaf functions.
 
 
+TRACE-CMD
+ - trace-cmd is a command to manage the ftrace directories.
+ - example:
+    - trace-cmd record -e sched <command> -> starts tracing. All events are
+      saved into the default file trace.dat
+    - trace-cmd report -> shows the report by reading the default trace.dat
+ - kernelshark gui can be used to visualize traces.
+ - When recording a trace, trace-cmd will fork off a process for each CPU on
+   the system. Each of these processes will open the file 
+   /sys/kernel/debug/tracing/per_cpu/cpuX/trace_pipe_raw, where X is the
+   processor number. Processes are not pinned and may appear on the trace.
+ 
+ - The overrun value is the number of entries that were dropped due to the buffer filling up, and the writer deleting the older entries.

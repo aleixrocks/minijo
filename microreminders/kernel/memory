@@ -129,3 +129,9 @@ SLAB ALLOCATOR
  - Each slab can be in one of the following states: empty, partial or full.
    When allocating objects, firsts go the partial slabs, then empty. If there
    are no empty slabs, then another one is allocated.
+ - Structure:
+    - The cached objects follows the following convention: For an inode, we have
+      inode_cachep cache.
+    - kmem_cache struct represents a cache. it has tree slab objects for full, 
+      empty and partial.
+    - Each struct slab contains a list of pages.
