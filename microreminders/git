@@ -5,7 +5,7 @@ de estat untracked a tracked, es a dir, que git el te en compte alhora de fer
 coses.
 
 
-general
+GENERAL
 - git init -> inicia git per projecte ja existent
 - git rm -> eliminar el fitxer del disc dur i marca el canvi com staged. 
   faltara commit per fer-ho permement.
@@ -18,7 +18,7 @@ general
   untracked i aixi no molesten. tipicament hi posem els ".o"
 - git mv nomVell nomNou -> canvi nom
 
-mostrar log
+LOG
 - git log
 - git log --stat -> mini resum sobre cada commit
 - git log -x -> mostra ultimes x entrades
@@ -32,7 +32,7 @@ mostrar log
 - git log foo bar -> show both foo, bar and ancestors.
 - git blame file -> display author of each line of file
 
-filtrar log
+FILTER LOG
 - GUI gitk
 - git log --since=2.weeks
 - git log --until=
@@ -43,13 +43,13 @@ filtrar log
   Readme.txt (tambe pot ser un directori). Fixarse en els espais de "--" 
   es important.
 
-diff
+DIFF
 - git diff foo..bar -> difference between commit foo and bar (equivalent
   to git diff foo bar)
 - git diff foo...bar -> difference between common ancestor and bar
   (equivalent to git diff $(git merge-base foo bar) bar)
 
-Rectificar
+RECTIFY
 - git commit --amend -> substitueix el ultim commit (per si ens hem deixat de 
   fer algo rapid en el utltim commit)
 - git checkout <SHA-1> -> coloca HEAD en el commit indicat. Pases a no estar 
@@ -67,18 +67,18 @@ Rectificar
 - git reset --hard -> COMPTE!!!! es carrega el tree i torna al estat del comit 
   que li indiguem amb part del SHA
 
-Repositoris
+REMOTES
 - git clone URL -> copia repositori remot
 - git remote -v -> mostra servers remots
 - git remote add Nom URL -> afegeix el repo URL i li dona nom Nom
 - git fetch -> pilla data de repo pero no la barreja
 - git push [remote-name] [branch-name] -> carrega al repo, a una branca concreta
 
-Branches
-- important! opcio --all per veure totes les branques
+BRANCHES
 - git branch -> llista branches
 - git branch -v -> list branches + last commit for each branch
 - git branch -vv -> list brances + their tracking remote branch
+- git branch -f branch_src branch_dst -> move branch_src to branch_dst
 - git branch --merged -> llista branches ja fusionades amb el actual check out
 - git branch --no-merged -> igual pero amb les no fusionades
 - git branch NomBranca -> crea una nova branca
@@ -90,7 +90,7 @@ Branches
 - git push origin :serverfix -> elimina branca serverfix remota (si, sintaxi 
   fea k te kages)
 
-Conflictes
+CONFLICTS
 - git mergetool -> GUI per soluciona problemes.
 - Si no volem fer servir la GUI podem simplement obrir el fitxer amb conflicte 
   i eliminar les marques de conflicte >>>>>>> <<<<<<<<< ======= tot solucionant 
@@ -101,6 +101,9 @@ STASH
  - git pop -> pop the stash over the current commit
  - git checkout stash@{0} -- <filename> -> restore the <filename> on the current
    commit from the specified stash.
+ - git stash --keep-index -> stash __all__ tracked files but keep the changes
+   of __staged__ files in the working directory. Be careful, if the staged
+   files are edited, there might be conflicts when running git stash pop.
 
 CLEAN, DELETE, UNSTAGE, UNDO, ETC
  - git reset -> clear the entire index (all git add files pending to be commited)
@@ -113,6 +116,7 @@ CLEAN, DELETE, UNSTAGE, UNDO, ETC
 
 SUBMODULES
  - fetch data
+     - git clone --recursive -j8 <url>
      - git submodule update --init --recursive -> init and update all submodules
        recursively.
      - git submodule update --recursive -> update all modules recursively

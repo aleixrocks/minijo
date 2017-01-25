@@ -62,9 +62,10 @@ PERF STAT
 
 PERF PROFILE
  - perf record -> record commands on system (such as top)
- - perf record -F <freq> -> at the specified <freq> frequency, samples are
-   written to the kernel log buffer and a perf deamon reads it asyncronously
-   (loot at FLAME GRAPH below). It writes perf.data file with traces.
+ - perf record [-F <freq>] [command] -> at the specified <freq> frequency, samples
+   are written to the kernel log buffer and a perf deamon reads it
+   asyncronously (loot at FLAME GRAPH below). It writes perf.data file with
+   traces.
  - -e,-a,-t,... of perf stat are also available here.
  - perf record -F 99 -a -g -- sleep 30 -> sample stack dumps for a flame graph
    for 30 seconds on all CPU's

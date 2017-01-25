@@ -11,6 +11,31 @@ SESSION MANAGEMENT
  - lttng start: start tracing (set events and channels before that!)
  - lttng stop: stop trcing
 
+CHANNELS AND SUBBUFFERS
+ - A channel has multiple ring buffer. Each ring buffer is subdivided in
+   subbuffers. Lttng fills each subbuffer one by one, and when one is full, it
+   marks it as "consumable". Then the lttng-consumer daemon, reads the marked
+   subbuffers and writes them to disk. Switching subbufers and mark them as
+   consumable has a noticeable CPU overhead. More than two subbuffers only make
+   sense in the overwrite mode. If lttng read more events than it can consume,
+   then we have to modes to deal with lost data:
+     - Discard mode: Drop the newest event records until a the tracer releases
+       a sub-buffer. In discard mode, the sub-buffers count parameter is
+       pointless: use two sub-buffers and set their size according to the
+       requirements of your situation.
+     - Overwrite mode: Clear the sub-buffer containing the oldest event records
+       and start writing the newest event records there. If subbuffers are big,
+       cleaning a subbuffer will kill a lot of events. If subbuffers are small,
+       cleaning them won't kill much of them. This is the only reason why
+       more than 2 subbuffers make sense.
+ - In user mode tracing, there are ring buffers per-process or per-user. In
+   kernel mode there is only a set of subbuffers for the whole system.
+ - The --switch-timer channel option enables a periodic change of subbufer. It
+   is usefull if after a low trhoughput period we start a high trhoughput
+   period (with the timer, we prevent having a filled buffer when the high
+   throughput period arrives). Default value is 0, disabled.
+
+
 EVENTS
  - lttng list some-session: list events for session 
  - lttng list --kernel: all kernel events

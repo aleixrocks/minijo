@@ -1,0 +1,36 @@
+BASIC
+ - sinfo -> show system info
+ - srun -t <time in minutes> <command> -> launch command with the max time
+   specified.
+ - squeue -> show job queue
+ - sbatch job_script.sh -> submit a job script. An OpenMP job script looks like:
+
+     #!/bin/bash
+     #SBATCH --partition=mb
+     #SBATCH --ntasks=1
+     #SBATCH --cpus-per-task=2
+     #SBATCH --out=omp-%j.out
+     #SBATCH --err=omp-%j.err
+     #SBATCH --time=10:00
+      
+     export OMP_NUM_THREADS=2
+     srun ./omp_binary
+
+   And a MPI job script looks like:
+
+     #!/bin/bash
+     #SBATCH --partition=mb
+     #SBATCH --ntasks=64
+     #SBATCH --cpus-per-task=1
+     #SBATCH --out=mpi-%j.out
+     #SBATCH --err=mpi-%j.err
+     #SBATCH --time=10:00
+      
+     # Use srun command over mpirun. The main reason is that srun command
+     # allows the user to set the running CPU frequency during the execution
+     # of the job:
+     # At Mont-Blanc prototype
+     srun ./mpi_binary
+     # At Mont-Blanc prototype testing
+     mpirun ./mpi_binary
+

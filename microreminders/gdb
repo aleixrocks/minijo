@@ -82,6 +82,7 @@ MEMORY
 
 BREAKPOINTS
  - break functionname/linenumber -> new breakpoint
+ - rbreak -> set multiple breakpoints given a regular expression
  - condition numBreakpoint variaable1==variable2 -> make numBreakpoint 
    breakpoint execute only when condition is true.
  - info breakpoints -> show breakpoints

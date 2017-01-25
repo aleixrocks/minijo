@@ -20,3 +20,7 @@
            /home/aleix/target will exists (touch $@) and make would avoid 
            further executions of the rule.
  - make V=1 -> show exactly the commands used.
+
+
+VARIABLES
+ - A=3; A=${A} + 1; A=$(A) + 1; #there is no difference between () and {}

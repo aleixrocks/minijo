@@ -9,6 +9,8 @@ VARIABLES BASH
    for exemple.
  - !:1 -> argument one of the last command executed
  - !:1-2 -> arguments one and two of the last command executed
+ - FOO=${VARIABLE:=default} -> set default to FOO if variable is not set.
+   otherwise, set the value of VARIABLE to FOO.
 
 CONTROL DE FLUX
 
@@ -81,6 +83,9 @@ PARSE STRINGS
 
    using the deliminter specified by IFS
  - IFS=', ' read -a array <<< "$string" -> to split $string into an array
+
+ - if [[ $var =~ regExp ]]; then fi -> do something if var matches the regular
+   expression
 
 INTERRUPTIONS
  - trap "trap_ctrl_c" 2 -> catch interrupt control-c and execute the function trap_ctrl_c
