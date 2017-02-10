@@ -249,3 +249,16 @@ BARRIERS
     - smp_wmb(), smp_mb() -> provide their omonimous on SMP or barrier() on UP
     - barrier() -> Prevents the compiler from optimizing stores or loads
       across barriers.
+
+RCU
+ - RCU stands for Read-Copy Update.
+ - RCU allows reads to occur concurrently with updates. 
+ - rcu_read_lock(), rcu_read_unlock() neither block nor spin. It is not possible
+   to block inside the critical read section.
+ - rcu_synchronize() forces the current process to execute on all other CPUs to
+   force a context switch. If a context switch ocurr, it means that the
+   processes executing in the other CPUs have exited their read critial section.
+   Hence, all previous read critial section will be finished and is now safe to
+   delete p.
+ - It is not allowed to keep reference of list elements after read critical
+   sections.

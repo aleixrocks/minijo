@@ -1,0 +1,6 @@
+ - All work sharing constructs must be inside a parallel construct,
+   otherwise they are ignored.
+ - There is an implicit barrier after the parallel construct
+ - There is not an implicit barrier after a work sharing construct,
+   alhough it can be specified by using the nowait clause.
+ - There is an implicit barrier after single construct

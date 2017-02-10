@@ -1,0 +1,17 @@
+- Execution time of a program:
+        T = N * CPI * Tc
+   * N = Number of instructions to complete the program
+   * CPI = Cycles per instruction
+   * Tc = 1 / Freq = Seconds it takes to complete one cycle
+- Speedup
+        Speedup = T1 / Tp
+        Speedup = 1 / ( (1 - F) + F/A )
+   * T1: Time withouth modifications
+   * Tp: TIme with modifications
+   * F:  Fraction of time where the modifications can accelerate something
+   * A:  Fraction in which time is accelerated
+
+- Hazards
+   - structural hazard: A required resource is busy
+   - Data hazard: A data element is needed, but not ready.
+   - Control hazard: Deciding in control action depends on previous instruction.

@@ -104,6 +104,9 @@ STASH
  - git stash --keep-index -> stash __all__ tracked files but keep the changes
    of __staged__ files in the working directory. Be careful, if the staged
    files are edited, there might be conflicts when running git stash pop.
+ - git stash clear -> delete all stashes
+ - git stash show -p -> show stash content as a diff with its actual parent.
+ - git stash show -p stash@{1} -> the same specifying the stash
 
 CLEAN, DELETE, UNSTAGE, UNDO, ETC
  - git reset -> clear the entire index (all git add files pending to be commited)

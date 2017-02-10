@@ -61,6 +61,7 @@ PERF STAT
    with <sleep 3> to measure for three seconds.
 
 PERF PROFILE
+ - perf record <command> -> sample command functions usage
  - perf record -> record commands on system (such as top)
  - perf record [-F <freq>] [command] -> at the specified <freq> frequency, samples
    are written to the kernel log buffer and a perf deamon reads it
