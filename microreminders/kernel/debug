@@ -158,6 +158,8 @@ KERNEL DEBUG OPTIONS
     number of common locking errors. Forces a percentage of memory operations
     to fail so you can check if your code is robust to mem allocation failures.
   - Locking checker (checks the __acquire and __release of locks)
+  - Check for memory use after being freed at runtime in kernel code
+     CONFIG_KASAN=y
 
 DELAYING PRINTK
 

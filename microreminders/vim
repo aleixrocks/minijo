@@ -173,6 +173,8 @@ CSCOPE SUMMARY
   - "CTRL-spacebar symbol" -> split horizontally
   - "CTRL-spacebar CTRL-spacebar s" (just hold down the CTRL key and 
        tap the spacebar twice). Window split vertically.
+  - !cscope -Rbq -> regenerate cscope from vim
+  - :cs reset -> reload cscope database from vim
 
 
 

@@ -59,7 +59,7 @@ ZONES
       archi- tectures, this zone is a larger subset of memory.
     - ZONE_NORMAL —This zone contains normal, regularly mapped, pages.
     - ZONE_HIGHMEM —This zone contains “high memory,” which are pages not
-      perma- nently mapped into the kernel’s address space.
+      permanently mapped into the kernel’s address space.
  - Sizes of zones on x86-32
     - Zone Description Physical Memory
     - ZONE_DMA DMA-able pages < 16MB
@@ -69,6 +69,7 @@ ZONES
  - For example, a 64-bit architecture such as Intel’s x86-64 can fully map and
    handle 64-bits of memory.Thus, x86-64 has no ZONE_HIGHMEM and all physical
    memory is contained within ZONE_DMA and ZONE_NORMAL .
+ - Allocations cannot cross zone boundaries.
 
 
 KMALLOC AND FRIENDS
@@ -80,11 +81,11 @@ KMALLOC AND FRIENDS
    memory. The kernel never returns less memory than requested. If the kernel
    is unable to find at least the requested amount, the allocation fails and
    the function returns NULL .
- - The kmalloc flags are defined in <linux/gfp.h>. There are three types:
-   action modifiers (how the kernel allocate the memory, for instance, we don't
-   want to sleep in interrupt context), zone modifiers (which zone it should be
-   allocated) and types (a combinatino of action and zone modifiers). Some
-   tipic type flags are:
+ - The kmalloc flags are defined in <linux/gfp.h> (GFP stands for "Get Free
+   Pages"). There are three types of flags: action modifiers (how the kernel
+   allocate the memory, for instance, we don't want to sleep in interrupt
+   context), zone modifiers (which zone it should be allocated) and types (a
+   combinatino of action and zone modifiers). Some tipic type flags are:
     - GFP_KERNEL: This is a normal allocation and might block. This is the
       flag to use in process context code when it is safe to sleep. The
       kernel will do whatever it has to do to obtain the memory requested by

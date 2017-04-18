@@ -1,13 +1,25 @@
-The kernel stores the list of processes in a circular doubly linked list 
-called the task list. Each element in the task list is a process descriptor 
-of the type struct task_struct , which is defined in <linux/sched.h>.
-The process descriptor contains all the information about a specific process.
+PROCESSES AND THREADS IMPLEMENTATION
+ - The kernel stores the list of processes (not threads) in a circular doubly
+   linked list called the task list. Each element in the task list is a process
+   descriptor of the type struct task_struct , which is defined in
+   <linux/sched.h>. The process descriptor contains all the information about a
+   specific process. The threads of a processes are not directly linked in this
+   list, but they are linked in another list that belongs to the task struct of
+   the processes the threads belong to. This structure is called thread_group.
+   (see kernel/fork.c:copy_process) Hence, if we want to iterate over all
+   processes, we have to iterate over the list of processes and, for each
+   entry, iterate over all threads in the thread_group list. It is important to
+   notice that, to iterate over all processes, there are only two levels:
+   processes and threads of processes.
 
  - current : macro that points to the current process task_struct
 
  - task_struct
      - parent: pointer to parent's task_struct
      - children: list of children tasks.
+     - thread_group: threads of process
+     - group_leader: task_struct pointer to the process the thread belongs. It
+       points to itself it no threads.
 
 
 

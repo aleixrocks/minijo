@@ -90,11 +90,17 @@ BRANCHES
 - git push origin :serverfix -> elimina branca serverfix remota (si, sintaxi 
   fea k te kages)
 
-CONFLICTS
-- git mergetool -> GUI per soluciona problemes.
-- Si no volem fer servir la GUI podem simplement obrir el fitxer amb conflicte 
-  i eliminar les marques de conflicte >>>>>>> <<<<<<<<< ======= tot solucionant 
-  el problema manualment.
+MERGE CONFLICTS
+- git status -> show the files with conflicts
+- git mergetool -> GUI to solve problems
+- We can simply open the document with conflicts and solve the sections
+  delimited with the marks >>>>>>> <<<<<<<<< and ======= to solve the problem
+  manually.
+- git add on file with conflicts to mark it has solved. Depending on the type
+  of conflict, instead of add, it might be necessary to do a git rm.
+- git merge --abort -> when merging, before commiting. Abort merge. It might
+  fail if we merged with uncommited changes, so always commit or stash
+  everything before merging.
 
 STASH
  - git stash -> remove all changes to the last commit and save them as a stash.
@@ -124,7 +130,7 @@ SUBMODULES
        recursively.
      - git submodule update --recursive -> update all modules recursively
        withouth initializing them.
-     - git submodule init: initialize local submodule info in .git/config
+     - git submodule init: initialize all local submodule info in .git/config
      - git submodule udpate: fetch submodule data
      - git clone --recursive git_url_here: clone project with submodules. Cloning
        witouth --recursive neither automatically initiates nor downloads submodules.

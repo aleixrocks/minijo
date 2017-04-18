@@ -23,7 +23,7 @@ GENERAL
    in the stack, each call one frame). Displays args and local vars.
  - up, down -> go up and down on the stack frames
 
-MALDAD
+ATTACH AND DEATACH
  - attach processID -> debug an alreeady running process. The process
    will halt unitl gdb exit.
  - deatch -> deatach process so it can continue executing normaly
@@ -125,6 +125,23 @@ CHECKPOINTS
  - restart idcheckpoing -> restart program since checkpoint
  - info checkpoints -> list all chekpoints and idcheckpoints
 
+CORE DUMP
+ - A core dump is a file automatically generated when an application crashes.
+   This file can be used to debug the program at the moment when it crashed.
+   Among other things, it can be used to check the backtrace and the value of
+   the variables.
+ - To activate automatic core dump files:
+      ulimit -c unlimited; (check with ulimit -a)
+ - Core dump are usually stored in /var/cache/abrt or in the current directory.
+   If not there, check man core for a detailed explanation.
+ - [/proc/sys/kernel/]core_pattern is used to specify a core dumpfile pattern name.
+   echo "core.%e.%p" > /proc/sys/kernel/core_pattern to create the core dump
+   file in current directory itself, with name "core.giis.12344". Check
+   /usr/src/linux/Documentation/sysctl/kernel.txt for more info.
+ - A core dump file can be examined with gdb path/to/the/binary path/to/the/core
+
+
+
 OTHERS
  - call x() -> call function (yes! during execution time!)
  - To run a program several times until it crashes:
@@ -213,3 +230,5 @@ OTHER COMMANDS
     - command linux size: size of elements of an object file .o
     - command linux strip: extirpa trosos d'un executable, com la 
       seccio .text or la symbol table
+
+

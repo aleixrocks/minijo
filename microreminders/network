@@ -1,0 +1,4 @@
+MDI-X is a network card feature that avoid the use of a crossover wire
+to directly connect two computers.
+ - ethtool eth0 -> list eth0 features, search for MDI-X
+ - ethtool -s etho mdix on | off | auto -> set mdix

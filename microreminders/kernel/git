@@ -1,0 +1,13 @@
+Set up the Linux-Next repo
+ - Git config:
+     $ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git                                                                      
+     $ cd linux                                                                                                                                        
+     $ git remote add linux-next git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git                                                     
+     $ git fetch linux-next                                                                                                                            
+     $ git fetch --tags linux-next                                                                                                                     
+     ... # later on                                                                                                                                    
+     $ git remote update
+ - Once a week, do a 'git remote update' and build/install/run the new kernel.
+   If anything explodes, send an email to linux-kernel@vger.kernel.org.
+   And yes, it reallys *is* that easy.
+ 
