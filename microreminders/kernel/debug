@@ -105,7 +105,7 @@ MAGIC SysRq Key
     - sendkey alt_r-sysrq-h -> send sysrq h (use tab to autocomplete)
     - ctrl_alt 1 -> return to emulation
 
-COMPILATION CHECKS
+COMPILATION-TIME CHECKS
 
 - make EXTRA_CFLAGS="-W" -> to get full set of warnings
 - make C=1 -> run sparse.  The "sparse" static analysis tool. sparse,
@@ -158,8 +158,18 @@ KERNEL DEBUG OPTIONS
     number of common locking errors. Forces a percentage of memory operations
     to fail so you can check if your code is robust to mem allocation failures.
   - Locking checker (checks the __acquire and __release of locks)
-  - Check for memory use after being freed at runtime in kernel code
-     CONFIG_KASAN=y
+  - Check for memory use after being freed at runtime in kernel code. Only
+    available since gcc 4.9.
+      CONFIG_KASAN=y
+    This technique uses shadow memory, i.e. for every 8 bytes of memory, an
+    extra shadow byte is placed after the 8 bytes. This byte contains info
+    describing the access rights of the previous 8 bytes ( 0 full access, 1-8
+    means from left to right that the n byte is accessible, negative numbers
+    are used for different types of non accessible memory). Hence, the size
+    of the kernel will be way large. Then, for each memory access, gcc places
+    a function call which checks whether the access is granted or not. This
+    function call can be configured as an "Inline" function call or an "outline"
+    function call. The inline is 1.1~2 times faster.
 
 DELAYING PRINTK
 

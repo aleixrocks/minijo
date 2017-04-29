@@ -1,3 +1,31 @@
+VIRTUAL MEMORY
+ - Each process belives it has its entire 32-bit or 64-bit address space for
+   itself. However, this "virtual addresses" are mapped to physical pages. The
+   mapping is stored in the page-table. Each process has its own page table.
+   Threads of the same process share the same page table.
+ - The page table and TLB (see below) stores the addresses of pages, which are
+   chunks of memory (usually 4KiB).
+ - The format, location of the page table plus the page size if hardware
+   dependent. This is so because the translation from virtual adresses (issued
+   by a process running in a processor) to physical addresses is handled by
+   the hardware, namely, the Translation Lookaside Buffer (inside the
+   processor's pipeline). The TLB is just a cache that keeps track of the last
+   used pages virtual adresses and its correspoding tranlation to physical
+   addresses. When the TLB does not contain the translation, a TLB-miss happens
+   and the pipeline stalls until the physical address is read from the
+   in-memory process-dependent page table. If the requested page is not
+   loaded in main memory, a "page fault" occur and the processor jumps to
+   the page fault handler which is in charge of loading the page from disk into
+   main memory and to update the corresponding page-table entry (and the TLB
+   entry as well). 
+ - Page tables have multiple levels to reduce its size. Each process does not
+   has an array for each possible page but multiple page tables, each
+   corresponding to a different level in the page table. Each page entry either
+   contains an address to another page table or a physical page address.
+ - The Linux Kernel stores the location of the page global directory (which is
+   the first level of the page table of the process) in the mm structure of
+   each task_struct.
+
 PAGES
  - struct page -> main page struct at <linux/mm_types.h>. An instance of
    this structure is created for every page on the system.

@@ -1,7 +1,7 @@
+BASIC
  - By default, make executes the first rule it find on the makefile
  - include PATH_TO_MAKFILE includes the makefile into this makefile
  - target : prerequisite1 prerequisite2 ... ; command
-        
      - all: pipas pal pajaro ; echo "eeeeiiiis"
          - after the ; we can specify a command (is the same as writing the
            command on a new line and tab it)
@@ -19,8 +19,8 @@
          - this will exectue only once. After the firs execution 
            /home/aleix/target will exists (touch $@) and make would avoid 
            further executions of the rule.
+UTILS
  - make V=1 -> show exactly the commands used.
-
 
 VARIABLES
  - A=3; A=${A} + 1; A=$(A) + 1; #there is no difference between () and {}

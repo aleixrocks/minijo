@@ -12,6 +12,13 @@ VARIABLES BASH
  - FOO=${VARIABLE:=default} -> set default to FOO if variable is not set.
    otherwise, set the value of VARIABLE to FOO.
 
+COLORS
+ - echo with colors example:
+     color_green=`tput setaf 2`
+     color_cyan=`tput setaf 6`
+     color_reset=`tput sgr0`
+     echo "${color_green} awimabe ${color_reset}"
+
 CONTROL DE FLUX
 
      if (( )); then

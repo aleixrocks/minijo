@@ -120,8 +120,13 @@ CLEAN, DELETE, UNSTAGE, UNDO, ETC
  - git checkout -- file -> return file to last commit version
  - git rm --cached [-r] <path> -> remove files or dirs on path of the git
    tacked files. This doesn't remove the file.
- - clean -dxfn -> delete directories (d), ignored files (x), do it (f), 
+ - git clean -dxfn -> delete directories (d), ignored files (x), do it (f), 
    simulate it (n)
+
+PATCH
+ - git format-patch -1 [ sha | head ] -> create path for the specified ref
+ - git diff --cached > mypatch.patch -> create patch of all __staged__ files.
+ - git apply file.patch -> apply patch
 
 SUBMODULES
  - fetch data
@@ -143,6 +148,9 @@ SUBMODULES
      - changes in a submodule have to be individually commited inside the submodule.
      - git push --recurse-submodules=on-demand: First, pushes all submodules, and
        then, pushes the main projects. 
+ - modify submodule
+     - git mv old new -> move submodule since git 1.8.5
+     - git rm submoduledir; rm -rf .git/modules/submoduledir -> remove submodule
 
 SEARCH
  - Text in code:
@@ -156,8 +164,11 @@ SEARCH
       last occurrence of a regexp in the commit history.
     - git grep <regexp> [commit | ] <file> -> search on file of commit
  - Commit history
+    - git merge-base ref1 ref2 -> return first commont ancestor of both ref1
+      and ref2. This also works to find the last commit that was merged in one
+      of the refs to the other.
     - git merge-base --is-ancestor <commit> <commit>; echo $? -> Check if the
       first is an ancestor of the second, and exit with status 0 if true or 
       with status 1 if not. Errors are signaled by a non-zero status that
       is not 1.
-    
+

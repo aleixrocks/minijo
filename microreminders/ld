@@ -1,0 +1,73 @@
+BASIC
+ - The linker combines input files into a single output file.
+ - ld --verbose -> display default linker script
+ - ld -T script.ldd -> using script.ldd instead of default script.
+ - objdump -h objfile.o -> list sections
+ - objdump -t objfile.o (or nm) -> list symbols
+
+SECTIONS
+ - Each section has a name and size.
+ - objdump -h objfile.o -> display sections
+ - input section -> input object file section
+ - output section -> output object file section
+ - section contents -> block of data associated to a section.
+ - section maked as loadable -> the section contents should be loaded into
+   memory when the output file is run.
+ - allocatable section -> The area in memory should be set aside, but nothing
+   should be loaded there. A section that is neither allocatable nor loadable
+   typically contains some sort of debugging information.
+  - Each section has two addresses (in most cases they are the same):
+    - VMA (virtual memory address) -> address the section will have when the
+      output file is run.
+    - LMA (load memory address) -> Address at which the section will be loaded.
+
+SYMBOLS
+ - Symbol table -> Object's list of symbols
+ - A symbol might be defined or undefined. A symbol is undefined when it is
+   referenced in the input file but it is not defined in the source code.
+ - Each symbol has a name and each defined symbol has an address.
+ - Symbols are defined for eavry function and global or static variables in
+   the program source code.
+ - objdump -t objfile.o (or nm) -> list symbols
+ - typical sections:
+    - .text -> code
+    - .data -> initialized data
+    - .bss  -> uninitialized data
+
+LINKER SCRIPT
+ - comments like in C.
+ - SECTION {} -> command used to specify the order of the sections. An example
+   follows:
+
+       SECTIONS
+       {
+         . = 0x10000;
+         .text : { *(.text) }
+         . = 0x8000000;
+         .data : { *(.data) }
+         .bss : { *(.bss) }
+       }
+   
+ - . -> location counter: The current address where the next specified section
+   will be placed. It is automatically incremented after specifying a section.
+ - The second line defines an output section named '.text' Within the curly
+   braces after the output section name, you list the names of the input
+   sections which should be placed into this output section.  The `*' is a
+   wildcard which matches any file name. The expression `*(.text)' means all
+   `.text' input sections in all input files.
+ - The linker will ensure that each output section has the required alignment,
+   by increasing the location counter if necessary. For instance, in this
+   example, the linker might need to create a small gap between the .data and
+   .bss sections.
+
+ - ENTRY (symbol) -> This is the entry point, is specifies the first
+   instruction to execute in a program. To determine the very first entry
+   point, the linker checks the following in order:
+     - '-e' entry command line option
+     - the ENTRY(symbol) comamnd in a linker script
+     - A default value such as 'start', but there are others.
+     - The address of the first byte of the '.text' section, if present.
+     - The address 0.
+ 
+ - INCLUDE filename -> include 'filement' at the exact point where INCLUDE is.
+ - 

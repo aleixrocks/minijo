@@ -1,0 +1,69 @@
+
+BUILD OBJECTS
+ - head-y := arch/tsar/kernel/head.o -> here, header is included to be linked
+   first
+ - $(head-y) lists objects to be linked first in vmlinux.
+ - $(init-y) objects will be located after $(head-y).
+   Then the rest follows in this order:
+   $(core-y), $(libs-y), $(drivers-y) and $(net-y).
+ - $(libs-y) lists directories where a lib.a archive can be located.
+   The rest list directories where a built-in.o object file can be
+   located.
+
+HEADER FILES
+ - The arch header files (such as linux/arch/tsar/include/) constitute the two
+   interfaces between the architecture-specific and architecture-independent code
+   required by Linux.
+
+    - The first portion of these headers (subdirectory asm/) is part of the kernel
+      interface and is used internally by the kernel source code.
+    - The second portion (uapi/asm/) is part of the user interface and is meant to
+      be exported to user space—even though the various standard C libraries tend to
+      reimplement the headers instead of including the exported ones. These
+      interfaces are not completely airtight, as many of the asm headers are used by
+      user space.
+ 
+ - Much architectures share some of this include files. Hence, they are placed on
+   a generic layer of header files (in linux/include/asm-generic/ and
+   linux/include/uapi/asm-generic/).
+ - Generic files are used like this in the Makefiles:
+      generic-y += atomic.h
+      generic-y += barrier.h
+      generic-y += bitops.h
+
+BOOT OVERVIEW
+
+The last step of the early boot code is to jump to the first
+architecture-independent C function that Linux provides: start_kernel().
+start_kernel() initializes all kernel systems. stat_kernel() finally calls
+rest_init(), which creates the first two kernel threads ( kernel_init, and
+kthreadd) and morphs into the boot idle thread. When the kernel calls
+rest_init(),  the memory-management subsystem is fully operational, the boot
+processor is running and able to process both exceptions and interrupts, and
+the system has a notion of time.
+
+The kernel_init is created first because it must obtain PID 1. This is the PID
+that the init process (i.e. the first user space process born from kernel_init)
+traditionally inherits. It's first task is to wait for the creation of the
+kthreadd thread.kthreadd is the kernel thread daemon in charge of
+asynchronously spawning new kernel threads whenever requested.  Once kthreadd
+is started, kernel_init proceeds with the second phase of booting, which
+includes a few architecture-specific initializations. In the case of a
+multiprocessor system, kernel_init begins by starting the other processors
+before initializing the various subsystems composing the driver model (e.g.
+devtmpfs, devices, buses, etc.) and, later, using the defined initialization
+calls to bring up the actual device drivers for the underlying hardware system.
+
+It is also through these initialization calls that the initramfs is unpacked
+and the initial root filesystem (rootfs) is mounted. There are a few options
+for mounting an initial rootfs but I have found initramfs to be the simplest
+when porting Linux. Basically this means that the rootfs is statically built at
+compilation time and integrated into the kernel binary image. After being
+mounted, the rootfs can give access to the mandatory /init and /dev/console.
+
+Linux lets applications fault at their first instruction because the pages
+containing their text segment have usually not been loaded yet.
+
+System calls are treated as software interrupts since they are accessed by a
+user instruction that makes the processor automatically switch to kernel mode,
+like hardware interrupts do
