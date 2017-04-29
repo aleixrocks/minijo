@@ -25,6 +25,28 @@ VIRTUAL MEMORY
  - The Linux Kernel stores the location of the page global directory (which is
    the first level of the page table of the process) in the mm structure of
    each task_struct.
+ - The address space is divided in two (this is named flat address space). On a
+   32 bit machine, for example, the lower 3GiB are reserver for user-space
+   processes and the upper 1GiB is for kernel-only use. This means that (on
+   such systems) a user-space process can only use 3GiB of memory and the
+   kernel 1GiB of memory because they cannot address more. The reason for such
+   limitation is performance.  It could be possible to switch the address space
+   every time a mode switch (user to kernel or kernel to user spaces) is done,
+   but this would require to also flush the TLB and even the cache on some
+   architectures. Think that you only have 32 bits of addresses, that you need
+   to differentiate user space from kernel space to protect kernel space and
+   that you cannot change address spaces when changing form user to kernel or
+   kernel to user because of performance. Then, you are simply limited.
+ - The term HIGH MEMORY and LOW MEMORY arise from this fact. All memory that it
+   is addresable is known as "low memory". All memory that it is not
+   addressable is "high memory". Hence, for the kernel, the 3GiB of user-space
+   memory is "high memory" because its address space is limited to 1GiB.
+   Sometimes, the kernel needs to access user space memory, such as when it has
+   to copy to/from user parameters on a system call or when it has to zero a
+   page. To access "high memory" the kernel can temporarily map user-space
+   pages into kernel space pages with the kmap() and kmap_atomic() functions.
+   Once the kernel is done which such pages, it has de unmap them with kunmap()
+   and kumap_atomic().
 
 PAGES
  - struct page -> main page struct at <linux/mm_types.h>. An instance of
