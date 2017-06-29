@@ -1,3 +1,36 @@
+INTRODUCTION (AND INITIALIZATION)
+=====================
+
+The role of trap_init() is to configure the hardware and software
+architecture-specific parts involved in the interrupt/exception infrastructure.
+trap_init() is executed by start_kernel() (the first C function executed when
+booting)
+
+On a typical processor, a possible overview of what happens on an interrupt is
+as follows:
+
+ - The processor automatically switches to kernel mode, disables interrupts,
+   and its execution flow is diverted to a special address that leads to the
+   main interrupt handler.
+ - This main handler retrieves the exact cause of the interrupt and usually
+   jumps to a sub-handler specialized for this cause. Often an interrupt vector
+   table is used to associate an interrupt sub-handler with a specific cause,
+   and on some architectures there is no need for a main interrupt handler, as
+   the routing between the actual interrupt event and the interrupt vector is
+   done transparently by hardware.
+ - The sub-handler saves the current context, which is the state of the
+   processor that can later be restored in order to resume exactly where it
+   stopped. It may also re-enable the interrupts (thus making Linux re-entrant)
+   and usually jumps to a C function that is better able to handle the cause of
+   the exception. For example, such a C function can, in the case of an access
+   to an illegal memory address, terminate the faulty user program with a
+   SIGBUS signal.
+
+Once all of this interrupt infrastructure is in place, trap_init() merely
+initializes the interrupt vector table and configures the processor via one of
+its system registers to reflect the address of the main interrupt handler (or
+of the interrupt vector table directly).
+
 
 TOP HALVES
 ======================

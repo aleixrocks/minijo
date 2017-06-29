@@ -2,7 +2,14 @@ VIRTUAL MEMORY
  - Each process belives it has its entire 32-bit or 64-bit address space for
    itself. However, this "virtual addresses" are mapped to physical pages. The
    mapping is stored in the page-table. Each process has its own page table.
-   Threads of the same process share the same page table.
+   Threads of the same process share the same page table. When a process
+   switches to another process (i.e. there is a change in the address space),
+   the page tables are switched and the TLBs (see below) flushed. Note that
+   switching to a kernel thread does not generally involve switching to another
+   page table since the kernel address space, in which all kernel threads run,
+   is defined in every page table structure. For user processes, the switch to
+   their own page table is performed by the architecture-specific routine
+   switch_mm().
  - The page table and TLB (see below) stores the addresses of pages, which are
    chunks of memory (usually 4KiB).
  - The format, location of the page table plus the page size if hardware
@@ -37,11 +44,55 @@ VIRTUAL MEMORY
    to differentiate user space from kernel space to protect kernel space and
    that you cannot change address spaces when changing form user to kernel or
    kernel to user because of performance. Then, you are simply limited.
- - The term HIGH MEMORY and LOW MEMORY arise from this fact. All memory that it
-   is addresable is known as "low memory". All memory that it is not
-   addressable is "high memory". Hence, for the kernel, the 3GiB of user-space
-   memory is "high memory" because its address space is limited to 1GiB.
-   Sometimes, the kernel needs to access user space memory, such as when it has
+ - The term HIGH MEMORY and LOW MEMORY arise from this fact. Low memory is
+   physical memory that is permanently mapped to virtual memory (VM), while
+   high memory is not. Roughly, almost all Linux kernel memory is low memory
+   while user-level memory is high memory. More precisely, the Linux Kernel
+   splits virtual memory into kernel and user space. When a context switch
+   between processes occur, the address space of the current process changes
+   for another one. However, the Kernel mapping does not change (its pages are
+   permanently mapped into the system's page table), so it is known as low
+   memory (most of it). Not all the kernel space memory is low memory because
+   the kernel needs to keep some addresses to map IO devices (such as DMA
+   devices), a region for vmalloc() to allocate large portions of virtually
+   contiguous memory (not necessarily physically contiguous) and a region to map user space pages.  Comparatively,
+   kmalloc() guarantees that the pages are both physically and virtually
+   contiguous, while vmalloc only guarantees that pages are virtually
+   contiguous. Finding large portions of physically contiguous memory might be
+   difficult, and this is why vmalloc exist.  In fact, vmalloc is similar to
+   how the malloc syscall works.
+   
+   *** verify!!
+   Every
+   kernel process can access directly the current user thread memory, but if it
+   wants to access memory from any other user thread than the current one, it
+   has to temporarly map its memory into a special area in the kernel space and
+   unmapp it after it has finished using it.  This is done with the kmap()
+   kernel function
+
+   ***
+
+ - Another high/low mem definition: The term HIGH MEMORY and LOW MEMORY arise
+   from this fact. High memory (highmem) is used when the size of physical
+   memory approaches or exceeds the maximum size of virtual memory. At that
+   point it becomes impossible for the kernel to keep all of the available
+   physical memory mapped at all times.  This means the kernel needs to start
+   using temporary mappings of the pieces of physical memory that it wants to
+   access. The part of (physical) memory not covered by a permanent mapping is
+   what we refer to as 'highmem'.  There are various architecture dependent
+   constraints on where exactly that border lies.  This means that the kernel
+   can at most map 1GiB of physical memory at any one time, but because we need
+   virtual address space for other things - including temporary maps to access
+   the rest of the physical memory - the actual direct map will typically be
+   less (usually around ~896MiB). Lets say a system with configuration as
+   follows, 2GB of physical RAM, 40 MB of physical io address space, 240 MB of
+   vmalloc address space, 32 MB for persistent kernel map The maximum RAM which
+   can be mapped as low mem = 1GB - (40 MB + 240 MB + 32MB) = 712MB. The Rest
+   of RAM (1GB - 712MB) will fall as HIGH_MEM.  Other architectures that have
+   mm context tagged TLBs can have separate kernel and user maps.  Some
+   hardware (like some ARMs), however, have limited virtual space when they use
+   mm context tags.
+ - Sometimes, the kernel needs to access user-space highmem, such as when it has
    to copy to/from user parameters on a system call or when it has to zero a
    page. To access "high memory" the kernel can temporarily map user-space
    pages into kernel space pages with the kmap() and kmap_atomic() functions.

@@ -1,28 +1,85 @@
 INTEL VS AT&T
-
-  In Intel syntax there are no register prefixes or immed prefixes. In AT&T
-  however registers are prefixed with a '%' and immed's are prefixed with a
-  '$'.  Intel syntax hexadecimal or binary immed data are suffixed with 'h' and
-  'b' respectively. Also if the first hexadecimal digit is a letter then the
-  value is prefixed by a '0'.
-  
-  Example:
-    Intex Syntax
-      instr	dest,source
-      mov	eax,1
-      mov	ebx,0ffh
-      int	80h
-    
-    AT&T Syntax
-      instr 	source,dest
-      movl	$1,%eax
-      movl	$0xff,%ebx
-      int 	$0x80
+ - In Intel syntax there are no register prefixes or immed prefixes. In AT&T
+   however registers are prefixed with a '%' and immed's are prefixed with a
+   '$'.  Intel syntax hexadecimal or binary immed data are suffixed with 'h' and
+   'b' respectively. Also if the first hexadecimal digit is a letter then the
+   value is prefixed by a '0'.
+   
+   Example:
+     Intex Syntax
+       instr    dest,source
+       mov      eax,1
+       mov      ebx,0ffh
+       int      80h
+     
+     AT&T Syntax
+       instr    source,dest
+       movl     $1,%eax
+       movl     $0xff,%ebx
+       int      $0x80
 
 BASICS
  - instr source, dest -> direction of operands
-    - movl $0xff,%ebx
+     - movl $0xff,%ebx
  - instr %segreg:disp(base,index,scale),foo -> [base+index*scale+disp] -> memory operands
-    - subl -0x20(%ebx,%ecx,0x4),%eax -> [ebx+ecx*4h-20h]
+     - subl -0x20(%ebx,%ecx,0x4),%eax -> [ebx+ecx*4h-20h]
+ - The size of the data to be used is specified in the instruction by using
+   sufixes: movb (byte), movw (word, 2 bytes), movl (long, 4 bytes)
+ - movb label, %eax -> moves the __VALUE__, while movb $label, %eax moves the
+   __ADDRESS__
+ - movb $'A', %al -> load ASCII code of A into %al register
+ - leaw 4(ebx,eax,8), %esi -> load the address of [EBX + 8*EAX + 4] into ESI.
+   in contrast with mov, this does not loads the in-memory value of the
+   resulting operation [EBX + 8*EAX + 4] but its addres. (mov can't simply load
+   the addres of the resulting operation, just can load the value, hence lea is
+   necessary).
+ - .balign 8 -> advances the location counter until it is a multiple of 8.
+   note that .align behaviour changes depending on the target plataform. baling
+   is gas exclusive but its behaviour is fixed.
+
+COMPARISIONS AND JUMPS
+ - cmpl %eax, $0x3 -> Compares the first source operand with the second source
+   operand and sets the status flags in the EFLAGS register according to the
+   results. The comparison is performed by subtracting the second operand from
+   the first operand and then setting the status flags.
+     - The CF, OF, SF, ZF, AF, and PF flags are set according to the result.
+ - Search for "jcc" on the intel manual to see all jump options. Here are some
+   of them:
+    - jne -> jump when not equal
+    - jeq -> jump when equal
+    - jlt -> jump when less than
+    - jgt -> jump when greater than
+ - jmp label -> unconditional jump to label.
+
+DATA
+ - welcome: .asciz "Hello, World\n\r" -> define string and assign a label to it
+   for further reference. This actually stores the ASCII characters in memory.
+ - .set VARNAME, VALUE -> Compiler time constant
+
+STRINGS
+ - loadsb -> perfect utilitz to deal with strings. loads the memory value of
+   the address pointed by %si into the %al register. Then, increments
+   the value of the address in %si. Hence, if %si points to a string
+   generated with .asciz ended with a null character, it will load a new char
+   of the string everytime is called. The returned values needs to be checked
+   for the null character indicating the end of the string. (it also supports
+   word and double word).
+
+
+ATOMIC OPERATIONS
+ - Put the "LOCK" prefix in front of operations such as ADD, SUB, INC, etc
+   to make them atomic.
+ - BTS (%eax), $0x0 -> Test and set operation. It copies the bit specified in the
+   second operand (bit zero in the example) in the CF flag (carry flag) and always
+   sets the same bit in the (%eax) memory position (or register). Use jump
+   "JC rel8" which jumps when CF=1 with BTS.
+
+LOCATION COUNTER
+ - The '.' symbol is the location counter and stores the current memory
+   location where the next instruction is placed. This symbol can be modified
+   in both an assembly source file or a linker script. For instance:
+      - . = .text + 510 -> advance location counter by 510 starting from
+        the section .text.
+
 
 

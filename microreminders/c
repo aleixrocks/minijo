@@ -1,0 +1,65 @@
+INITIALIZE
+ - a[100] = { 0 }; -> intialize array the 100 array elements to 0.
+
+
+
+
+INLINE ASSEMBLY
+ - asm("assembly code") and __asm__("assembly code") are both equivalent
+ - It is possible to specify arguments to the asm function:
+
+      asm ( "assembly code"
+                 : output operands                  /* optional */
+                 : input operands                   /* optional */
+                 : list of clobbered registers      /* optional */
+      );
+ - If there are no output operands but there are input operands, we must place
+   two consecutive colons surrounding the place where the output operands would
+   go. 
+ - Register naming for inline assembly:
+     +---+--------------------+
+     | r |    Register(s)     |
+     +---+--------------------+
+     | a |   %eax, %ax, %al   |
+     | b |   %ebx, %bx, %bl   |
+     | c |   %ecx, %cx, %cl   |
+     | d |   %edx, %dx, %dl   |
+     | S |   %esi, %si        |
+     | D |   %edi, %di        |
+     +---+--------------------+
+ - Examples:
+     - asm ("movl %%eax, %0;" : "=r" ( val )); -> variable val is kept on a
+       register "r" and stored into memory.
+
+     - int no = 100, val ;
+       asm ("movl %1, %%ebx;"
+            "movl %%ebx, %0;"
+            : "=r" ( val )        /* output */
+            : "r" ( no )         /* input */
+            : "%ebx"         /* clobbered register */
+       );
+
+       val" is the output operand, referred to by %0 and "no" is the input
+       operand, referred to by %1. "r" is a constraint on the operands, which says to
+       GCC to use any register for storing the operands.
+
+       Output operand constraint should have a constraint modifier "=" to specify the
+       output operand in write-only mode. There are two %’s prefixed to the register
+       name, which helps GCC to distinguish between the operands and registers.
+       operands have a single % as prefix.
+
+       The clobbered register %ebx after the third colon informs the GCC that the
+       value of %ebx is to be modified inside "asm", so GCC won't use this register to
+       store any other value.
+     - int arg1, arg2, add ;
+       __asm__ ( "addl %%ebx, %%eax;"
+               : "=a" (add)
+               : "a" (arg1), "b" (arg2) );
+
+       Here "add" is the output operand referred to by register eax. And arg1 and
+       arg2 are input operands referred to by registers eax and ebx respectively.
+     - Starting with GCC 3.1, it is possible to use labels instead of numbers:
+       int current_task;
+       asm( "str %[output]"
+          : [output] "=r" (current_task)
+       );

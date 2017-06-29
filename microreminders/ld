@@ -1,9 +1,16 @@
 BASIC
  - The linker combines input files into a single output file.
  - ld --verbose -> display default linker script
- - ld -T script.ldd -> using script.ldd instead of default script.
+ - ld -T script.lds -> using script.lds instead of default script.
+ - ld -Ttext ld -Ttext 0x7c00 -> assume that .text section will be loaded
+   to 0x7c00.
+ - ld --oformat=binary main.o -o main -> generate only instructions, no
+   metadata, just as the source file is.
  - objdump -h objfile.o -> list sections
  - objdump -t objfile.o (or nm) -> list symbols
+ - objdump -D -b binary -mi386 -Maddr16,data16 <object-file> -> disassemble
+   raw x86 binary. we have to specify the arch (-mi386) and the initial size
+   of addresses and data (-Maddr16,data16)
 
 SECTIONS
  - Each section has a name and size.
@@ -38,6 +45,23 @@ LINKER SCRIPT
  - comments like in C.
  - SECTION {} -> command used to specify the order of the sections. An example
    follows:
+
+   Example 1:
+       SECTIONS
+       {
+          . = 0x7c00;          // starting address
+          .text : {            // start defining the final .text section
+             main.o(.text  );  // it is composed of the .text section of the main.o file
+             main.o(.stage2);  // and the section .stage2 of the main.o file
+          }
+          ld_stage2_ns = (SIZEOF(.text) / 512) - 1; //here, a variable that is
+                                                    //used in .S code is defined
+                                                    //with the number of disk
+                                                    //sectors of .text section
+                                                    //minus one
+       }
+
+   Example 2:
 
        SECTIONS
        {

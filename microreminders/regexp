@@ -1,0 +1,14 @@
+- grep -> basic regexp
+- egrep or grep -E -> extended regexp. It uses the following special
+  characters: ‘?’, ‘+’, ‘{’, ‘|’, ‘(’, and ‘)’
+
+- \s -> whitespace
+- \S -> any non-whitespace character
+- \b -> word boundary. Can be end of line, beginning of line or whitespace char.
+- . -> match exactly one character of any kind. "..." matches any word of 3 chars.
+- * -> matches zero or more number of instances of the preceeding character
+     - for instance, "Hey!*" matches "Hey" and "Hey!!!".
+     - (extended regexp in grep) Use pharentesis to match multiple characters,
+       sucha as: "Hey(!?)*" to match "Hey" and "Hey!?!?!?"
+- $ -> end of line
+- ^ -> beginning of line

@@ -12,6 +12,8 @@ GENERAL
  - kern-tree/Documentation/sysrq.txt -> sysrq info
  - kern-tree/Documentation/printk-formats.txt -> printk formats
 
+
+
 UNDERSTANDING OOPS AND PANIC
  - A out of memory Oops looks like:
 
@@ -86,7 +88,53 @@ DEBUG FUNCTION
  - dump_stack() -> dumps the contents of the registers and a function back 
    trace to the console
  - sched_show_task(prev) -> like dump_stack but more info.
+ - pr_debug() -> only enabled if the c file where pr_debug is, is compiled 
+   with -DDEBUG like this: "CFLAGS_[filename].o := -DDEBUG" in the makefile.
 
+DYNAMIC DEBUG
+ - dynamic debug enables pr_debug("message") printk like functions per file at
+   runtime. This feature is both configured through the debug filesystem or the
+   kernel command line for boot time logs. It requires CONFIG_DYNAMIC_DEBUG.
+ - all info in: Documentation/dynamic-debug-howto.txt
+ - basic examples:
+    - echo 'file svcsock.c line 1603 +p' > <debugfs>/dynamic_debug/control ->
+      this enables the dynamic print in the specified file and line.
+    - echo "func pnpacpi_get_resources +p; func pnp_assign_mem +p" \
+      <debugfs>/dynamic_debug/control -> enable pnpacpi_get_resources and
+      pnp_assign_mem functions.
+    - echo "file drivers/usb/* +p" > <debugfs>/dynamic_debug/control ->
+      wildcards accepted.
+ - other places to enable:
+     - also in /etc/modprobe.d/*.conf
+         options foo dyndbg=+pt
+         options foo dyndbg # defaults to +p
+     - kenel command line
+         foo.dyndbg=" func bar +p; func buz +mp" -> foo. is stripped and passed
+         dyndbg=" func bar +p; func buz +mp" -> also ok
+     - args to modprobe
+         modprobe foo dyndbg==pmf # override previous settings
+ - more examples (only the echo part):
+    - module sunrpc +p -> apply to specified sunrpc module
+    - format svcrdma: +p -> The given string is searched for in the dynamic
+      debug format string. Note that the string does not need to match the
+      entire format, only some part
+    - line 1600-1605 +p-> the six lines from line 1600 to line 1605
+    - line -1605 +p -> the 1605 lines from line 1 to line 1605
+    - line 1600- +p -> all lines from line 1600 to the end of the file
+    - file svcsock.c +p -> enable on file
+    - func svc_tcp_accept +p-> enable on function
+ - The change operation is one of:
+    - remove the given flags
+    + add the given flags
+    = set the flags to the given flags
+ - The flags are:
+    p enables the pr_debug() callsite.
+    f Include the function name in the printed message
+    l Include line number in the printed message
+    m Include module name in the printed message
+    t Include thread ID in messages not generated from interrupt context
+    _ No flags are set. (Or'd with others on input)
+  
 MAGIC SysRq Key
  Special combinations of keys enable you to communicate with the kernel
  regardless of what else it is doing.
@@ -202,6 +250,11 @@ KGDB
  - start qemu with -s option, then start a gdb instance with the vmlinux image
    and connect to the remote virtual machine with "target remote localhost:1234"
 
+REMOTE SERIAL CONSOLE
+ - screen /dev/ttyS0 9600 -> connect to remote kernel through serial port (and
+   press enter to see the prompt). (ctrl-A \ to exit)
+ - sudo minicom -D /dev/ttyUSB0 -b 9600 -> connect to remote kernel through
+   serial port. (ctrl-A X to exit)
 
 MY_DEBUG CONFIGURATION
  - kernel hacking

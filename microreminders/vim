@@ -99,6 +99,10 @@ WINDOWS
  - Ctrl-w h (or j or k or l) to navigate between windows
  - Ctrl-w c -> close current window
  - Ctrl-w o -> close all windows but the current one
+ - Ctrl-w L -> move split to the right
+ - Ctrl-w J -> move split to the bottom
+ - Ctrl-w r -> rotate splits (from vertical to horizontal or the other
+   way arround.
 
 SESSIONS
  - mksession! ~/today.ses -> save session

@@ -1,0 +1,184 @@
+BASIC
+ - fio is a benchmarking application that takes an input fio script and
+   outputs several disk metrics.
+ - HOWTO file in fio source directory explains all available options.
+ - examples directory in the fio source directory populates several fio
+   scripts.
+ - Random read example:
+      $ cat random-read-test.fio #display fio script
+      ; random read of 128mb of data
+      [global]          # global options applicable to all threads
+      direct=1
+
+      [random-read th1] # name of the thread, follow the thread options
+      rw=randread       # perform random reads
+      size=128m         # on a 128 MiB file
+      directory=/tmp/fio-testing/data # stored in this directory (randomly generated)
+      direct=0          # overwrite global option
+
+      [random-read th2] # name of the next thread, follow the thread options
+      rw=randread
+      size=128m
+      directory=/tmp/fio-testing/data
+      $ fio random-read-test.fio #execute fio
+ - It is possible to define multiple [global] sections. A thread/job is only
+   affected by a [global] section residing above it.
+ - It is possible to use shell variables in the script. fio defines the
+   following ones:
+     - $pagesize -> page size
+     - $mb_memory -> MiB of total memory
+     - $ncpus -> number of cpus
+ - some basic options:
+    - rw=randread tells fio to use a random reading access pattern
+    - size=128m specifies that it should transfer a total of 128 megabytes of data
+      before calling the test complete
+    - directory parameter explicitly tells fio what filesystem to use for the IO
+      benchmark. If not specified, fio uses the current directory.
+ - fio defaults to not locking any shared files that several threads might be
+   reading/writing to it. To change this behaviour see the option below
+   "lockfile"
+ - fio can have each thread to work with several files, look at options
+   "nrfiles", "openfiles" and "file_service_type"
+ - It is possible to automatically stop fio when certain condition is met, such
+   as stoping when bandwidth falls to certain threshold. see "steady state" in
+   fio HOWTO.
+ 
+
+SCRIPT COMMON OPTIONS
+
+- rw -> Allows to specify sequential or random reads and or writes in many
+  combinations.
+- blocksize=int -> Block size used for I/O. Defaults to 4096.
+- blocksize=n,k -> n block size for reads and k block size for writes.
+- numjobs=4 -> fork 4 indentical jobs. See "thread" option.
+- thread -> Fio defaults to forking jobs, however if this option is given, will
+  use threads instead.
+- filename -> file name of the file to work with. If the filename is the same
+  between multiple threads/jobs, they share the file.
+- size -> file size. Fio will divide this size between the available files
+  determined by options such as :option:`nrfiles`, :option:`filename`, unless
+  :option:`filesize` is specified by the job
+- loops -> Run the specified number of iterations of this job. Used to repeat
+  the same workload a given number of times. Defaults to 1.
+- ioengine -> can select how the IO requests are issued to the
+  kernel.
+    - psync -> default in Linux. use pread/pwrite syscalls at specified offset.
+      The pread and pwrite do io at offset without changing the file offset.
+      See man pread. 
+    - sync ->  use read/write syscalls. To read at specified position, is
+      necessary to do a lseek to move the file offset first. see man read
+    - vsync -> use readv/writev. read/write multiple buffers. see man readv.
+    - libaio -> asynchronous io
+    - mmap -> file is memory mapped
+- iodepth -> Number of I/O units to keep in flight against the file.  Note that
+  increasing iodepth beyond 1 will not affect synchronous ioengines.
+  Interesting to combine with ioengine=libaio for AIO. The OS might limit the
+  actual iodepth, always check the results obtained.
+- invalidate -> causes the kernel buffer and page cache to be
+  invalidated for a file before beginning the benchmark.
+- pre_read=1 -> causes the files to be read before staring the tests (the
+  opposite of invalidate)
+- runtime -> specifies that a test should run for a given amount of time and
+  then be considered complete.
+- thinktime=time -> parameter inserts a specified delay between IO requests in
+  ms, which is useful for simulating a real application that would normally
+  perform some work on data that is being read from disk.
+- thinktime_spin=time -> pretend to spend CPU time doing something with the
+  data received, before falling back to sleeping for the rest of the period
+  specified by :option:`thinktime`.
+- fsync=n -> can be used to issue a sync call after every n writes issued.
+- write_iolog, read_iolog -> cause fio to write or read a log of all the IO
+  requests issued. With these commands you can capture a log of the exact IO
+  commands issued, edit that log to give exactly the IO workload you want, and
+  benchmark those exact IO requests. The iolog options are great for importing
+  an IO access pattern from an existing application for use with fio.
+- direct -> If value is true, use non-buffered I/O (required by libaio on linux)
+- lockfile -> specify the locking of a shared file for multiple threads
+   - none -> no locking
+   - exclusive -> only one thread of process may do I/O at a time.
+   - Read-write locking on the file. Many readers may
+     access the file at the same time, but writes get exclusive access.
+
+
+DEBUG
+ - --debug=all -> show debug info for everything
+ - --debug=file,io,mem,process -> show debug info for the specified options
+ - There are a lot of more options. See man fio or HOWTO document in source
+   code repository.
+
+
+RESULTS
+ - structure by example:
+     # per thread, summary of configured parameters
+     random-read th1: (g=0): rw=randread, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=psync, iodepth=1
+     random-read th2: (g=0): rw=randread, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=psync, iodepth=1
+
+     # in-time metrics (reported while executing)
+     Jobs: 2 (f=2): [r(2)][-.-%][r=67.1MiB/s,w=0KiB/s][r=17.2k,w=0 IOPS][eta 00m:00s]
+
+     # Per-thread detailed statistics (one of this blocks per thread) detailed below
+     random-read th1: (groupid=0, jobs=1): err= 0: pid=5444: Thu May 11 19:23:56 2017
+        read: IOPS=8668, BW=33.9MiB/s (35.5MB/s)(128MiB/3780msec)
+         clat (usec): min=95, max=18157, avg=114.10, stdev=101.76
+          lat (usec): min=96, max=18157, avg=114.15, stdev=101.76
+         clat percentiles (usec):
+          |  1.00th=[   97],  5.00th=[   99], 10.00th=[  100], 20.00th=[  102],
+          | 30.00th=[  104], 40.00th=[  106], 50.00th=[  107], 60.00th=[  108],
+          | 70.00th=[  110], 80.00th=[  113], 90.00th=[  153], 95.00th=[  167],
+          | 99.00th=[  179], 99.50th=[  181], 99.90th=[  185], 99.95th=[  187],
+          | 99.99th=[  245]
+         lat (usec) : 100=7.92%, 250=92.07%, 500=0.01%, 1000=0.01%
+         lat (msec) : 20=0.01%
+       cpu          : usr=0.64%, sys=4.45%, ctx=32769, majf=0, minf=8
+       IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+          submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+          complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+          issued rwt: total=32768,0,0, short=0,0,0, dropped=0,0,0
+          latency   : target=0, window=0, percentile=100.00%, depth=1
+
+     ...... (other threads stats here)
+
+     # Overall thread group statistics
+     Run status group 0 (all jobs):
+        READ: bw=67.7MiB/s (71.0MB/s), 33.9MiB/s-33.9MiB/s (35.5MB/s-35.5MB/s), io=256MiB (268MB), run=3779-3780msec
+
+     # Overall disk statistics
+     Disk stats (read/write):
+       sda: ios=63201/2, merge=0/10, ticks=6868/16, in_queue=6884, util=96.64%
+
+ - bw -> Shows the average bandwidth achieved by the test. The "per=" field
+   (if present) means the total io contribution of this thread to the total
+   io of all threads.
+ - slat -> The submit latency reports how long did it take to submit this IO to
+   the kernel for processing, but does not include the completion time.
+ - clat -> The completion latency is the time between submitting a request
+   (just when slat ends) and it being completed. This does not include the
+   submision latency.
+ - lat ->  This is slat + clat
+ - IO depths -> Histogram of requests pending in the queue. 8=96.0% tells you
+   that 96% of the time there were five, six, seven, or eight requests in the
+   async IO queue, while, based on 4=4.0%, 4% of the time there were only three
+   or four requests in the queue. If using a single thread and IO (not AIO),
+   IO depths should be 1=100%.
+ - lat(usec)/lat(msec) -> show a latency histogram. The latencies are reported
+   as intervals, so the 4=12.80%, 10=44.96% section reports that 44.96% of
+   requests took more than 4 (the previous reported value) and up to 10
+   milliseconds to complete.
+ - READ: bandwith stats per threads. If multiple threads were run, there would
+   be multiple lines.
+     - aggrb: aggregate bandwith is ?
+     
+
+AIO
+ - Linux kernel asynchronous I/O. A single process can issue multiple IO
+   request and continue running. An example of why this is beneficious is:
+   Random reads are always going to be limited by the seek time of the disk
+   head on an HDD (not SSD). Because the async IO test could issue multiple IO
+   requests before waiting for any to complete, there are more chances for
+   reads in the same disk area to be completed together, and thus an overall
+   boost in IO bandwidth.
+ - use with:
+    ioengine=libaio # AIO
+    iodepth=8       # io queue max depth
+    direct=1        # non-buffered, required on Linux
+    invalidate=1    # invalidate page cache before starting

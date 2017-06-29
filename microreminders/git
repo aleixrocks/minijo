@@ -17,6 +17,10 @@ GENERAL
 - gitignore -> per posar fitxers que no ens mostrara a git state com a 
   untracked i aixi no molesten. tipicament hi posem els ".o"
 - git mv nomVell nomNou -> canvi nom
+- index/stage/cache -> are the same thing, files "git add"ed ready to be
+  commited but not yet commited.
+- The workspace/work tree is the directory tree of (source) files that you see
+  and edit
 
 LOG
 - git log
@@ -44,6 +48,10 @@ FILTER LOG
   es important.
 
 DIFF
+- git diff [commit] -> check difference between current working copy and
+  [commit] if specified or HEAD otherwise.
+- git diff --cached [commit] -> difference between staged/cached files and
+  [commit] if specified or head otherwhise.
 - git diff foo..bar -> difference between commit foo and bar (equivalent
   to git diff foo bar)
 - git diff foo...bar -> difference between common ancestor and bar

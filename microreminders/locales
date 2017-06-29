@@ -1,0 +1,10 @@
+Locales define per-country character display options, such as currency, date
+or other special symbols. To set a system's locale, its only needed to specify
+the value of the variable LANG=en_US, for example.
+
+ - locale -> list current locale configuration
+ - locale -a -> list all current locales installed
+ - sudo locale-gen "en_US.UTF-8" -> generate the specified locale
+ - To change a locale (in Ubuntu based distros) put in /etc/default/locale:
+      LC_ALL=en_US.UTF-8
+      LANG=en_US.UTF-8

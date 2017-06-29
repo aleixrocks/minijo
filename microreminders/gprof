@@ -1,0 +1,11 @@
+NOTES
+- gprof only samples the main thread for multithreaded applications. There is
+  an ugly workaround that implies to modify the profiled application source
+  code for each thread spawned.
+
+BASIC
+ - compile and link application with -pg
+     gcc -pg hello.c -o hello
+ - Execute the application normally. The binary will create the file gmon.out.
+ - run gprof
+     gprof hello gmon.out > analysis.txt

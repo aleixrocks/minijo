@@ -1,0 +1,9 @@
+ - top -> process view
+ - iotop -> Input / output top
+ - powertop -> power usage top
+    - cpupower idle-info -> available idle C-states. An idle C-state is a CPU
+      mode in which the cpu is sleep to reduce power consumption. There are
+      several modes which have different savings and different latencies to
+      exit the idle state.
+    - cpupower monitor -m Idle_Stats -> show statistics per idle C-state
+ - tcptrack -i <interface> -> network connection top

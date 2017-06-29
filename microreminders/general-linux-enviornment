@@ -11,6 +11,18 @@
 
 # check system limits
  - ulimit -a
+ - /proc/sys/vm/overcommit_memory (check man 5 proc) -> allow the kernel to
+   malloc more memory than physical memory. The memory is only actually
+   allocated when used. In fact, when a malloc is done, only the memory address
+   range in the virtual address space is reserved.
+    - 0 activated (default)
+    - 2 deactivated
 
 # check hotkeys associated to interrupts
  - stty -a
+
+# List PID/TID
+ - pgrep <process_name> -> return all pid (not tid) for all processes that match
+   the specified name.
+ - pgrep -w <process_name> -> return all tid of all threads that match the
+   process name.

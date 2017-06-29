@@ -1,0 +1,8 @@
+
+ - -fsanitize=address -> detect Memory access instructions will be
+   instrumented to detect out-of-bounds and use-after-free bugs. address can
+   be "undefined"
+
+ - -O{1,2,3} -> optimize code without breaking compilance. Check gcc man to see
+   exactly which options enable -O1, -O2 and -O3.
+ - -Ofast -> optimize still more than O3 but breaks compilance.

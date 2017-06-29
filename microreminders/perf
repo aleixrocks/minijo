@@ -32,8 +32,8 @@ BASIC
 
 PREPRATION
  - To get complete stack traces
-     - compile applications with -fno-omit-frame-pointer 
-     -   or use perf record -g dwarf
+     - compile applications with -fno-omit-frame-pointer or
+       use perf record -g dwarf
      - compile kernel with CONFIG_FRAME_POINTER=y
 
 PERF STAT
@@ -60,7 +60,7 @@ PERF STAT
    if specified, is used to determine execution time. It is useful to use it
    with <sleep 3> to measure for three seconds.
 
-PERF PROFILE
+PERF SAMPLING/RECORD
  - perf record <command> -> sample command functions usage
  - perf record -> record commands on system (such as top)
  - perf record [-F <freq>] [command] -> at the specified <freq> frequency, samples
@@ -68,17 +68,45 @@ PERF PROFILE
    asyncronously (loot at FLAME GRAPH below). It writes perf.data file with
    traces.
  - -e,-a,-t,... of perf stat are also available here.
+ - To record perf call stacks is is necessary:
+    - compile kernel with CONFIG_FRAME_POINTER=y if you want to see
+      kernel functions
+    - and either:
+       - binary compiled with -fno-omit-frame-pointer, then run: perf -g or
+         perf --call-stack fp
+       - record perf events with: perf --call-stack dwarf
  - perf record -F 99 -a -g -- sleep 30 -> sample stack dumps for a flame graph
    for 30 seconds on all CPU's
  - perf record -F 99 -p PID -> sample on-CPU functions for the specified PID at
    99 Hertz, until ctrl-c
  - Show saved data with perf record command, see below
 
-PERF RECORD
+PERF REPORT
  - perf report -> run on the same dir where perf.data is to show the data
    recorded.
+     - The column "self" means the number of times a sample was caught at
+       exactly the current function.
+     - The column "children" shows the total percentage of the accumulated
+       number of samples caught in the current function plus all the child
+       functions from this function. (if function A calls function B, and B
+       calls function C, then C is a child of B. Also, B and C are child of A)
+     - see more info in man perf-report, under "OVERHEAD CALCULATION"
+ - perf report --hierarchy -> The default perf report display is confusing
+   because is shows the same entry several times. The hierarchy view shows
+   entries folded from the first function called that can be unfolded
+   interactively until the last function called. This is way more intuitive
+   IMHO.
  - perf report --stdio -> print data on screen as text
  - perf report -n --sort comm --stdio -> plot data sorted by command
+ - perf report --sort=srcline -> sorted by source line
+ - perf report --sort=cpu-> sorted by cpu (use perf record -a)
+ - perf report --no-children -> sort by self instead of children. Useful to see
+   from how many places a function was called (if recorded with perf record
+   --call-stack dwarf)
+
+MULTITHREADING
+ - perf record -s -g --call-stack dwarf  -> -s is to record per thread
+   perf report -T -> -T is to display per thread (it crashed when i tried)
 
 PERF TOP
  - perf top -F 49 -> sample cpu's and show top addresses and symbols
