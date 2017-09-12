@@ -246,3 +246,9 @@ The File Structure
  - struct cdev *i_cdev -> struct cdev is the kernel’s internal structure that
    represents char devices; this field contains a pointer to that structure when
    the inode refers to a char device file.
+
+
+MANAGING MODULES
+ - modinfo <module_name> -> list module info
+ - Search for the CONFIG_ option that enables module named 'usbcore'
+     fgrep -r --include=Makefile ' usbcore.o'

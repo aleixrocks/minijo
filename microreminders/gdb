@@ -140,6 +140,11 @@ CORE DUMP
    /usr/src/linux/Documentation/sysctl/kernel.txt for more info.
  - A core dump file can be examined with gdb path/to/the/binary path/to/the/core
 
+MACROS
+ - gdb loades the .gdbinit located in the current directory or in ~/.gdbinit.
+   This file can contain definitions of custom macros.
+ - source ./gdbinit -> reload gdbinit file while gdb is running. This will
+   override currently defined macros but won't delete already defined ones.
 
 
 OTHERS
@@ -231,4 +236,6 @@ OTHER COMMANDS
     - command linux strip: extirpa trosos d'un executable, com la 
       seccio .text or la symbol table
 
+PYTHON API
+ - python-interactive -> start python shell in gdb
 

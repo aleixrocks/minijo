@@ -64,8 +64,29 @@ FILTERS
      - echo '!*lock*' >> set_ftrace_filter -> the '!' symbol removes function
        listed in the filter file, wildcards are valid.
 
+FUNCTION GRAPH
+ - echo function_graph > current_tracer -> enable function graph. It records
+   the entry and exit of each function. The return address in the stack of the
+   process is hijaked for another one to account for timings. The real return
+   address is stored in a stack in the process/thread task_struct.
+ - Show name of the function in the closing brakets as a comment (disabled by
+   defautl)
+     hide: echo nofuncgraph-tail > trace_options                              
+     show: echo funcgraph-tail > trace_options
+
 
 FUNCTION PROFILING
+ - This is not the function_graph tracer. The function profiler accounts for
+   global usage times of internal kernel functions. By default, it includes
+   the time of being scheduled out (it can be changed, see below).
+
+     Function        Hit    Time            Avg             s^2
+       --------        ---    ----            ---             ---
+       __schedule   344796    4773420829 us     13844.18 us     3942666 us  
+       schedule     341844    4772511744 us     13961.08 us     1762672 us  
+       SyS_futex     11287    2418140234 us     214241.1 us     6249603 us  
+       do_futex      11287    2418136211 us     214240.8 us     6204462 us  
+
  - This doesn't takes samples but the actual values.
  - If CONFIG_FUNCTION_GRAPH_TRACER is configured in the kernel, the function
    profiler will use the function graph infrastructure to record how long a
@@ -92,6 +113,25 @@ FUNCTION PROFILING
      - echo 0 > function_profile_enabled
      - echo 1 > function_profile_enabled
      - cat trace_stat/function0  | head
+
+WHO CALLS ME
+  - Be careful with this option. It enables recording of stack traces for the
+    selected function. If a function to trace is not specified, tracing the
+    call stacks for all functions __will__ livelock the system. So check twice.
+
+      sudo su -c "echo kfree > set_ftrace_filter"
+      cat set_ftrace_filter # check again to avoid livelocks
+        kfree
+      sudo su -c "echo function > current_tracer"
+      sudo su -c "echo 1 > options/func_stack_trace"
+      cat trace | tail -5
+         => __fput
+         => fput
+         => remove_vma
+         => do_munmap
+         => sys_munmap
+      sudo su -c "echo 0 > options/func_stack_trace"
+      sudo su -c "echo > set_ftrace_filter"
 
 IMPLEMENTATION DETAILS
 
@@ -127,4 +167,5 @@ TRACE-CMD
    /sys/kernel/debug/tracing/per_cpu/cpuX/trace_pipe_raw, where X is the
    processor number. Processes are not pinned and may appear on the trace.
  
- - The overrun value is the number of entries that were dropped due to the buffer filling up, and the writer deleting the older entries.
+ - The overrun value is the number of entries that were dropped due to the
+   buffer filling up, and the writer deleting the older entries.

@@ -1,5 +1,0 @@
-sector, hard sectors or device blocks: smallest unit the hardware can address.
-  This is typically 512 on hard drives, but 2k in cd's for example.
-block: smalles unit the filesystem works with, it needs to be a multiple of 2
-  , biger than a sector and smaller than a page. Common sizes are 512 bytes, 
-  1 KiB or 4 KiB.

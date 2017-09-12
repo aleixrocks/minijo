@@ -1,0 +1,122 @@
+BASIC
+ - block devices are not sequential, it is possible to access fixed-size chucks
+   of data in random memory locations.
+ - The fixed-size chunk are called blocks.
+ - File systems are common in block devices.
+ - The "sector" is the smallest hardware-level addressable unit of all block
+   devices. Typically it is 512 but on CD-ROM, for example, it is 2KiB.
+ - Software has different goals and therefore imposes its own smallest logically
+   addressable unit, which is the "block". Hence, the block cannot be smaller
+   than the sector, must be a multiple of the sector, a power of 2 and not
+   greater than the page size (this could go away in the future).
+ - sectors are also called "hard sectors" or "device blocks". Blocks are also
+   called "filesystem blocks or I/O blocks".
+ - All device I/O must be done in units of sectors.
+
+BUFFERS AND BUFFER HEADS
+ - When a block is stored in memory —say, after a read or pending a write— it
+   is stored in a buffer. Each buffer is associated with exactly one block.The
+   buffer serves as the object that represents a disk block in memory
+ - A "buffer head" is a kernel object that contains metadata for each block
+   in-memory. It contains, among other things, from which block device the
+   block cames and which specific block the buffer is. Buffer heads are of
+   type struct buffer_head and defined in <linux/buffer_head.h>
+ - In other words, a buffer is just a sequence of bytes stored in a specific
+   page. All data that describes the buffer is in the buffer_head object.
+ - A single page can hold one or more blocks in memory.
+
+THE bio STRUCTURE
+ - The basic container for block I/O within the kernel is the bio structure,
+   which is defined in <linux/bio.h>.
+ - This structure represents block I/O operations that are in flight (active)
+   as a list of segments. A segment (not sector!!!) is a chunk of a buffer that
+   is contiguous in memory. Thus, individual buffers need not be contiguous in
+   memory. By allowing the buffers to be described in chunks, the bio structure
+   provides the capability for the kernel to perform block I/O operations of
+   even a single buffer from multiple locations in memory. Vector I/O such as
+   this is called scatter-gather I/O.
+ - The most important structures in struct bio are "b_io_vec, bi_idx and
+   bi_vcnt".
+ - Each block I/O request is represented by a bio structure. Each
+   request is composed of one or more blocks, which are stored in an array of
+   bio_vec structures. These structures act as vectors and describe each
+   segment’s location in a physical page in memory. The first segment in the
+   I/O operation is pointed to by b_io_vec. Each additional segment follows
+   after the first, for a total of bi_vcnt segments in the list. As the block
+   I/O layer submits segments in the request, the bi_idx field is updated to
+   point to the current segment.
+ - The bio structure does not contain any information about the state of a
+   buffer. It is simply an array of vectors describing one or more segments of
+   data for a single block I/O operation, plus related information.
+
+REQUEST QUEUE
+ - Block devices maintain request queues to store their pending block I/O
+   requests. Queues are defined in <linux/blkdev.h>.
+ - As long as the request queue is nonempty, the block device driver associated
+   with the queue grabs the request from the head of the queue and sub- mits it
+   to its associated block device.
+ - The request queue stores "struct request". Each struct request can be
+   composed of multiple struct bio because requests can write/read multiple
+   consecutive disk blocks. Note that although the blocks on the disk must be
+   adjacent, the blocks in memory need not be.
+
+
+IO SQUEDULERS
+ - I/O squedulers merge and sort bloq I/O requests to improve performance.
+ - There are several IO squedulers:
+    - Linus elevator (block/elevator.c): It basically does the following
+       1) merge current new request with another one if their sectors are
+          adjacent.
+       2) if there is a request waiting in the queue old enough, the new
+          request is added to the tail to prevent starvation.
+       3) if the new request can be placed between other requests in the queue
+          so that the disk spinner movement flows in the same direction (no
+          direction changes) place it there. (this is why it is named elevator,
+          because the spinner should move fluently, such as an elevator).
+       4) if no suitable insertion point exist, place it at the tail of the
+          queue.
+    - Deadline I/O scheduler (block/deadline-iosched.c): It implements several
+      features to ensure that request starvation in general, and read
+      starvation in specific, is minimized. Reads are more important than
+      writes for the general system response because applications reading block
+      until the data is ready while applications writing can continue
+      asynchronously thanks to the page cache. The Linux Elevator has higher
+      global throughput, but the deadline scheduler is more fair yet provides
+      good enough global throughput.
+        - each request is associated with an expiration time. By default, the
+          500 ms for reads and 5seconds for writes.
+        - It maintains a request queue sorted by physical location on disk
+          (such as the Linus elevator). It calls this queue the sorted queue.
+          Also, Read requests are sorted into a special read FIFO queue,
+          and write requests are inserted into a special write FIFO queue. Hence
+          there are three queues.
+        - Under normal operation, requests are pulled from the sorted queue to
+          feed the disk.
+        - If the request at the head of either the write FIFO queue or the read
+          FIFO queue expires (that is, if the current time becomes greater than
+          the expiration time associated with the request), the Deadline I/O
+          scheduler then begins servicing requests from the FIFO queue. In this
+          manner, the Deadline I/O scheduler attempts to ensure that no request
+          is outstanding longer than its expiration time
+    - The Complete Fair Queueing I/O Scheduler (CFQ) (block/cfq-iosched.c): 
+        - Within each queue, requests are coalesced with adjacent requests and
+          insertion sorted.
+        - It assigns incoming I/O requests to specific queues based on the
+          process originating the I/O request.
+        - then services the queues round robin, plucking a config- urable
+          number of requests (by default, four) from each queue before
+          continuing on to the next.
+    - The Noop scheduler (block/noop-iosched.c):
+        - It only performs merging of requests. It is intended for block
+          devices that do not suffer a penality for seeking, such as flash
+          memory.
+ 
+
+
+MANAGING PER-DEVICE IO SCHEDULERS
+ - find /sys -name scheduler -exec grep . {} + -> list per-device io schedulers
+   being used (the scheduler name between [] is the current one).
+ - echo SCHEDNAME > /sys/block/DEV/queue/scheduler -> set SCHEDNAME scheduler
+   for the DEV device at runtime.
+ - use the kernel parameter 'elevator=SCHEDNAME' to set the scheduler at
+   boot time.

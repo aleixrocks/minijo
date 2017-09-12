@@ -19,8 +19,46 @@ BASIC
          - this will exectue only once. After the firs execution 
            /home/aleix/target will exists (touch $@) and make would avoid 
            further executions of the rule.
+CONTROL FLOW
+ - if/else/elseif (be careful with spacing!!!)
+     ifeq ($(TARGET_CPU),x86)
+       TARGET_CPU_IS_X86 := 1
+     else ifeq ($(TARGET_CPU),x86_64)
+       TARGET_CPU_IS_X86 := 1
+     else
+       TARGET_CPU_IS_X86 := 0
+     endif
+
 UTILS
  - make V=1 -> show exactly the commands used.
+ - $(addprefix prefix,names…) -> add prefix to names: $(addprefix src/,foo bar)
+ - To ignore errors in a command line, write - at the beginning of the command:
+     clean:
+     	-rm -f *.o
+ - Check if variable is not defined
+     ifeq ($(BINDIR),)                                                                                                                                                 
+     	BINDIR := ./bin                                                                                                                                           
+     endif 
+ - Create a directory if needed. This is done using oder-only prerequisites
+   (which are all prerequisites listerd after "|"):
+     OBJDIR := objdir
+     OBJS := $(addprefix $(OBJDIR)/,foo.o bar.o baz.o)
+  
+     $(OBJDIR)/%.o : %.c
+     	$(COMPILE.c) $(OUTPUT_OPTION) $<
+  
+     all: $(OBJS)
+  
+     $(OBJS): | $(OBJDIR)
+  
+     $(OBJDIR):
+     	mkdir $(OBJDIR)
+
+MULTIPLE MAKEFILES
+ - Call a makefile in another subdirectory
+     rule:
+     	$(MAKE) subidr/  
+ - export -> just add the line "export" to export all variables to submakes.
 
 VARIABLES
  - A=3; A=${A} + 1; A=$(A) + 1; #there is no difference between () and {}

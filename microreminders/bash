@@ -11,6 +11,42 @@ VARIABLES BASH
  - FOO=${VARIABLE:=default} -> set default to FOO if variable is not set.
    otherwise, set the value of VARIABLE to FOO.
 
+ARRAYS
+ - create an array from string
+     A="elm1 elm2"
+     ARRAY=($A)
+ - create array directly
+     ARRAY[0]='kernel'
+     ARRAY[1]='rules'
+ - Access elements
+     echo ${ARRAY[1]}
+ - Loop over array
+     # the double quotes are needed if the array contains elements with
+     # spaces within them.
+     for CMD in "${CMDS[@]}"; do
+       echo $CMD
+     done
+
+SIGNALS
+ - When the shell receives SIGTERM (or the server exits independently), the
+   wait call will return (exiting with the server's exit code, or with the
+   signal number + 127 if a signal was received). Afterward, if the shell
+   received SIGTERM, it will call the _term function specified as the SIGTERM
+   trap handler before exiting (in which we do any cleanup and manually
+   propagate the signal to the server process using kill).
+ 
+     _term() { 
+       echo "Caught SIGTERM signal!" 
+       kill -TERM "$child" 2>/dev/null
+     }
+
+     trap _term SIGTERM
+
+     echo "Doing some initial work...";
+     /bin/start/main/server --nodaemon &
+
+     child=$! 
+     wait "$child"
 
 SPLIT STRING/CODE LINES
  - The best way to split a long path in multiple lines is to use serveral
@@ -36,10 +72,31 @@ SPLIT STRING/CODE LINES
 
 COLORS
  - echo with colors example:
-     color_green=`tput setaf 2`
-     color_cyan=`tput setaf 6`
-     color_reset=`tput sgr0`
-     echo "${color_green} awimabe ${color_reset}"
+     CGRN=`tput setaf 2`
+     CRED=`tput setaf 1`
+     CRES=`tput sgr0` 
+     echo "${CGRN} awimabe ${CRES}"
+     colorize() {
+            CLR=""
+            if [ "$1" == "true" ]; then
+                   CLR=$CGRN
+            elif [ "$1" == "false" ]; then
+                   CLR=$CRED
+            fi
+            echo "${CLR}${1}${CRES}"
+     } 
+     echo "TIME:    "`colorize $DO_TIME`
+
+JOB CONTROL
+ - set -m -> enable job control in shell scripting
+ - command & -> background command
+ - jobs -> list jobs
+ - fg -> foreground last command
+ - fg %3 -> froground third backgrounded job
+
+BASH PROMPT
+ - PS1 -> bash prompt enviroment variable, by default "\u@\h:\w>" where
+   \u is user, \h is hostname and \w is path relative to home.
 
 ARGUMENTS
  - getopts template:
@@ -77,6 +134,10 @@ ARGUMENTS
      	Usage
      fi
 
+CHECKS
+ - Use hash (for commands) or type (for commands and buil-ins) to determine
+   whether a binary is found in the PATH. 
+
 FLUX CONTROL
      if (( )); then
 
@@ -103,11 +164,16 @@ FLUX CONTROL
      
 
 
-UTILITATS SCRIPTS
- - ${variable(sense dolar!!!):-valor} -> retorna valor si variable no existeix. Si variable existeix retorna variable.
- - Per llegir directament de un fitxer a una variable VAR=$(</tmp/Fitxer)
- - Per guardar el contingut de un fitxer en una variable i despres mostarla per pantalla, s'ha de fer un echo
-   amb la variable entre comentes VAR=`cat FILE`; echo "$VAR"; Sino no fara els salts de linia
+SCRIPTING UTILS
+ - Read file into variable
+     VAR=$(</tmp/Fitxer)
+ - To plot a variable containing new lines, it has to be surrounded by double
+   colons for the newlines to be visible.
+     VAR=`cat FILE`; echo "$VAR";
+ - sorteable timestamp
+     TS=$(date +"%F-%T-%N")      -> 2017-09-01-16:55:43-761191392
+     TS=$(date +"%Y%m%d-%H%M%S") -> 20170901-170148
+
 
 
 FUNCTIONS
@@ -118,8 +184,6 @@ FUNCTIONS
       }
   - call function
       nameFunction param1 param2
-
-
 
 READ FROM A FILE
 	while read LINE
@@ -133,6 +197,8 @@ PARSE STRINGS
    and ending on the end of the string
  - ${string:position:length} -> extract substring from string begining at
    position and ending at position + length
+
+ - ${#string} -> count characters in string
 
  - ${string#pattern} -> start at the begining, first match, delete pattern
  - ${string##pattern} -> start at the begining, last match, delete pattern
@@ -151,17 +217,6 @@ PARSE STRINGS
  - if [[ $var =~ regExp ]]; then fi -> do something if var matches the regular
    expression
 
-INTERRUPTIONS
- - trap "trap_ctrl_c" 2 -> catch interrupt control-c and execute the function trap_ctrl_c
-     trap_ctrl_c() {
-	 # Do things
-         exit 0
-     }
-
-
-PARSE OPTIONS
- - search for getopts
- 
 PRACTICAL EXAMPLES
  - find | grep -o '\.[a-z]*$'| sort |uniq -c|sort -nr -> list files by type and
    count them. Thanks to Dani!

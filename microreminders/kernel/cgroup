@@ -1,0 +1,39 @@
+BASIC
+ - There are two cgroups implementations v1 and v2. v2 fixes several problems
+   of the v1 version such as non-uniform controllers and other non-scalable
+   features that have been removed.
+ - check Documentation/cgroup-v2.txt for more details.
+
+
+
+BASIC SETUP
+ - mount -t cgroup2 nodev /cgroup2 -> mount root cgroup
+ - mkdir /cgroup2/group1 -> create group in root
+ - mkdir /cgroup2/group1/nested1 -> crate subgroup
+ - mkdir /cgroup2/group1/nested2 -> create subgroup
+ - rmdir /cgroup2/group1/nested2 -> delete subgroup
+ - cat /cgroup2/cgroup.controllers -> list available controllers to be enabled
+   (by default none is enabled). If no controllers are listed, it is posible
+   that all controlers are being used by cgroup v1 (a controller can only be
+   used by a single cgroup implementation at the same time). To release the
+   controllers, boot the kernel with the option "cgroup_no_v1=all"
+ - echo "+cpu +memory -io" > /cgroup2/cgroup.subtree_control -> enable(+) or
+   disable(-) controller for the cgroup.
+
+PRIVILEGE DELEGATION
+ - A cgroup can be delegated to a less privileged user by granting write                                                                                            
+   306 access of the directory and its "cgroup.procs" file to the user.  
+ - The non-root user would then be able to create further subgroups.
+ - More info on this under Documentation/cgroup-v2.txt.
+
+HOW IT WORKS
+ -  Resources are distributed top-down and a cgroup can further distribute                                                                                           
+    a resource only if the resource has been distributed to it from the                                                                                              
+    parent.  This means that all non-root "cgroup.subtree_control" files                                                                                             
+    can only contain controllers which are enabled in the parent's                                                                                                   
+    "cgroup.subtree_control" file.  A controller can be enabled only if                                                                                              
+    the parent has the controller enabled and a controller can't be                                                                                                  
+    disabled if one or more children have it enabled.
+
+MEMORY CONTROLLER
+ - all values writen/read to the memory files are in bytes

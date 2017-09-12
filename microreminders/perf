@@ -103,9 +103,18 @@ PERF REPORT
  - perf report --no-children -> sort by self instead of children. Useful to see
    from how many places a function was called (if recorded with perf record
    --call-stack dwarf)
+ - perf report -g "graph,0.5,callee" -> bottom-to-top graph, listed by most
+   time-consuming children of entries.
+ - source code analysis (I'm not sure about this):
+    - perf report --call-graph=address -> The call stack of each entry is now
+      grouped by the source code line (if the __same__ function is called from
+      two different places they are no longer merged into a single entry).
+    - perf report --sort=srcline -> The TUI entry symbols are grouped by
+      source code lines instead of symbol names (function/symbols called from
+      two different places are now not merged into a single entry).
 
 MULTITHREADING
- - perf record -s -g --call-stack dwarf  -> -s is to record per thread
+ - perf record -s -a --call-stack dwarf  -> -s is to record per thread
    perf report -T -> -T is to display per thread (it crashed when i tried)
 
 PERF TOP

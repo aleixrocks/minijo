@@ -97,6 +97,7 @@ BRANCHES
   estava al server (origin/serverfix) que es dira a partir dara serverfix.
 - git push origin :serverfix -> elimina branca serverfix remota (si, sintaxi 
   fea k te kages)
+- git branch --unset-upstream <branch> -> stop tracking remote branch
 
 MERGE CONFLICTS
 - git status -> show the files with conflicts
@@ -109,6 +110,10 @@ MERGE CONFLICTS
 - git merge --abort -> when merging, before commiting. Abort merge. It might
   fail if we merged with uncommited changes, so always commit or stash
   everything before merging.
+- git checkout --theirs <path-to-file> -> accept the remote file while
+  resolving a conflict (run git add afterwards).
+- git checkout --ours <path-to-file> -> accept the local file while
+  resolving a conflict (run git add afterwards).
 
 STASH
  - git stash -> remove all changes to the last commit and save them as a stash.

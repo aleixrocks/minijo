@@ -8,7 +8,7 @@ BASIC
       $ cat random-read-test.fio #display fio script
       ; random read of 128mb of data
       [global]          # global options applicable to all threads
-      direct=1
+      direct=1          # bypass linux page cache
 
       [random-read th1] # name of the thread, follow the thread options
       rw=randread       # perform random reads
@@ -45,7 +45,6 @@ BASIC
  
 
 SCRIPT COMMON OPTIONS
-
 - rw -> Allows to specify sequential or random reads and or writes in many
   combinations.
 - blocksize=int -> Block size used for I/O. Defaults to 4096.
@@ -92,12 +91,16 @@ SCRIPT COMMON OPTIONS
   commands issued, edit that log to give exactly the IO workload you want, and
   benchmark those exact IO requests. The iolog options are great for importing
   an IO access pattern from an existing application for use with fio.
-- direct -> If value is true, use non-buffered I/O (required by libaio on linux)
+- direct -> If value is true, bypass linux page cache or what it is the same
+  "use non-buffered I/O" (required by libaio on linux)
 - lockfile -> specify the locking of a shared file for multiple threads
    - none -> no locking
    - exclusive -> only one thread of process may do I/O at a time.
    - Read-write locking on the file. Many readers may
      access the file at the same time, but writes get exclusive access.
+
+THREADS
+ - group_reporting -> report stats per all jobs instead of per job
 
 
 DEBUG
@@ -180,5 +183,5 @@ AIO
  - use with:
     ioengine=libaio # AIO
     iodepth=8       # io queue max depth
-    direct=1        # non-buffered, required on Linux
+    direct=1        # non-buffered IO
     invalidate=1    # invalidate page cache before starting

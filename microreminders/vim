@@ -134,6 +134,10 @@ FOLDING
  - zR -> opens all on file
 
 AUTO SPLIT LINES
+ - set wrap -> long lines are "virtually" split into new lines (although they
+   are really a single line)
+ - set nowrap -> long lines are not split and the user must scroll horizontally
+   to see all the content.
  - gq{motion} % format the line that {motion} moves over
  - {Visual}gq % format the visually selected area
  - gqq        % format the current line
@@ -154,6 +158,7 @@ ENCODING
 
 OTHERS
  - J -> join current and next line into current line
+ - set cinkeys-=0# -> indent #pragma
 
 CTAGS SUMMARY
  - Description: Go to function definition and omnicompletion

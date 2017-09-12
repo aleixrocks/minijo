@@ -152,8 +152,8 @@ The softirq handlers run with interrupts enabled and cannot sleep. A softirq
 never preempts another softirq.The only event that can preempt a softirq is an
 interrupt handler.Another softirq—even the same one—can run on another
 processor, however. While a handler runs, softirqs on the current processor are
-disabled.Another processor, however, can exe- cute other softirqs. If the same
-softirq is raised again while it is executing, another proces- sor can run it
+disabled.Another processor, however, can execute other softirqs. If the same
+softirq is raised again while it is executing, another processor can run it
 simultaneously.This means that any shared data—even global data used only
 within the softirq handler—needs proper locking (as discussed in the next two
 chapters).  This is an important point, and it is the reason tasklets are
@@ -164,7 +164,7 @@ processing on the system. Currently, only two subsystems—networking and block
 devices—directly use softirqs.Additionally, kernel timers and tasklets are
 built on top of softirqs. If you add a new softirq, you normally want to ask
 yourself why using a tasklet is insufficient.Tasklets are dynamically created
-and are simpler to use because of their weaker locking require- ments, and they
+and are simpler to use because of their weaker locking requirements, and they
 still perform quite well. Nonetheless, for timing-critical applications that
 can do their own locking in an efficient way, softirqs might be the correct
 solution.

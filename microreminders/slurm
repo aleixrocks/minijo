@@ -34,3 +34,6 @@ BASIC
      # At Mont-Blanc prototype testing
      mpirun ./mpi_binary
 
+  Interactive node
+    
+

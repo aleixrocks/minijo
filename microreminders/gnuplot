@@ -10,12 +10,21 @@ TERMINALS
     - set terminal -> list available terminals
     - set terminal {x11 | wxt | png} -> typical terminals. png produces an image, 
       that needs to be saved with "set output 'filename'". The others display a 
-      window. Each type of terminal as also options. For instance, if dashed lines
+      window. Each type of terminal has also options. For instance, if dashed lines
       are desired, it must be activated when selecting the terminal, but not all 
       terminals support dashed lines. For instance, png do not support it, but
       x11 does (when activated with "set terminal x11 dashed" and the type of
-      line is selected properly when plotting "plot 3 with lines lt 2"
+      line is selected properly when plotting "plot 3 with lines lt 2")
     
+INPUT DATA
+ - set datafile separator {whitespace | tab | comma | "<chars>"} -> set input
+   data delimiter. The default is "whitespace".
+     set datafile separator "*|" -> separated by either * or |
+ - If the data contains a header on the first row, use the following command
+   to do not use the header as numeric data. gnuplot will use this headers for
+   the x, y labels of the plot unless an explicit "title", "notitle" or other
+   similar command is used.
+     set key autotitle columnheader
 
 READ FROM STDIN
  - gnuplot -p -e "plot '-'" introduce "e" to end input
@@ -46,15 +55,17 @@ READ FROM STDIN
 
 - plot sin(x)/x -> 2d plot
 - splot sin(x*y/20) -> 3d plot
-- plot sin(x) title 'sine function', tan(x) title 'tangent' -> multiple plots per figure
+- plot sin(x) title 'sine function', tan(x) title 'tangent' -> multiple plots
+  per figure
 
-llegir de fitxers
-Ordenats per columnes, no utilitzar comes separadores. Podem elegir utilitzar nomes certes columnes amb "using"
-- plot fitxer using 1:2 (columnes 1 i 2) title 'Columns'
+READ FROM FILES
+ - Sort by columns, do not use columns as delimiters. The columns used for the
+   plot are selected with the option "using"
+     plot file_name using 1:2  title 'Columns'
 
 
-CUSTOMIAION OPTIONS
- set output  "name.png"          output to image
+CUSTOMIZATION OPTIONS
+ set output  "name.png"             output to image
  set terminal postfile              type of terminal
  set title "Force-Deflection Data"  Create a title
  set xlabel "Deflection (meters)"   put a label on the x-axis
@@ -88,26 +99,31 @@ LOOP
      splot u*sin(v),u*cos(v),bessel(u,t/50.0) w pm3d ls 1
    }
 
+LEGEND/KEY
+ - In gnuplot the legend is called key
+ - set key off -> disable key
 
-Multiple plots
+MULTIPLE PLOTS
  - set term x11 0; plot sin(x)
  - set term x11 1; plot cos(x)
 
-
-Altres opcions de customitzacio
-
-- Plot a function. To plot a function instead of a data file, try
-	plot sin(x) with lines
-- Plot in a specified range. To plot a data set in the range 0 < x < 10 and 0.2 < y < 0.6, try
-	plot [0,10] [0.2,0.6] "d1.dat" with lines
-- Plot with points. To plot with points, or to plot with lines and points, use the folloing forms
-	plot "d1.dat" with points
-	plot "d1.dat" with linespoints
-- Plot different columns of datafile. For example, to take x from column 4 and y from column 2, 
-	plot "data.dat" using 4:2 with lines
-	Plot several functions at once. To plot d1.dat against the line y(x)=exp(-x), try
-	plot "d1.dat" with lines, exp(x) with lines
-- Change the Plot Title. To change the name that appears in the 'key' in the corner of the plot, try 
-	plot "d1.dat" title 'Sample Data' with lines
-  or, if you don't like the key, try 
-	plot "d1.dat" notitle with lines
+OTHER CUSTOMIZATION OPTIONS
+  - Plot a function. To plot a function instead of a data file, try
+      plot sin(x) with lines
+  - Plot in a specified range. To plot a data set in the range 0 < x < 10 and
+    0.2 < y < 0.6, try
+      plot [0,10] [0.2,0.6] "d1.dat" with lines
+  - Plot with points. To plot with points, or to plot with lines and points,
+    use the folloing forms
+      plot "d1.dat" with points
+      plot "d1.dat" with linespoints
+  - Plot different columns of datafile. For example, to take x from column 4
+    and y from column 2, 
+      plot "data.dat" using 4:2 with lines
+    Plot several functions at once. To plot d1.dat against the line y(x)=exp(-x), try
+      plot "d1.dat" with lines, exp(x) with lines
+  - Change the Plot Title. To change the name that appears in the 'key' in the
+    corner of the plot, try 
+      plot "d1.dat" title 'Sample Data' with lines
+    or, if you don't like the key, try 
+      plot "d1.dat" notitle with lines

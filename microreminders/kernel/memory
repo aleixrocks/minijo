@@ -237,3 +237,50 @@ SLAB ALLOCATOR
     - kmem_cache struct represents a cache. it has tree slab objects for full, 
       empty and partial.
     - Each struct slab contains a list of pages.
+ - From user-space, the "slabtop" command reports real time usage of the slab
+   allocator.
+
+PAGE CACHE
+ - The address_space struct is a representation of a mapped region in the page
+   cache. This is different than the vm_area_struct. The same region of a file
+   can have 10 instances of vm_area_struct if 5 processes mmap() it twice each.
+   However, only once address_space struct exist for the region mapped. Follows
+   a description of some important fields:
+     - i_mmap: points to all vm_area_struct of this region (one-to-n mapping)
+     - host: points to the associated inode if it exists (for files) or  NULL
+       otherwise (for instance swapper)
+     - a_ops: points to the address_space operations table (i.e. its methods
+       to write or read the cache)
+     - page_tree_root: radix tree (binary tree) of all pages associated with
+       this address_space. (whenever a data access is done, the kernel
+       searches this tree to find the page where the data might or might not be)
+ - Pages in the page cache track individual disk blocks:
+ - Disk blocks are made of 512 bytes. This is the minimum that can be read or
+   written from a hard drive. A page can hold 4096/512=8 blocks.
+ - Buffer is the in-memory representation of a single physical disk block.
+   Buffers describe the mapping of a block onto a page, which is in the page
+   cache.
+ - Blocks are read with the bread() function to perform a low level read.
+ - A gang of threads named "flusher threads" are responsible to flush dirty
+   pages to disk.
+     - Pages are flushed in the following conditions:
+         - When free memory drops below /proc/sys/vm/dirty_background_ratio. In
+           this case, the threads execute the "bdi_writeback_all()" function.
+           Next write operation do not block yet, they are still done
+           asynchronously (writes syscalls return after the data has been
+           written to the page cache, not the disk).
+         - When the free memory drops below /proc/sys/vm/dirty_ratio number
+           of pages, threads issuing write operations will itself block and wait
+           until enough pages from the page cache are backed up to disk.
+         - After certain period of time, flusher threads are waken up regularly
+           to flush pages older than /proc/sys/vm/diry_expire_centisecs. In
+           this case, threads execute "wb_writeback()" function. The threads
+           timer is set at /proc/sys/vm/dirty_writeback_centisecs.
+         - When a user process calls sync or fsync syscalls.
+     - All files associated with /proc/sys/vm are documented in
+       Documentation/sysctl/vm.txt
+     - The kernel calls "wakeup_flusher_threads()" to wake up the one or more
+       flusher threads.
+     - Flusher threads are page-based; they write back whole pages.
+     - Older flusher threads implementation are known as "bdflush" and
+       "pdflush".
