@@ -77,8 +77,11 @@ SCRIPT COMMON OPTIONS
   invalidated for a file before beginning the benchmark.
 - pre_read=1 -> causes the files to be read before staring the tests (the
   opposite of invalidate)
-- runtime -> specifies that a test should run for a given amount of time and
-  then be considered complete.
+- runtime <time> -> specifies that a test should run for a given amount of time and
+  then be considered complete. If all data is read/write before the runtime,
+  it ends see time_based.
+- time_based -> run all the time specified in 'runtime', even if everything
+  is read/written.
 - thinktime=time -> parameter inserts a specified delay between IO requests in
   ms, which is useful for simulating a real application that would normally
   perform some work on data that is being read from disk.

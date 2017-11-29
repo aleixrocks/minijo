@@ -28,11 +28,18 @@ double toc(int watch)
 {
     double elapsed;
 #ifdef CLOCK
-    struct timespec now;
     clock_gettime(CLOCK, &now);
-    elapsed = now.tv_nsec - (double) watches[watch].tv_nsec;
-    elapsed *= 1.0E-9L;
-    elapsed += now.tv_sec - (double) watches[watch].tv_sec;
+    //elapsed = now.tv_nsec - (double) watches[watch].tv_nsec;
+    //elapsed *= 1.0E-9L;
+    //elapsed += now.tv_sec - (double) watches[watch].tv_sec;
+    if (now.tv_sec == watches[watch].tv_sec) {
+        elapsed = now.tv_nsec - watches[watch].tv_nsec;
+        elapsed /= 1000;
+    } else {
+        elapsed = 1000000000 - watches[watch].tv_nsec + now.tv_nsec;
+        elapsed /= 1000;
+        elapsed += (now.tv_sec - watches[watch].tv_sec)*1000000;
+    }
 #else
     clock_t now = clock();
     elapsed = (double) (now-watches[watch])/CLOCKS_PER_SEC;

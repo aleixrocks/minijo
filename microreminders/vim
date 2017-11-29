@@ -79,6 +79,9 @@ TABS
  - ZZ -> save and close tab
  - :tabm [i | +i | -i] -> move tab to i (absolute) or current+i(-i) (relative)
 
+AUTOINDENT
+ - gg=G -> reformat all file, placing tabs instead of spaces when necessary.
+
 BUFFERS
  - :ls -> list of current buffers
  - :e ../myfile -> open new file
@@ -155,6 +158,14 @@ SPACES TO TABS
 ENCODING
  - set encoding=utf-8      -> The encoding displayed.
  - set fileencoding=utf-8  -> The encoding written to file.
+
+HEX EDITOR
+ - To edit a file in hexadecimal:
+    - vi -b file -> turn off autmatic autoformatting.
+    - :%!xxd -> send data into xxd command and display hex.
+    - perform edits as usual
+    - :%!xxd -r -> return to previous format
+    - :wq 
 
 OTHERS
  - J -> join current and next line into current line

@@ -97,6 +97,10 @@ FUNCTION PROFILING
      - echo nop > current_tracer
      - echo 1 > function_profile_enabled
      - cat trace_stat/function0 | head
+ - trace_stat/function 0 only displays results for CPU0. There is a file per
+   CPU.
+ - Disabling the function profiler and then re-enabling it causes the numbers
+   to reset
  - The following example tells ftrace to ignore the time the task was
    scheduled out. Disabling the function profiler and then re-enabling it causes
    the numbers to reset. 

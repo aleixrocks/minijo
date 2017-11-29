@@ -122,6 +122,11 @@ PERF TOP
  - perf top -F 49 -ns comm,dso -> sample cpu's and show top process names and
    segments
 
+TROUBLESHOOTING
+ - If symbol names look like "_ZL5myfunRN9benchmark5StateE", it means that perf
+   was not compiled with name demangling. To solve it, install the
+   libiberty-dev binutils-dev packages and rebuild perf.
+
 
 FLAME GRAPH (CREATED WITH PERF PROFILING)
    The samples taken are the current stacks of the selected process. Hence,
