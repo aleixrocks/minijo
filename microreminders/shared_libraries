@@ -5,7 +5,12 @@ BASIC
    might load diferent libraries from another path if the path has more
    priority. The priorities are listed in man ld.so.
 
-TOOLS
+TOOLS / DEBUG
+ - LD_DEBUG=help cat -> show linux loader debug options LD_DEBUG options
+ - LD_DEBUG=all LD_DEBUG_OUTPUT=<file> <command> -> Store __all__ debug info
+   the file specified in the LD_DEBUG_OUTPUT variable.
+ - egrep "binding.*<symbol>.*" <ld_debug_output_file> -> show from which
+   library the <symbol> definition was used.
  - nm <object-file> -> list object symbols. See man nm for a description of the
    listed flags.
  - objectdump -t -> the same as above, but with more symbols

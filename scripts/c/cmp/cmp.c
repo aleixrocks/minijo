@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <math.h>
 
 typedef float type_t;
 
@@ -57,6 +58,8 @@ void compare(char *fname1, char *fname2, int fd1, int fd2, size_t size,
 	int i, nelem;
 	ssize_t r1, r2;
 	size_t remmaining;
+	unsigned long int byte = 0;
+	unsigned long int elem = 0;
 
 	remmaining = size;
 
@@ -70,11 +73,12 @@ void compare(char *fname1, char *fname2, int fd1, int fd2, size_t size,
 
 		nelem = r1/sizeof(type_t);
 
-		for (i = 0; i < nelem; i++) {
-			tol = ((double)buffer1[i])*delta;
+		for (i = 0; i < nelem; i++, byte+=sizeof(type_t), elem++) {
+			tol = fabs(((double)buffer1[i])*delta);
 
 			if ( ((double)buffer2[i]      < ((double)buffer1[i]-tol)) ||
 			   ( ((double)buffer1[i]+tol) <  (double)buffer2[i])) {
+				fprintf(stderr, "byte: %lu elem: %lu tol: %f buf1:%f buf2:%f\n", byte, elem, tol, buffer1[i], buffer2[i]);
 				mabort("Files differ");
 			}
 		}
