@@ -1,0 +1,187 @@
+Kobjects
+ - Definition
+     - Used for reference counting 
+     - Every file under /sys has a kobject representation.
+     - Hotplug event handling: Generate events that notify user space about the
+       comings and goings of hardware on the system.
+     - A kobject is like an abstract class which is inherinted by devices.
+       Because C does not support objects, they are represented as structs.
+     - An example of usage in a device named "cdev" :
+          struct cdev {
+              struct kobject kobj;
+              struct module *owner;
+              struct file_operations *ops;
+              struct list_head list;
+              dev_t dev;
+              unsigned int count;
+          };
+ - Defined at <linux/kobject.h> as "struct kobject".
+ - To convert from kobject to the device that holds it (cdev in this case):
+      struct cdev *device = container_of(kp, struct cdev, kobj);
+ - Set kobject to zero.
+ - Initialization
+     - Initialize it with void kobject_init(struct kobject *kobj), which sets its
+       reference count to 1.
+     - Set the kobject name to be displayed in its /sys entry with the
+       prink-like function:
+         int kobject_set_name(struct kobject *kobj, const char *format, ...);
+       Be careful! the operation might fail while attempting to allocate memory.
+ - kobjects work as reference counters.
+     - To manipulate it at the reference counter level:
+         struct kobject *kobject_get(struct kobject *kobj);
+         void kobject_put(struct kobject *kobj);
+       kobject_get returns NULL if error or the kobject pointer otherwise.
+       kobject_put frees the kobject if it reaches zero after decrementing it.
+     - The object continging the kobject might depend on a module. Which means
+       that getting a reference to the object (cdev for instance) needs to get
+       a reference count to the module (owner in the cdev example). (see p370
+       LDD3)
+     - Every kobject must have a release method to free the object that holds
+       the kobject. The relase method is stored in the "struct kobj_type" which
+       is itself either stored in the kobject or in a kset if it has one. In
+       any case, the following function returns the kobj_type:
+         struct kobj_type *get_ktype(struct kobject *kobj);
+  - Hierarchy
+     - Two main objects in a kobject to represent hierarchies: the parent
+       pointer and ksets.
+     - The parent points to another kobject. The parent of an USB device
+            might be the hub where it is connected. The main usage is to
+            position the object int he sysfs hierarchy.
+     - Ksets are containers of kobjects.
+          - ksets have internally a kobject used to work with the kset.
+          - Kobjects do not necessarily show up in sysfs, but every kobject
+            that is a member of a kset is represented there.
+          - To create a kobject and add it into a kset:
+               extern int kobject_register(struct kobject *kobj);
+            Which is simply a combination of kobject_init and kobject_add.
+            Adding a kobject into a ket increments the ref count of the kobject.
+          - To remove and delete a kobject of the kset use the
+            kobject_unregister which is just a combination of kobject_del and
+            kobject_put. kobject_del simply removes the kobject form the kset.
+          - ksets keep its kobjects in a linked list. see LDD3 p370 for a
+            diagram.
+          - kobjects->kset points to its kset. kobject->parent usually also
+            points to the kset, although other rare configurations might exist.
+          - ksets have analogous operation functions to kbobjects:
+              void kset_init(struct kset *kset);
+              int kset_add(struct kset *kset);
+              int kset_register(struct kset *kset);
+              void kset_unregister(struct kset *kset);
+              struct kset *kset_get(struct kset *kset);
+              void kset_put(struct kset *kset);
+              kobject_set_name(&my_set->kobj, "The name");
+     - Subsystems is a representation for a high-level of the kernel. Example
+       subsystems are /sys/block /sys/devices and a specyfic subsystem for
+       every bus the kernel knows about. The subsystem structure is just:
+
+          struct subsystem {
+            struct kset kset;
+            struct rw_semaphore rwsem;
+          };
+
+       All ksets belong to a subsystem. The semaphore is used to serialize the
+       access to the kset list. The kset subsys points to the subsystem object
+       it belongs. The subystem does not have pointers to the ksets. Subsystems
+       are created with
+          decl_subsys(name, struct kobj_type *type, struct kset_hotplug_ops *hotplug_ops);
+ - Kobjects and Sysfs
+    - Kobjects are the mechanism behind the sysfs virtual filesystem. For every
+      directory found in sysfs, there is a kobject lurking somewhere within the
+      kernel. Every kobject of interest also exports one or more attributes,
+      which appear in that kobject’s sysfs directory as files containing
+      kernel-generated information.
+    - Code that works with sysfs should include <linux/sysfs.h>.
+    - Sysfs entries for kobjects are always directories, so a call to
+      kobject_add results in the creation of a directory in sysfs. Usually that
+      directory contains one or more attributes; we see how attributes are
+      specified shortly.
+    - The name assigned to the kobject (with kobject_set_name) is the name used
+      for the sysfs directory. Thus, kobjects that appear in the same part of
+      the sysfs hier- archy must have unique names. Names assigned to kobjects
+      should also be rea- sonable file names: they cannot contain the slash
+      character, and the use of white space is strongly discouraged.
+    - The sysfs entry is located in the directory corresponding to the
+      kobject’s parent pointer. If parent is NULL when kobject_add is called,
+      it is set to the kobject embedded in the new kobject’s kset; thus, the
+      sysfs hierarchy usually matches the internal hierarchy created with
+      ksets. If both parent and kset are NULL , the sysfs directory is created
+      at the top level, which is almost certainly not what you want.
+    - The kobject's attributes are defined in the kobj_type struct:
+        struct kobj_type {
+          void (*release)(struct kobject *);
+          struct sysfs_ops *sysfs_ops;
+          struct attribute **default_attrs;
+        };
+    - The strut attribute is an array that contains the files to be shown on
+      the directorhy, the module where they belong and the permisions (read/write)
+        struct attribute {
+          char *name;
+          struct module *owner;
+          mode_t mode;
+        };
+    - The functions to show and store a value to the attribute (file) are
+      stored in the kobj_type's sysfs_ops struct:
+        struct sysfs_ops {
+          ssize_t (*show)(struct kobject *kobj, struct attribute *attr,
+          char *buffer);
+          ssize_t (*store)(struct kobject *kobj, struct attribute *attr,
+          const char *buffer, size_t size);
+        };
+      buffer is of PAGE_SIZE. The show function must return the actual lenght.
+    - The conventions for sysfs state that each attribute should contain a
+      single, human-readable value; if you have a lot of information to return,
+      you may want to consider splitting it into multiple attributes.
+    - Appart form the defaults, Attributes can be added and removed at any time
+      using the:
+        int sysfs_create_file(struct kobject *kobj, struct attribute *attr);
+	int sysfs_remove_file(struct kobject *kobj, struct attribute *attr);
+    - For attributes that need to pass a big chunk of binary data to the
+      device (such as uploading a firmware), use the struct:
+        struct bin_attribute {
+          struct attribute attr;
+          size_t size;
+          ssize_t (*read)(struct kobject *kobj, char *buffer,
+          loff_t pos, size_t size);
+          ssize_t (*write)(struct kobject *kobj, char *buffer,
+          loff_t pos, size_t size);
+        };
+ - Symbolic links
+    - /sys/devices contain all devices known to the system. /sys/bus contains
+      all the device drivers. The link between devices and drivers are
+      specified by creating symbolic links:
+        int sysfs_create_link(struct kobject *kobj, struct kobject *target,
+                              char *name);
+        void sysfs_remove_link(struct kobject *kobj, char *name);
+      The create function creates a link (called name ) pointing to target ’s
+      sysfs entry as an attribute of kobj . It is a relative link, so it works
+      regardless of where sysfs is mounted on any particular system.
+ - Hotplug
+    - Notification form User-space to kernel-space whenever a kboject is
+      created or destroyed. Hotplug events turn into an invocation of
+      /sbin/hotplug, which can respond to each event by loading drivers,
+      creating device nodes, mounting partitions, or taking any other action
+      that is appropriate.
+    - Actual control of hotplug events is exercised by way of a set of methods
+      stored in the kset_hotplug_ops structure:
+        struct kset_hotplug_ops {
+          int (*filter)(struct kset *kset, struct kobject *kobj);
+          char *(*name)(struct kset *kset, struct kobject *kobj);
+          int (*hotplug)(struct kset *kset, struct kobject *kobj,
+          char **envp, int num_envp, char *buffer,
+          int buffer_size);
+        };
+      A pointer to this structure is found in the hotplug_ops field of the kset
+      structure. If a given kobject is not contained within a kset, the kernel
+      searchs up through the hier- archy (via the parent pointer) until it finds
+      a kobject that does have a kset; that kset’s hotplug operations are then
+      used.
+    - The filter hotplug operation is called whenever the kernel is considering
+      generating an event for a given kobject. If filter returns 0 , the event
+      is not created.
+    - The name hotplug method returns a string which is passed to the
+      user-space hotplug command. The other user-space hotplug paramenters are
+      passed through environment variables.
+    - The hotplug method is used to create such environment variables.
+       
+
+

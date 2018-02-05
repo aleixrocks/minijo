@@ -1,0 +1,126 @@
+BASIC
+ - All documentation can be found at:
+   Documentation/process/submitting-patches.rst and
+   https://kernelnewbies.org/PatchPhilosophy
+ - Use scripts/checkpatch.pl to check the patch format style.
+ - Use scripts/get_maintainer.pl to determine to which maintainer the patch
+   should be sent.
+ - Split the work into conceptual patches that can be esily reviewed.
+ - Do not send more than 15 patches at once. Wait for review before
+   sending the rest of the series.
+ - Prefix subject line with "[PATCH]".
+ - git commit -v -s: Do commit. -v to add diffstat and -s to add Signed-off-by
+   line.
+
+To Who should the patch be sent?
+ - Patches must be send to the maintainer of the affected subsystem by the
+   patch and to the relevant mailing list of the subsystem.  To determine who
+   is the mantainer, use the scripts/get_maintainer.pl script. The mailing list
+   can be found at: http://vger.kernel.org/vger-lists.html
+ - If the maintainer cannot be determined, send it to Andrew Morton. He is the
+   maintainer of last resort.
+ - Avoid sending mails directly to Linus by all means.
+ - Send security patches to security@kernel.org.
+ - Userland interfaces changes need to be also emailed to MAN-PAGES maintainer
+   as listed in the get_maintainer.pl script.
+ - Trivial patches should be sent to the Trivial Patch Monkey. See the 
+   MAINTAINERS FILE.
+
+TAGS
+ - Signed-off-by: The signer has been involved in writting or modifying the
+   code. This is usually used by patch authors and mantainers that perform
+   small patches adaptations to indicate that hey actually touched the code.
+ - Acked-by: People listed here said "this looks good to me" (not necessarily
+   to the entire patch).
+ - Cc: the person was mentioned or say something in the discussion of the patch.
+ - Reported-by: Gives credit to people who has found bugs.
+ - Tested-by: Indicates that the patch has been successfully tested by the
+   persons metioned.
+ - Reviewed-by: The patch as been reviewed and it states that it is an
+   appropiate modification of the kernel without remaining serious issues.
+ - Suggested-by: Indicates that the patch idea was suggested by the mentioned
+   people.
+ - Fixes: Indicates that the patch fixes an issue in a previous commit.
+ - In-Reply-To: To associate the patch with previous relevant discussion.
+
+
+FORMAT
+ - Subject line
+      - The subject of the patch must include a "driver prefix" to identify
+        to which driver the patch affects. To determine the driver, use:
+            git log --pretty=oneline --abbrev-commit <file>
+        and check what other patches/commits affecting this file use for the
+        "driver prefix".
+ - If the patch has not been developed by the emailer, the first line
+   in the body of the message must be: "From: Original Author <author@example.com>"
+ - If you are going to include a diffstat after the --- marker, please use
+   diffstat options -p 1 -w 70 so that filenames are listed from the top of the
+   kernel source tree and don’t use too much horizontal space (easily fit in 80
+   columns, maybe with some indentation). (git generates appropriate diffstats
+   by default.)
+ - Use imperative language. For example:
+
+       somedriver: fixed sleep while atomic in send_a_packet()
+
+       The send_a_packet() function was called in atomic context but took a mutex,
+       which caused a sleeping while atomic warning.  Changed the skb_lock to
+       be a spin lock instead of a mutex to fix.
+
+   Should be written as:
+
+       somedriver: fix sleep while atomic in send_a_packet()
+
+       The send_a_packet() function is called in atomic context but takes a mutex,
+       causing a sleeping while atomic warning.  Change the skb_lock to be a spin
+       lock instead of a mutex to fix.
+
+   Resist the temptation to list every step and right or wrong turn you took to
+   arrive at the solution; instead summarize what was wrong, and how the fix
+   corrects it. If you think the reviewer needs to know how you arrived at it,
+   please add that information after the "---" line before the diffstat: such
+   information does not make it into the git history.
+
+
+
+
+GIT BRANCHES
+(from first kernel patch)
+Greg Kroah-Hartman's staging git repository. Here, you can see the staging
+remote has five branches: master, staging-linus, staging-next, staging-testing,
+and test. The staging-linus branch contains bug fix patches for the current
+kernel release candidate, and the staging-next branch contains patches for the
+next kernel release. Your patches will all go into staging-testing (since they
+will be code clean up, not bug fixes), so you want to base all your branches on
+the staging-testing branch. Greg first applies patches to staging-testing. They
+are moved to staging-next shortly thereafter.
+
+
+SENDING PATCHES WITH GIT
+ - Add the following post-commit hook in .git/hooks and make sure that it is
+   executable (also install codespell command):
+ 
+      #!/bin/sh
+      exec git show --format=email HEAD | ./scripts/checkpatch.pl --strict --codespell
+ 
+ - git commit -v -s: Do commit. -v to add diffstat and -s to add Signed-off-by
+   line.
+ - git show HEAD                             -> review the current commit.
+ - git log --pretty=oneline --abbrev-commit  -> review the current commit.
+ - git format-patch -o /tmp/ HEAD^ -> format commit into a patch and store in
+   a file stored in /tmp/.
+ - mutt -H /tmp/0001-<whatever your filename is> -> send previously created
+   file with mutt.
+
+
+
+
+
+
+
+The following git config settings can be used to add a pretty format for
+outputting the above style in the git log or git show commands: 
+
+[core]
+        abbrev = 12
+[pretty]
+        fixes = Fixes: %h (\"%s\")

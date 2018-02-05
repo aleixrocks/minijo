@@ -89,7 +89,8 @@ DEBUG FUNCTION
    trace to the console
  - sched_show_task(prev) -> like dump_stack but more info.
  - pr_debug() -> only enabled if the c file where pr_debug is, is compiled 
-   with -DDEBUG like this: "CFLAGS_[filename].o := -DDEBUG" in the makefile.
+   with -DDEBUG like this: "CFLAGS_[filename].o := -DDEBUG" in the makefile or
+   CONFIG_DYNAMIC_DEBUG is set.
 
 DYNAMIC DEBUG
  - dynamic debug enables pr_debug("message") printk like functions per file at

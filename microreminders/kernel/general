@@ -12,3 +12,7 @@ things at any given moment (without exceptions):
     specific process
   - In kernel-space, in interrupt context, not associated with a process, 
     handling an interrupt
+
+
+- check include/linux/kernel.h for standard helper macros such as
+  ARRAY_SIZE() to calculate the size of an array.
