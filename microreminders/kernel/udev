@@ -1,0 +1,87 @@
+BASIC
+ - All doc in http://www.reactivated.net/writing_udev_rules.html
+ - [archlinux] udev rules written by the administrator go in
+   /etc/udev/rules.d/, their file name has to end with .rules. The udev rules
+   shipped with various packages are found in /usr/lib/udev/rules.d/. If there
+   are two files by the same name under /usr/lib and /etc, the ones in /etc
+   take precedence.
+ - Files in /etc/udev/rules.d/ are parsed in lexical order, so I suggest you
+   create a file at /etc/udev/rules.d/10-local.rules and write all your rules
+   into this file.
+
+SIMPLE EXAMPLES
+ - The above rule says: match a device which was named by the kernel as hdb,
+   and instead of calling it hdb, name the device node as my_spare_disk. The
+   device node appears at /dev/my_spare_disk.
+     KERNEL=="hdb", NAME="my_spare_disk"
+ - The below rule says: match a device which was named by the kernel as hdb AND
+   where the driver is ide-disk. Name the device node with the default name and
+   create a symbolic link to it named sparedisk. Note that we did not specify a
+   device node name, so udev uses the default. In order to preserve the
+   standard /dev layout, your own rules will typically leave the NAME alone but
+   create some SYMLINKs and/or perform other assignments.
+     KERNEL=="hdb", DRIVER=="ide-disk", SYMLINK+="sparedisk"
+ - The first rule ensures that the mice device node appears exclusively in the
+   /dev/input directory (by default it would be at /dev/mice). The second rule
+   ensures that the device node named loop0 is created at /dev/loop/0 but also
+   creates a symbolic link at /dev/loop0 as usual.
+     KERNEL=="mice", NAME="input/%k"
+     KERNEL=="loop0", NAME="loop/%n", SYMLINK+="%k"
+ - The first rule matches all floppy disk drives, and ensures that the device
+   nodes are placed in the /dev/floppy directory, as well as creating a
+   symbolic link from the default name. The second rule ensures that hiddev
+   devices are only present in the /dev/usb directory.
+     KERNEL=="fd[0-9]*", NAME="floppy/%n", SYMLINK+="%k"
+     KERNEL=="hiddev*", NAME="usb/%k"
+
+GENERAL
+ - The /dev directory is used to store file-like device nodes which refer to
+   certain devices in the system. Each node points to a part of the system (a
+   device), which might or might not exist. Userspace applications can use
+   these device nodes to interface with the systems hardware, for example, the
+   X server will "listen to" /dev/input/mice so that it can relate the user's
+   mouse movements to moving the visual mouse pointer.
+ - udev relies on matching information provided by sysfs with rules provided by
+   the user. sysfs is a new filesystem to the 2.6 kernels. It is managed by the
+   kernel, and exports basic information about the devices currently plugged
+   into your system. udev can use this information to create device nodes
+   corresponding to your hardware.
+ - Even if there are no matching rules, udev will create the device node with
+   the default name supplied by the kernel.
+ - udev provides out-of-the-box persistent naming for storage devices in the
+   /dev/disk directory. To view the persistent names which have been created
+   for your storage hardware, you can use ls -lR /dev/disk
+
+
+WRITING RULES
+ - One device can be matched by more than one rule. Hence we can write two
+   rules which match the same device, where each one provides its own alternate
+   name for the device.
+ - Each rule is constructed from a series of key-value pairs, separated by
+   commas. The below rule includes one match (==)  key (KERNEL) and one
+   assignment (=) key (NAME)
+     KERNEL=="hdb", NAME="my_spare_disk"
+   when all keys match, then the rule is applied. Every rule should consist of
+   at least one match key and at least one assignment key.
+ - Possible keys (see man udev for more):
+     KERNEL - match against the kernel name for the device
+     SUBSYSTEM - match against the subsystem of the device
+     DRIVER - match against the name of the driver backing the device
+ - Possible assignment (se man udev for more)
+     NAME - the name that shall be used for the device node
+     SYMLINK - a list of symbolic links which act as alternative names for the device node
+ - SYMLINKS
+    - As hinted above, udev only creates one true device node for one device. If
+      you wish to provide alternate names for this device node, you use the
+      symbolic link functionality. With the SYMLINK assignment, you are actually
+      maintaining a list of symbolic links, all of which will be pointed at the
+      real device node.
+ - STRING
+    - %k -> the default name
+    - %n -> the id (the 0 of loop0, being loop0 the default name)
+    - regex like expressions:
+      * - match any character, zero or more times
+      ? - match any character exactly once
+      [] - match any single character specified in the brackets, ranges are also permitted
+
+
