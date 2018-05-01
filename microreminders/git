@@ -22,6 +22,46 @@ GENERAL
 - The workspace/work tree is the directory tree of (source) files that you see
   and edit
 
+TERMINOLOGY
+ - Graph example: (imagine the diagonal connections having arrow heads so that
+   they point up-and-left or down-and-left, as needed).
+          o<---o
+         /      \
+    A<--o        \
+         \   B    \
+          \ /      \
+           o        C<--D
+            \      /
+             o<---o
+ - Ancestor: C is a direct ancestor of D (no commits in between). A is an
+   indirect ancestor of D (commits in between).
+ - Descendant (or child). D does not have any childs. C only has one child, D.
+   All nodes in the graph are childs of A. 
+ - B..D -> substraction operation. Get all ancestors from D, get all ancestors
+   of B, and remove the all commits from the ancestors of D that are in the
+   ancestors of B:
+     o---o
+          \
+           \
+            \
+             \
+              C--D
+             /
+        o---o
+  - B...D -> find the merge base of D and B (the commit where their ancestors
+    first join) and remove the merge base and all earlier commits. In other
+    words, it selects all commits  that are reachable from either commit, but
+    not from both.
+     o---o
+          \
+           \
+        B   \
+             \
+              C--D
+             /
+        o---o
+
+
 LOG
 - git log
 - git log --stat -> mini resum sobre cada commit
@@ -35,6 +75,7 @@ LOG
   (equivalent to foo bar --not $(git merge-base --all foo bar))
 - git log foo bar -> show both foo, bar and ancestors.
 - git blame file -> display author of each line of file
+- git log --no-walk -> do not show ancestors, onlly "leaf" commits.
 
 FILTER LOG
 - GUI gitk

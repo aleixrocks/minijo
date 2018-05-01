@@ -84,4 +84,12 @@ WRITING RULES
       ? - match any character exactly once
       [] - match any single character specified in the brackets, ranges are also permitted
 
+DEBUG
+ - sudo udevadm monitor -e  -> output uevents as they occur.
+ - [ARCHLINUX] change the file /etc/udev/udev.conf and set:
+      udev_log="debug"
+   To show the log:
+      journalctl --all --this-boot --no-pager -o verbose
+      journalctl --all --this-boot --no-pager
+
 

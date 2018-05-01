@@ -1,13 +1,14 @@
-Set up the Linux-Next repo
+LINUX-NEXT SETUP
  - Git config:
-     $ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git                                                                      
-     $ cd linux                                                                                                                                        
-     $ git remote add linux-next git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git                                                     
-     $ git fetch linux-next                                                                                                                            
-     $ git fetch --tags linux-next                                                                                                                     
-     ... # later on                                                                                                                                    
+     $ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+     $ cd linux
+     $ git remote add linux-next git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git
+     $ git fetch linux-next
+     $ git fetch --tags linux-next
+     ... # later on
      $ git remote update
  - Once a week, do a 'git remote update' and build/install/run the new kernel.
    If anything explodes, send an email to linux-kernel@vger.kernel.org.
    And yes, it reallys *is* that easy.
- 
+LINUX-NEXT LOG
+ - git log linux-next/master --no-walk --pretty=oneline --decorate -> The --no-walk option hides the ancestry of the leaf commits. Hence it only shows the linux-next tags 

@@ -1,0 +1,6 @@
+ - /proc/bus/pci/devices ->Text file with hexadecimal device information
+ - /proc/bus/pci/*/* -> Binary files that repot a snapshot of the configuration
+   registers of each device (see LDD3 figure 12-2 to see what each byte means).
+ - tree /sys/bus/pci -> see all pci devices
+ - sudo lspci -vnn -> see all pci devices info
+ - sudo lshw -X -> GUI with info of all hw devices.

@@ -1,0 +1,10 @@
+
+ - The cu command:
+     cu -l /dev/device -s baud-rate-speed
+     cu -l /dev/ttyS0 -s 19200
+     To exit enter tilde dot (~.).
+ - The picocom command:
+     picocom -b 112500 /dev/ttyUSB0
+
+
+   

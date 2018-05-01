@@ -1,0 +1,47 @@
+
+git has three types of objects: blob, tree and commit
+
+- git hash-object -w --stdin -> store given stdin object
+- git-cat <file> -p <sha1> -> return stored object given <sha1>
+- git-cat <file> -p master^{tree} -> return the stored commit
+  tree of the master branc.
+- git-cat -t <sha1> -> type of stored object 
+- git-cat -s <sha1> -> size of stored object 
+- git update-index --add --cacheinfo [100644 | 100755 | 120000] <sha1> <file_path> -> add file to index/staging area and manually speify metadata. In this case, the file was not previously on the staging area but was present in the database. the modes are for file, executable and symbolic link.  
+- git write-tree -> writes staging area to objects
+- echo "message" | git commit-tree <sha1> [ -p <previos commit sha1> -> creates a commit object attached to a tree identified by <sha1>
+
+REFERENCES
+ .git/HEAD is a symbolic reference. It points to another reference.
+ .git/ref/heads contain files with the sha1 of commits. Heach of i
+ these files are a branch. These files point to a tree
+ .git/ref/tags contains tags. ligthweight tags are files such as
+ branches that point to commits. Annotated tags require an object
+ and a reference.
+ .git/ref/remotes contains for each branch, the commit that was
+ last pushed to the remote.
+
+ blobs, trees, commits and annotated tags have their own object.
+ branches, remotes and ligthweigth tags don't. 
+
+ - git log -g / git reflog -> output reference log. Every time 
+   HEAD is changed or update-refs is called, a log is silently kept
+ - git fsck --full -> integriticheck over data base. it outputs the
+   not referenced objects. Useful for data recovery.
+ - git update-refs refs/heads/name <sha1> -> creates branch name!
+ - git symbolic-ref HEAD [ref] -> outputs the content of a
+   symbolic reference (HEAD). if [ref] is specified, HEAD is
+   updated
+ - git update-refs /refs/tags/tag-name <sha1 commit> -> creates a
+   ligthweight tag.
+ - git rev-list --objects --all -> print all sha1s and names
+
+PACK
+ The gc command will search for loose files (no incremental) and
+ will pack them as incremental files. Git calls gc automatically
+ if there are too many loose objects or when pushing to remote.
+
+ - git gc -> git garbage collector
+ - git count-objects -v -> show how much space the repo uses 
+   (size-pack is the size of your packs)
+ - git verify-pack -v .git/objects/pack/pack-29...69.idx

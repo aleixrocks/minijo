@@ -1,0 +1,24 @@
+BASICS
+ - USB hardware configuration
+    - Devices usually have one or more configurations
+    - Configurations often have one or more interfaces
+    - Interfacesusually have one or more settings
+    - Interfaces have zero or more endpoints
+    - Linux drivers attach to each Interface, hence multiple drivers per device
+      is possible.
+ - USB sysfs naming
+    - The naming format is:
+        root_hub-hub_port:config.interface
+    - Example of USB devices sysfs name:
+        /sys/devices/pci0000:00/0000:00:09.0/usb2/2-1/2-1:1.0
+    - usb2 is the usb root hub (the pci card is both a bridge to attach usb
+      device tree to the PCI tree and the first usb device of the tree). The
+      number sequence (usb1, usb2, ...) depends on the order in which root
+      devices are discovered.
+    - 2-1 describes a devices attached to the first port of the second usb root
+      hub. 2-1 is the main name of a USB devices such as a hardware mouse.
+      Because this example has an interface, another sysfs entry is created
+      under it.
+    - 2-1:1.0 describes the first configuration of the interface zero for the
+      2-1 device.
+

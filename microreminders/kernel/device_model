@@ -135,6 +135,8 @@ Kobjects
       using the:
         int sysfs_create_file(struct kobject *kobj, struct attribute *attr);
 	int sysfs_remove_file(struct kobject *kobj, struct attribute *attr);
+      This is only necessary when attributes need to be created at runtime
+      (e.g. when a user writes one to a sysfs file, it creates another file).
     - For attributes that need to pass a big chunk of binary data to the
       device (such as uploading a firmware), use the struct:
         struct bin_attribute {
@@ -145,6 +147,33 @@ Kobjects
           ssize_t (*write)(struct kobject *kobj, char *buffer,
           loff_t pos, size_t size);
         };
+ - Unloading a module and sysfs
+    - What happens when unloading a module? When a user opens a sysfs file,
+      neither module's nor sysfs file kobject reference count is incremented,
+      however this is not a problem. All attempts to reference the underlying
+      kobject of a sysfs are protected. If the kobject no longer exists because
+      it has been freed when unloading the module, the sysfs operation will
+      fail with an "No such device" (-ENODEV) error.
+    - This is achieved with a rwsm (read write semaphore) used in a non
+      conventional way. When some user program is calling a function of a sysfs
+      file (show, store), it gets a read reference. As soon as the function
+      ends, the reference is dropped.  Multiple read reference can be
+      withstanding at the same time. When the last reference to the sysfs file
+      kobject is droppend, a write reference on the semaphore is acquired.
+      Hence, attempts to call a sysfs function on that file will fail because
+      they will try to get a read reference but won't be able because a write
+      reference is active.
+    - When the module is unloaded, the sysfs file kobject reference count is
+      generally decremented with kobject_put() on the module exit function. If
+      no more references are held (again, opened sysfs files do not get a
+      reference), the kobject release function is called (while in the
+      kobject_put() function), which releases the kobject data. When
+      kobject_put() returns, the module exit function continues and when it
+      finished, the module code is removed from memory. If the module is
+      removed while the kobject reference count is not zero, really bad things
+      might happen. Hence, is the programer work to be sure that no more
+      references left before unloading the module.
+    - More details at: https://lwn.net/Articles/229774/
  - Symbolic links
     - /sys/devices contain all devices known to the system. /sys/bus contains
       all the device drivers. The link between devices and drivers are
