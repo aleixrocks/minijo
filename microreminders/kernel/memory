@@ -284,3 +284,78 @@ PAGE CACHE
      - Flusher threads are page-based; they write back whole pages.
      - Older flusher threads implementation are known as "bdflush" and
        "pdflush".
+
+CURIOSITIES
+ - Physical memory can be directly accessed from user space by mapping /dev/mm
+
+
+
+
+
+
+NODES AND ZONES
+ - struct pglist_data (typedef pg_data_t) represents a memory bank chip called
+   "node" in Linux. NUMA machines have multiple pg_data_t. UMA machines have a
+   single pg_data_t.
+ - Each node is divided into zones. Each zone is represented by a struct
+   zone. Possible zone types are:
+      - ZONE_DMA
+      - ZONE_NORMAL
+      - ZONE_HIGHMEM
+ - Each physical page frame is described by a struct page. All structs are kept
+   in a global mem_map array which is usually stored at the beginning of
+   ZONE_NORMAL.
+ - When not enough memory left, the kswapd daemon is woken up to start freeing
+   memory. There are three watermarks that define the behaviour of the daemon:
+   pages_high, pages_low and pages_min.
+     - pages_high -> there are lots of free space. If the kswapd was running,
+       it is stopped.
+     - pages_low -> kswapd is waken up and stats freeing pages.
+     - pages_min -> kswapd works in a synchronous faishon.
+ - The  ZONE_PADDING(_pad1_) in struct zone is used to keep spinlocks in
+   separate cache lines.
+ - Each zone keeps a struct per_cpu_pageset (an array of two positions of type
+   struct per_cpu_pages) which differentiates between hot and cold pages for
+   the LRU algorithm.
+ - The struct per_cpu_pages keeps a list of pages and a high and low watermark
+   that determines when the set shoul be refilled or pages freed in bulk.
+ - The struct page_state holds a number of acounting variables
+PAGE TABLE STRUCTURE
+ - Each task_struct (process) has a mm->pgd which contains the address of the
+   process page table hierarchy.
+ - The process mm->pgd is written into the cr3 register (on x86) to let the
+   hardware know the current page table hierarchy. Writting to cr3 has de side
+   effect of flushing the TLB.
+ - mm->pgd points to a page frame which contains an array of type pmd_t with
+   entries that point to the page middle directory pages. Each of this pmd_t
+   contains an array of pte_t which actually point to page frames containing
+   user data.
+ - Each entry of time pgd_t, pmd_t and pte_t contain an 32 bit address (for
+   x86). The page flags are stored in the PAGE_SHIFT (12) bits of the address.
+   They are free because entries point to page aligned addresses. However, this
+   is achitecture dependent. Flags can be found at
+   arch/x86/include/asm/pgtable_types.h . Example of x86 flags are:
+     - _PAGE_PRESENT -> Page is in memory adn not swapped out
+     - _PAGE_RW -> Page can be written to
+     - _PAGE_USER -> Set if page is accessible from userspace
+     - _PAGE_DIRTY -> Page has been written
+ - Important macros and functions:
+     - #define PAGE_SHIFT 12
+     - #define PAGE_SIZE  (1UL << PAGE_SHIFT)
+     - #define PAGE_MASK  (~(PAGE_SHIFT-1))
+     - #define PTRS_PER_PGD -> contains the number of entries for the PGD
+     - pte_present() -> return whether page is present in memory
+     - PAGE_ALIGN(addr) -> return the next page aligned to addr.
+     - pgd_offset(mm, address) -> takes a process mm object and an address and
+       returns the index in the page global directory of the relevant address.
+       Equivalent function exists for PMD, PTE.
+     - pgd_none() -> return 1 if entry does not exists.
+     - pgd_clear() -> clears the corresponding page table entry
+     - pgd_bad() -> check if page is valid (I don't understand how it works)
+     - pte_read(), pte_mkread() pte_rdprotect() -> test,set,clear read
+       permission. The equivalent exists for write and exec. On x86 there are
+       no "exec" permissions on pages so it acts as a read.
+     - pte_dirty(), pte_mkdirty(), pte_mkclean() -> test, check and set access bit.
+     - pte_young(), pte_mkyoung(), pte_old() -> test, check and set diry bit.
+  - The kernel currently supports 5-level page table which are named:
+    PGD, P4D, PUD, PMD and PTE.

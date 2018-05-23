@@ -252,3 +252,57 @@ MANAGING MODULES
  - modinfo <module_name> -> list module info
  - Search for the CONFIG_ option that enables module named 'usbcore'
      fgrep -r --include=Makefile ' usbcore.o'
+
+HOTPLUG
+ - The complete story is in: https://wiki.archlinux.org/index.php/Modalias
+ - There are two mechanisms for hotplugging: /sbin/hotplug old mechanism and
+   the new udev mechanism.
+ - When a new hardware is plugged, the kernel sets a number of environment
+   variables and calls the /sbin/hotplug command or it sends the informaton
+   to a udev deamon through a socket.
+ - The /sbin/hotplug relies on a set of user-space scripts that determine the
+   right module to load based on the environemnt variables. Then it loads the
+   right module with modprobe.
+ - udev uses the environement variables against a set of udev dules that are
+   defined at /etc/udev/rules.d/ to determine which module to load and the
+   files that need to be created at /dev.
+ - Module drivers register themselves to a subystem (see device_model) and
+   specify which hardware they accept. The hardware can be either a specific
+   vendor and product ID or a generic class, such as a HID device. For the
+   USB subsystem, this is done like this:
+
+      static const struct usb_device_id usb_hello_id_table[] = {
+              { USB_INTERFACE_INFO(USB_INTERFACE_CLASS_HID, USB_INTERFACE_SUBCLASS_BOOT,
+                      USB_INTERFACE_PROTOCOL_KEYBOARD) },
+              { }                                             /* Terminating entry */
+      };
+      MODULE_DEVICE_TABLE(usb, usb_hello_id_table);
+      
+      static struct usb_driver hello_driver = {
+              .name =         "hello",
+              .probe =        hello_probe,
+              .disconnect =   hello_disconnect,
+              .id_table =     usb_hello_id_table,
+      };
+      
+      static struct usb_driver hello_driver;
+
+    And then the driver is registered into the core:
+
+       result = usb_register(&hello_driver);
+       if (result < 0) {
+               err("usb_register failed for the "__FILE__ "driver."
+                   "Error number %d", result);
+               return -1;
+       }
+
+  - When the kernel is installed, the depmod command extracts the accepted
+    device ids for each module and creates the file
+    /lib/modules/`uname -r`/modules.alias . Which contains rules as:
+      alias usb:v*p*d*dc*dsc*dp*ic03isc01ip01in* hello
+    The udev deamon uses this rules to determine which module to load based
+    on the environment linux kernel variables:
+      DRIVER!="?*", ENV{MODALIAS}=="?*", RUN{builtin}="kmod load $env{MODALIAS}"
+    See ./udev file for more udev things.
+
+

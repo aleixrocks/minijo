@@ -1,0 +1,88 @@
+
+HOW TO CONNECT A LINUX CLIENT WITH AN ANDROID AP
+ - Tutorial from: https://blind.guru/tag/bluetooth-pan.html#bluez-5-and-pan
+ - Install:
+     sudo apt-get install bluetooth bluez bluez-tools
+ - Check bluetooth is not hardware/software blocked with
+    rfkill list
+ - Show bluetooth interfaces, it should be named like bnep0
+    hciconfig -a
+ - Pair both client and AP:
+     - bluetoothctl
+        [NEW] Controller 00:10:20:30:40:50 pi [default]
+        [bluetooth]# agent KeyboardOnly 
+        Agent registered
+        [bluetooth]# default-agent 
+        Default agent request successful
+        [bluetooth]# power on
+        Changing power on succeeded
+        [CHG] Controller 00:10:20:30:40:50 Powered: yes
+        [bluetooth]# scan on
+        Discovery started
+        [CHG] Controller 00:10:20:30:40:50 Discovering: yes
+        [NEW] Device 00:12:34:56:78:90 myLino
+        [CHG] Device 00:12:34:56:78:90 LegacyPairing: yes
+        [bluetooth]# pair 00:12:34:56:78:90
+        Attempting to pair with 00:12:34:56:78:90
+        [CHG] Device 00:12:34:56:78:90 Connected: yes
+        [CHG] Device 00:12:34:56:78:90 Connected: no
+        [CHG] Device 00:12:34:56:78:90 Connected: yes
+        Request PIN code
+        [agent] Enter PIN code: 1234
+        [CHG] Device 00:12:34:56:78:90 Paired: yes
+        Pairing successful
+        [CHG] Device 00:12:34:56:78:90 Connected: no
+        [bluetooth]# trust 00:12:34:56:78:90
+
+      - This might not be necessary:
+
+        [bluetooth]# connect 00:12:34:56:78:90
+        Attempting to connect to 00:12:34:56:78:90
+        [CHG] Device 00:12:34:56:78:90 Connected: yes
+        Connection successful
+ - Set up the android AP:
+     - Turn on Bluetooth tethering 
+     - Wait for the device to connect. On the bluetooth device discovery
+       window, open the options of the paired device and select "internet
+       connection sharing"
+ - Bluez5 no longer has pand, so use a third party script.
+     - Download bt-pan from
+         https://github.com/mk-fg/fgtk/blob/master/bt-pan
+       There is a copy of this script in minijo/scripts.
+     - Copy the script to /usr/local/sbin
+ - For the client side, create the following sysmted scripts. More info can be
+   found in man systemd.network
+     - /etc/systemd/network/pan-client.network:
+          [Match]
+          Name=bnep*
+
+          [Network]
+          DHCP=yes
+     - /etc/systemd/system/pan@.service:
+          [Unit]
+          Description=Bluetooth Personal Area Network client
+
+          [Service]
+          Type=notify
+          ExecStart=/usr/local/sbin/bt-pan --debug --systemd client %I --wait
+     - Be sure that that systemd-networkd daemon is running
+         - systemctl status systemd-networkd
+         - systemctl start systemd-networkd
+         - systemctl enable systemd-networkd
+     - Connect to bluetooth AP device specifying the AP MAC with:
+         systemctl start pan@CC:FA:00:52:3D:B0 
+     - [Optional] Check for errors with
+         journalctl -xe
+     - Systemd should wake up the dhclient on the interface, however, if it is
+       not working, for debuging pruposes it can be enabled manually with:
+         dhclient bnep0
+     - Test with:
+         ping www.google.es
+
+
+
+OTHERS
+ - To wait for a network interface on a systemd unit:
+     [Service]
+       ExecStartPre=/lib/systemd/systemd-networkd-wait-online --interface=bnep0
+       ExecStart=...

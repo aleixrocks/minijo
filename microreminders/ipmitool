@@ -1,0 +1,14 @@
+
+TYPIC COMMANDS
+ - Turn on:
+      ipmitool -H xeon08-ipmi0 -P "" -U "" chassis power on
+ - Reset:
+      ipmitool -H xeon08-ipmi0 -P "" -U "" chassis power reset
+ - Serial Line
+     - remember to press ~. to exit.
+     - remember to setup serial line on the linux kernel parameters and spawn a
+       tty
+     - command:
+          ipmitool -I lanplus -H xeon08-ipmi0 -P "" -U "" sol activate
+
+

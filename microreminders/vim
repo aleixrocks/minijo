@@ -150,6 +150,17 @@ AUTO SPLIT LINES
    depending on which comes first.
  - vip -> select current pharagraph (useful for formatting)
 
+SPELLCHECK
+ - set spell spelllang=en_us -> turn spellcheck on for EEUU english
+ - setlocal spell spelllang=en_us -> turn spellcheck only on the local
+   buffer (useful when working with code and text in the same file)
+ - set nospell -> turn off spellcheck
+ - ]s -> move to next misspelled word
+ - [s -> move to previous misspelled word
+ - z= -> with the cursor over a misspelled word, shows suggestions.
+ - zg -> add workd to dictionary
+ - zw -> mark word as incorrect
+
 SPACES TO TABS
  - :set tabstop=2      " To match the sample file
  - :set noexpandtab    " Use tabs, not spaces
@@ -166,6 +177,8 @@ HEX EDITOR
     - perform edits as usual
     - :%!xxd -r -> return to previous format
     - :wq 
+ - An alternative to vim is:
+    - od -tfF file.bin (to view floats (f) of sizeof(float) bytes (F))
 
 OTHERS
  - J -> join current and next line into current line

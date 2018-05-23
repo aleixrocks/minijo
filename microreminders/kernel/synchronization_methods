@@ -81,11 +81,19 @@ SPIN LOCKS
      - it is safe for a reader to obtain its lock multiple times. This is used
        in interrupt handerls that only read to avoid disabling interrupts.
        More info at LKD3 p188.
-     - If the read lock is held and a writer is waiting for exclusive ac- cess,
-       readers that attempt to acquire the lock continue to succeed.The
-       spinning writer does not acquire the lock until all readers release the
-       lock. Therefore, a sufficient number of readers can starve pending 
-       writers
+     - Lock flow: 
+	 - Infinite number of readers are allowed into a critical region as
+	   long as there is no writer. 
+	 - If a write tries to get the rwsem while a reader holds it, the
+	   writer blocks. 
+	 - If a writer is waiting to get the lock, subsequent readers won't get
+	   the lock but will block. 
+	 - Once the last reader exits the critcal area, it will wake up a
+	   single writter. 
+	 - After the writer exits, it will wake up the next processes waiting.
+	   If the next one is a writer, only the writer is waken up. If the
+	   next processes is a reader, this an all subsequent readers on the
+	   list are waken up in parallel. 
  - To debug spin_locks:
      - CONFIG_DEBUG_SPINLOCK -> checks for the use of uninitialized spin locks
        and unlocking a lock that is not yet locked.

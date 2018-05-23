@@ -1,0 +1,116 @@
+DOCUMENTATION
+ - Documentation/vm/hugetlbpage.txt
+ - Documentation/vm/transhuge.txt
+ - LWN Article series
+    - https://lwn.net/Articles/374424/
+    - https://lwn.net/Articles/375096/
+    - https://lwn.net/Articles/376606/
+    - https://lwn.net/Articles/378641/
+
+HUGE PAGES WITH libhugetlbfs
+ - Install libhugetlbfs and libhugetlbfs-utils (the later might be included
+   in the former depending on the disto)
+ - Mount a hugetlbfs per each page size that you want to use and give it
+   the right permisions if non-sudo users want to use it. If the page size
+   if not specified, the default one is used (2MiB probably). There might
+   already be a hugetlbfs mounted in your system, check it first with
+   mount.
+     mkdir -p /mnt/hugetlbfs-64K
+     mount -t hugetlbfs none -opagesize=64k,uid=<user-name> /mnt/hugetlbfs-64K
+ - Allocate a number of hugepages
+     echo 50 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
+     hugeadm --pool-pages-min 2MB:50 
+ - It is not needed to mount the fs if shmat/shmget or the mmap MAP_HUGETLB
+   flag is used.
+ - Allocate hugepages at boot time
+     - Use the following boot parameters
+         hugepages=N -> where 'N' is the number of huge pages requested of
+         default size default_hugepagesz=<size> -> (optional) default
+         huge page size.
+     - To allocate huge pages of a specific size, one must precede the huge
+       pages boot command parameters with a huge page size selection parameter
+         hugepagesz=<size> -> size in [kKmMgG] (e.g. 2M) 
+
+Some platforms support multiple huge page sizes.   "".  <size> must
+be specified in bytes with optional scale suffix .  The default huge
+page size may be selected with the "" boot parameter.
+
+ - List current pools
+     hugeadm --pool-list
+ - Run application with hugepages (this uses a glibc hook to force it to
+   use hugepages when allocating new memory. It also prevents malloc from
+   using brk.)
+     hugectl --heap <application>
+     hugectl --heap=64k ./target-application # use 64k pages instead of default size
+ - Check usage of hugepages with
+     grep Huge /proc/meminfo
+
+
+TRANSPARENT HUGE PAGES (THP)
+ - THP is only enabled for anonymous memory regions.
+ - THP do not require to allocate a pool of pages.
+ - Size of THP:
+     cat /sys/kernel/mm/transparent_hugepage/hpage_pmd_size
+ - Transparent Hugepage Support for anonymous memory can be entirely disabled
+   (mostly for debugging purposes) or only enabled inside MADV_HUGEPAGE regions
+   (to avoid the risk of consuming more memory resources) or enabled system
+   wide. This can be achieved with one of:
+      echo always >/sys/kernel/mm/transparent_hugepage/enabled
+      echo madvise >/sys/kernel/mm/transparent_hugepage/enabled
+      echo never >/sys/kernel/mm/transparent_hugepage/enabled
+   When set to always the khugepaged is started and when set to never is
+   killed. 
+ - If no pages are available, the <thp daemon name> will wake up and try to get
+   more pages. This behaviour is determined by the
+   /sys/kernel/mm/transparent_hugepage/defrag file. Where
+     - always: application stalls when there is no memory and starts compacting
+       memory to get some THP.
+     - madvise (default): Like always but only for mmap areas that have used the
+       madvise(MADV_HUGEPAGE).
+     - defer: wake up kswapd to reclaim pages and kcompactd to compact memory
+       in background so pages are available later.
+     - defer+madvise: to defer only for madvise(MADV_HUGEPAGE) regions.
+     - never: don't do that
+ - The khugepaged runs the defrag algorithm in background regardless of the
+   previous option. It can be explicitly disabled.
+ - Optional optimizations
+    - THP are automatically used when memory is aligned to the page size. In
+      userland, no modifications to the applications are necessary (hence
+      transparent). But there are ways to optimize its use. For applications that
+      want to use hugepages, use of posix_memalign() can also help ensure that
+      large allocations are aligned to huge page (2MB) boundaries.
+    - Applications that gets a lot of benefit from hugepages and that don't risk
+      to lose memory by using hugepages, should use madvise(MADV_HUGEPAGE) on
+      their critical mmapped regions. 
+ - The khugepaged kernel thread occasionally attempts to substitute smaller
+   pages being used currently with a hugepage allocation, thus maximizing THP
+   usage. khugepaged will be automatically started when
+   transparent_hugepage/enabled is set to "always" or "madvise, and it'll be
+   automatically shutdown if it's set to "never"
+ - They support swap (huge pages are broken into smaller pages when swapping)
+ - MONITORING/DEBUG
+    - System wide
+       - Number of currently used HP
+           grep AnonHugePages /proc/meminfo 
+           AnonHugePages:    632832 kB
+    - Per process usage:
+        - cat /proc/[PID]/smaps -> show mappings and page usage
+           - AnonHugePages
+    - Other statistics. Check Documentation/vm/transhuge.txt for description.
+        egrep 'trans|thp' /proc/vmstat
+        nr_anon_transparent_hugepages 2018
+        thp_fault_alloc 7302
+        thp_fault_fallback 0
+        thp_collapse_alloc 401
+        thp_collapse_alloc_failed 0
+        thp_split 21
+
+MONITORING/DEBUG
+ - Per process usage:
+     - cat /proc/[PID]/smaps -> show mappings and page usage
+     - List total 2MiB pages for a process:
+          grep -B 11 'KernelPageSize:     2048 kB' /proc/[PID]/smaps | grep "^Size:" | awk 'BEGIN{sum=0}{sum+=$2}END{print sum/1024}'
+     - Show for how many memory regions each page size is used:
+           grep KernelPageSize /proc/[PID]/smaps | sort | uniq -c
+ - Per NUMA node default size Huge page distribution
+     cat /sys/devices/system/node/node*/meminfo | fgrep Huge

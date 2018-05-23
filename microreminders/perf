@@ -212,3 +212,8 @@ FLAME GRAPH (CREATED WITH PERF PROFILING)
                          |          |           --41.29%-- mpage_da_submit_io
      
 
+
+COMPILING AND INSTALLING
+ - perf is located at the kernel source tree tools/perf
+ - Install on custom directory
+     - make O=<build_dir> perfix=<custom_dir> install-doc install

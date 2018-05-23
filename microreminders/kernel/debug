@@ -1,6 +1,6 @@
 
 GENERAL
- - system.map -> fiel generated at compile time which contains the assresses 
+ - system.map -> file generated at compile time which contains the assresses 
    of functions inside the image
  - Oops -> the stack is printed from the bottom to the top.  ksmoops
    saved_oops.txt -> decodes an undecoded oops trace  by using system.map.

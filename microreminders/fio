@@ -42,6 +42,31 @@ BASIC
  - It is possible to automatically stop fio when certain condition is met, such
    as stoping when bandwidth falls to certain threshold. see "steady state" in
    fio HOWTO.
+
+UNITS
+ - Unit names are not case sensitive
+ - ALWAYS use the option "kb_base=1000". To set the default unit base to the
+   International System of Units (SI).  Otherwise, when a unit si specified as
+   4KiB, the unit is understood as 4000 !. However, when this is set, 4k is
+   understood as 4000, so be careful. 
+ - Some examples of this (read ".. _int:" in HOWTO):
+
+        Examples with :option:`kb_base`\=1000:
+
+                * *4 KiB*: 4096, 4096b, 4096B, 4ki, 4kib, 4kiB, 4Ki, 4KiB
+                * *1 MiB*: 1048576, 1mi, 1024ki
+                * *1 MB*: 1000000, 1m, 1000k
+                * *1 TiB*: 1099511627776, 1ti, 1024gi, 1048576mi
+                * *1 TB*: 1000000000, 1t, 1000m, 1000000k
+
+        Examples with :option:`kb_base`\=1024 (default):
+
+                * *4 KiB*: 4096, 4096b, 4096B, 4k, 4kb, 4kB, 4K, 4KB
+                * *1 MiB*: 1048576, 1m, 1024k
+                * *1 MB*: 1000000, 1mi, 1000ki
+                * *1 TiB*: 1099511627776, 1t, 1024g, 1048576m
+                * *1 TB*: 1000000000, 1ti, 1000mi, 1000000ki
+
  
 
 SCRIPT COMMON OPTIONS
@@ -186,5 +211,5 @@ AIO
  - use with:
     ioengine=libaio # AIO
     iodepth=8       # io queue max depth
-    direct=1        # non-buffered IO
+    direct=1        # non-buffered IO (O_DIRECT)
     invalidate=1    # invalidate page cache before starting

@@ -35,5 +35,10 @@ BASIC
      mpirun ./mpi_binary
 
   Interactive node
+
+
+ENVIRONMENT VARIABLES
+ - SLURM_LOCALID -> Node local task ID for the process within a job.
+ - SLURM_JOB_ID -> Job id of the job.
     
 

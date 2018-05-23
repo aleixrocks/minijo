@@ -12,3 +12,4 @@
        sucha as: "Hey(!?)*" to match "Hey" and "Hey!?!?!?"
 - $ -> end of line
 - ^ -> beginning of line
+- [^=]* -> anycharacter but = .

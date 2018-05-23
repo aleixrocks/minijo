@@ -1,0 +1,151 @@
+#!/bin/sh
+
+# Copyright (C) 2018 Josep Maria Perez <josep.m.perez@bsc.es>
+
+# This file is free software; as a special exception the author gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
+
+if ! test -d $i ; then
+	echo Error: cannot find $1 1>&2
+	exit 1
+fi
+
+if test $(echo $1 | cut -c 1) = "/" ; then
+	location=$1
+else
+	location=$PWD/$1
+fi
+
+base=$(basename ${location})
+dir=$(dirname ${location})
+version=$(echo ${base} | awk -F '-' '{ print $NF; }')
+appname=$(echo ${base} | sed 's/-'${version}'$//g')
+
+if test x"${version}" = x"${base}" ; then
+	version="0"
+fi
+
+echo Base: ${base}
+echo Dir:  ${dir}
+echo Ver:  ${version}
+echo App:  ${appname}
+
+if ! test -d $HOME/modulefiles/${appname} ; then
+	mkdir $HOME/modulefiles/${appname}
+fi
+
+APPNAME=$(echo ${appname} | tr a-z A-Z)
+
+
+cat > $HOME/modulefiles/${appname}/${version} << EOF
+#%Module
+
+proc ModulesHelp { } {
+	puts stderr "${appname} version ${version}"
+}
+
+module-whatis   "loads ${appname} ${version}"
+
+#module-verbosity {on}
+
+# Consistency check
+# --------------------
+# Do not load if another ${appname} modulefile was previously loaded
+
+conflict ${appname}
+
+
+### This shows info about loaded/unloaded module
+if { [module-info mode] != "whatis" } {
+   puts stderr "[module-info mode] [module-info name]"
+}
+
+
+setenv ${APPNAME}_HOME ${location}
+setenv ${APPNAME}_ROOT ${location}
+
+EOF
+
+
+for component in bin bin32 bin64 sbin bin/intel64; do
+	if test -d ${location}/${component} ; then
+		echo "prepend-path	PATH	${location}/${component}" >> $HOME/modulefiles/${appname}/${version}
+	fi
+done
+
+for component in man share/man man/en_US; do
+	if test -d ${location}/${component} ; then
+		echo "prepend-path	MANPATH	${location}/${component}" >> $HOME/modulefiles/${appname}/${version}
+	fi
+done
+
+for component in lib lib32 lib64 lib/intel64 lib/x86_64-linux-gnu ; do
+	shared_objects=$(eval echo ${location}/${component}/*.so)
+	if test "${shared_objects}" != "${location}/${component}/"'*.so' ; then
+		echo "prepend-path	LD_LIBRARY_PATH	${location}/${component}" >> $HOME/modulefiles/${appname}/${version}
+	fi
+	if test -d ${location}/${component}/python2.7/site-packages ; then
+		echo "prepend-path	PYTHONPATH	${location}/${component}/python2.7/site-packages" >> $HOME/modulefiles/${appname}/${version}
+		for subdir in $(find ${location}/${component}/python2.7/site-packages -maxdepth 1 -type d) ; do
+			echo "prepend-path	PYTHONPATH  ${subdir}" >> $HOME/modulefiles/${appname}/${version}
+		done
+	fi
+	if test -d ${location}/${component}/python ; then
+		echo "prepend-path	PYTHONPATH	${location}/${component}/python" >> $HOME/modulefiles/${appname}/${version}
+	fi
+done
+
+if [ -d ${location}/lib/mic ] ; then
+	echo "prepend-path      MIC_LIBRARY_PATH ${location}/lib/mic" >> $HOME/modulefiles/${appname}/${version}
+fi
+
+for component in share ; do
+	if test -d ${location}/${component}/gir-1.0 ; then
+		echo "prepend-path	XDG_DATA_DIRS	${location}/${component}" >> $HOME/modulefiles/${appname}/${version}
+	fi
+done
+
+for component in info share/info ; do
+	if test -d ${location}/${component} ; then
+		echo "prepend-path	INFODIR	${location}/${component}" >> $HOME/modulefiles/${appname}/${version}
+		echo "prepend-path	INFOPATH	${location}/${component}" >> $HOME/modulefiles/${appname}/${version}
+	fi
+done
+
+if test -d ${location}/include ; then
+	echo "prepend-path	INCLUDE	${location}/include" >> $HOME/modulefiles/${appname}/${version}
+	echo "prepend-path	C_INCLUDE_PATH	${location}/include" >> $HOME/modulefiles/${appname}/${version}
+	echo "prepend-path	CPLUS_INCLUDE_PATH	${location}/include" >> $HOME/modulefiles/${appname}/${version}
+fi
+
+for component in lib/pkgconfig lib32/pkgconfig lib64/pkgconfig share/pkgconfig ; do
+	if test -d ${location}/${component} ; then
+		echo "prepend-path	PKG_CONFIG_PATH	${location}/${component}" >> $HOME/modulefiles/${appname}/${version}
+	fi
+done
+
+if test -d ${location}/share/aclocal ; then
+	echo "prepend-path	ACLOCAL_PATH	${location}/share/aclocal" >> $HOME/modulefiles/${appname}/${version}
+fi
+
+for component in lib/python2.6 lib32/python2.6 lib64/python2.6 ; do
+	if test -d ${location}/${component} ; then
+		echo "prepend-path	PYTHONPATH	${location}/${component}" >> $HOME/modulefiles/${appname}/${version}
+	fi
+done
+
+for component in lib/perl5/site_perl/$(perl -e 'printf "%vd", $^V;') ; do
+	if test -d ${location}/${component} ; then
+		echo "prepend-path	PERL5LIB	${location}/${component}" >> $HOME/modulefiles/${appname}/${version}
+	fi
+done
+
+for catalog in $(find ${location} -name docbook.cat) $(find ${location} -name catalog) ; do
+	echo "prepend-path	SGML_CATALOG_FILES	${catalog}" >> $HOME/modulefiles/${appname}/${version}
+done
+
+for catalog in $(find ${location} -name catalog.xml) ; do
+	echo "prepend-path	XML_CATALOG_FILES	${catalog}" >> $HOME/modulefiles/${appname}/${version}
+done
+

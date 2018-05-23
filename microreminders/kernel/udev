@@ -33,6 +33,23 @@ SIMPLE EXAMPLES
    devices are only present in the /dev/usb directory.
      KERNEL=="fd[0-9]*", NAME="floppy/%n", SYMLINK+="%k"
      KERNEL=="hiddev*", NAME="usb/%k"
+ - It is not possible, on a single rule, to try to match attributes of 2
+   different parents when using KERNELS/SUBSYSTEMS/ATTRS... the *S variants
+   of the available keys must match the same device in the hierarchy,
+   otherwhise it won't work.
+   good:
+      SUBSYSTEM=="block", ATTR{size}=="234441648", NAME="my_hard_disk"
+      SUBSYSTEM=="block", SUBSYSTEMS=="scsi", ATTRS{model}=="ST3120827AS", NAME="my_hard_disk"
+   bad (model match the first parent and DRIVERS match the parent of the parent)
+      SUBSYSTEM=="block", ATTRS{model}=="ST3120827AS", DRIVERS=="sata_nv", NAME="my_hard_disk"
+ - The above rule only creates the /dev/floppy link if $an_env_var is set to
+   "yes" in udev's environmen
+      KERNEL=="fd0", ENV{an_env_var}=="yes", SYMLINK+="floppy"
+
+
+
+
+
 
 GENERAL
  - The /dev directory is used to store file-like device nodes which refer to
@@ -51,6 +68,19 @@ GENERAL
  - udev provides out-of-the-box persistent naming for storage devices in the
    /dev/disk directory. To view the persistent names which have been created
    for your storage hardware, you can use ls -lR /dev/disk
+ - SYSFS
+    - Top-level device paths are directories that contain a dev file and
+      represent actual devices that have corresponding device nodes.
+          find /sys -name dev
+    - For example, the /sys/block/sda directory is the device path for my hard
+      disk. It is linked to it's parent, the SCSI disk device, through the
+      /sys/block/sda/device symbolic link.
+    - When you write rules based on sysfs information, you are simply matching
+      attribute contents of some files in one part of the chain. For example, I
+      can read the size of my hard disk as follows:
+          cat /sys/block/sda/size
+	  234441648
+    - In a udev rule, I could use ATTR{size}=="234441648" to identify this disk.
 
 
 WRITING RULES
@@ -64,9 +94,18 @@ WRITING RULES
    when all keys match, then the rule is applied. Every rule should consist of
    at least one match key and at least one assignment key.
  - Possible keys (see man udev for more):
-     KERNEL - match against the kernel name for the device
-     SUBSYSTEM - match against the subsystem of the device
-     DRIVER - match against the name of the driver backing the device
+     - KERNEL - match against the kernel name for the device
+     - SUBSYSTEM - match against the subsystem of the device
+     - DRIVER - match against the name of the driver backing the device
+     - KERNELS - match against the kernel name for the device, or the kernel
+       name
+     - for any of the parent devices
+     - SUBSYSTEMS - match against the subsystem of the device, or the subsystem
+       of any of the parent devices
+     - DRIVERS - match against the name of the driver backing the device, or
+       the name of the driver backing any of the parent devices
+     - ATTRS - match a sysfs attribute of the device, or a sysfs attribute of
+       any of the parent devices
  - Possible assignment (se man udev for more)
      NAME - the name that shall be used for the device node
      SYMLINK - a list of symbolic links which act as alternative names for the device node
@@ -83,6 +122,50 @@ WRITING RULES
       * - match any character, zero or more times
       ? - match any character exactly once
       [] - match any single character specified in the brackets, ranges are also permitted
+ - SYSFS
+    - Use ATTR{name}==val to match for sysfs attributes and their value.
+    - udevinfo -a -p /sys/block/sda -> to format a set of match keys to
+      create udev rules. Only some of the listed values are needed to build
+      the rule, you have to choose theme wisely.
+    - udevadm info -a -p /sys/block/sda -> the same for debian/ubuntu
+    - Sometimes the output of udevinfo for text attributes have appended white
+      spaces, they can be safely removed or not when writing the rule.
+    - It is not possible, on a single rule, to try to match attributes of 2
+      different parents when using KERNELS/SUBSYSTEMS/ATTRS... the *S variants
+      of the available keys must match the same device in the hierarchy,
+      otherwhise it won't work.
+    - To find the /sys path of a /dev device, use:
+        udevinfo -a -p $(udevinfo -q path -n /dev/sda)
+  - OWNERSHIP
+    - OWNER="john"
+    - GROUP="video"
+    - MODE="0666", by default is "0660"
+  - EXTERNAL PROGRAM TO NAME THE RULE
+    - PROGRAM="/path/to/program" -> use the output to name a device, use %c or
+      %c{index} if the output if a set of words and only index is needed.
+  - TRIGGER EXTERNAL PROGRAM
+    - RUN+="/usr/bin/my_program" -> allows you to run a program after the
+      device node is put in place.
+    - It must not run for any extended period of time, because udev is
+      effectively paused while these programs are running. deatach program to
+      solve this.
+    - The application has acces to the environment variable such as SUBSYSTEM.
+      it can use ACTION to detect if the device is "add"ed or "remove"d.
+  - ENVIRONMENT INTERACTION
+    - ENV{some_var}="value" -> set environemnt variable that can be read by
+      external programs or used to match rules.
+  - OTHERS
+    - OPTIONS= list can have the following values:
+       - all_partitions - create all possible partitions for a block device,
+         rather than only those that were initially detected
+       - ignore_device - ignore the event completely
+       - last_rule - ensure that no later rules have any effect
+  - DEBUG
+    - udevtest /sys/<device-dir> -> show actions which udev would take
+    - udevtrigger -> force udev to rerun rules.
+
+
+
 
 DEBUG
  - sudo udevadm monitor -e  -> output uevents as they occur.

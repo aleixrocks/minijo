@@ -1,0 +1,64 @@
+BASICS
+ - There are to methods to methods to access the underlying devices:
+     - Through I/O ports
+     - Through memmory mapped regions
+   Not all architectures implement the I/O ports. Instead, they always use
+   ememmory mapped regions such as ARM. However, the kernel abstracts the
+   difference and mapps the I/O ports API to mmaped regions when the
+   architecture requires it.
+ - When I/O ports are implemented by the architecture (such as x86) it is said
+   that they have their own address range which lives in parallel to the usual
+   memory address range.
+
+RELEVANT VIRTUAL FILES
+ - /proc/ioports -> Shows for what purpose each I/O port (address in the I/O
+   port address space) has been allocated.
+ - /proc/iomem -> Shows which physical memory regions have been allocated for
+   I/O and for what.
+
+I/O PORTS
+ - For a driver to request a range of ports in the ports address space, it must
+   first request the ports. If the operation fails, it means that the ports are
+   already in use by some other driver. Inspecting /proc/ioports will reveal who
+   currently owns the ports.
+ - To request ports use:
+      struct resource *request_region(unsigned long first, unsigned long n,
+                                      const char *name);
+ - To write or read I/O ports it is important to use kernel macros to guarantee
+   portability. This is because writting to the I/O port is architecture
+   dependent (some arch such as ARM use mapped memory instead of I/O ports)
+     - unsigned inb(unsigned port) -> read one byte
+     - void outb(unsigned char byte, unsigned port) -> write one byte
+     - check other functions at <asm/io.h>
+ - To guarantee that data has been written instead of being on a register due
+   to compiler optimizations, barriers should be enforced manually:
+      - barrier() - read and write memory barrier
+      - rmb() -> read memory barrier
+      - wmb() -> write memory barrier
+ - ioports_map -> map ioports into I/O memory region. This is used to
+   homogenize the access to both ports and memory. Of course, ports must be
+   requested before doing so anyways.
+
+
+MEMORY MAPPED REGIONS
+ - To request a memory region for I/O use:
+      struct resource *request_mem_region(unsigned long start, unsigned long len,
+                                          char *name);
+ - The memory is only reserved, but it is not yet mapped. To map/unmap it, use:
+      #include <asm/io.h>
+      void *ioremap(unsigned long phys_addr, unsigned long size);
+      void *ioremap_nocache(unsigned long phys_addr, unsigned long size);
+      void iounmap(void * addr);
+   see LDD3 "vmalloc and friends" section.
+ - ioremap sets up virtual addresses for the requested physical I/O memory
+   region. It modifies the page table so the reserved physical address range
+   can be actually accessed. The virtual address assigned is the same as the
+   physical address requested (1-1 mapping). However, memory mapped this way
+   cannot be accesses directly because of the alpha architecture restrictions
+   which kills generality.
+ - To access ioremap returned addresses use the following familiy of functions:
+     unsigned int ioread8(void *addr);
+ - Or in blocks:
+     void memset_io(void *addr, u8 value, unsigned int count);
+     void memcpy_fromio(void *dest, void *source, unsigned int count);
+     void memcpy_toio(void *dest, void *source, unsigned int count);

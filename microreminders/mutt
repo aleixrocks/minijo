@@ -1,6 +1,11 @@
  - ? -> display key bindings
  - cntl + L -> redraw screen
 
+
+TYPIC USAGE
+ - Ctrl-R -> mark message/thread as read
+ - $ -> commit changes
+
 Moving around entry-based menus
  - j or <Down> -> <next-entry>	move to the next entry
  - k or <Up> -> <previous-entry>	move to the previous entry

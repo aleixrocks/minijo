@@ -1,0 +1,63 @@
+BASIC
+ - systemctl start/stop <service> -> start/stop service once
+ - systemctl enable/disable <service> -> enable/disable service at boot time
+
+WRITING UNIT FILE
+ - The behaviour of the program to execute by systemd in the systemd script
+   depends on the 'type' attribute in the script:
+    - simple - A long running process that does not background its self and
+      stays attached to the shell.
+    - forking - A typical daemon that forks itself detaching it from the
+      process that ran it, effectively backgrounding itself.
+    - oneshot - A short lived process that is expected to exit.
+    - dbus - Like simple, but notification of processes startup finishing is
+      sent over dbus.
+    - notify - Like simple, but notification of processes startup finishing
+      is sent over inotify.
+    - idle - Like simple, but the binary is started after the job has been
+      dispatched.
+
+RESTART SERVICE ON FAILURE
+ - Use the service Restart= to specify when to restart (always, on failure, on
+   abort, ... look at man).
+ - Use service RestartSec=<seconds> to specify the number of seconds between
+   restart (no unit sufix)
+ - Use the unit StartLimitIntervalSec=0 to try to restart an unlimited amount
+   of times.  Otherwise it will stop after a number of attempts.
+ - Example:
+      [Unit]
+      Description=My Miscellaneous Service
+      After=network.target
+      StartLimitIntervalSec=0 # Repeat restart unlimited
+     
+      [Service]
+      Type=simple
+      User=nanodano
+      WorkingDirectory=/home/nanodano
+      ExecStart=/home/nanodano/my_daemon --option=123
+      Restart=on-failure # or always, on-abort, etc
+      RestartSec=5 # 5s between restart
+     
+      [Install]
+      WantedBy=multi-user.target
+
+DEBUG
+ - journalctl -u <service> -> show logs for <service>
+ - systemctl list-dependencies [--after | --before] -> show tree of after |
+   before dependencies. If no --after or --before is used, it returns the list
+   of wanted, required [improve this explanation]
+ - systemctl list-unit -> show all units
+
+DEPENDENCIES
+ - Wants -> This unit wants the listed unit, but if the listed unit fails to
+   start, this unit will start anyways.
+ - Requires= -> This unit requires teh listed unit, if the listed unit fails to
+   start, this unit won't start either.
+ - WantedBy=, RequiredBy= ->A dependency of type Wants= or Requires= is added
+   from the listed unit to the current unit.
+
+OTHERS
+ - To wait for a network interface on a systemd unit:
+     [Service]
+       ExecStartPre=/lib/systemd/systemd-networkd-wait-online --interface=bnep0
+       ExecStart=...

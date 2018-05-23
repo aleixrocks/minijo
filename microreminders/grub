@@ -17,6 +17,33 @@ BASIC
    again the default kernel. <menuentry> is the complete text of the menuentry
    name as specified in the GRUB_DEFAULT option.
 
+ENVIRONMENT
+ - GRUB_TIMEOUT=10 -> boot default entry in 10 seconds.
+ - GRUB_HIDDEN_TIMEOUT=0 -> whait the specified numer of seconds before showing
+   the grub menu. If a key is pressed while waiting, the menu is displayed
+   directly. if GRUB_TIMEOUT=0, the grub menu won't be displayed unless a key
+   is pressed.
+ - GRUB_HIDDEN_TIMEOUT_QUIET=false -> set to true to supress the verbose
+   conuntdown while waiting for a key to be pressed befor the grub menu.
+ - GRUB_CMDLINE_LINUX='' -> Options passed ALWAYS to the linux kernel.
+ - GRUB_CMDLINE_LINUX_DEFAULT='' -> Options passed to the linux kernel ONLY
+   during normal boot, not during recovery mode.
+ - GRUB_TERMINAL="console serial" -> set the terminals where grub is displayed.
+   console shows to the standard console (the monitor) serial shows grub on the
+   serial port as configured by GRUB_SERIAL_COMMAND
+
+
+SERIAL CONSOLE TYPICAL CONFIGURATION
+   GRUB_TIMEOUT=10
+   GRUB_HIDDEN_TIMEOUT=0
+   GRUB_HIDDEN_TIMEOUT_QUIET=false
+   GRUB_CMDLINE_LINUX_DEFAULT="console=ttyS0,115200n8 console=tty0"
+   GRUB_TERMINAL="console serial"
+   GRUB_SERIAL_COMMAND="serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
+
+
+
+
 CUSTOM GRUB ENTRY
  - To add a custom grub entry, simply write your own menuentry { } in the
    file /etc/grub.d/40_custom. The scripts listed under /etc/grub.d/* are

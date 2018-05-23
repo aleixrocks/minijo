@@ -1,0 +1,9 @@
+ - Open gimp, select with the rectangle tool what you want to cut. Write down
+   the "position" and "size" numbers found in the left pannel (where the
+   rectangle tool options lie). Do not use the values shown in the bottom of
+   the GIMP toolbar!!
+ - Put all pictures in a folder and make a backup.
+ - use the mogrify tool to cut all pictures. The syntaxis is:
+     mogrify -crop {Width}x{Height}+{X}+{Y} image.pnga
+   For a rectangle of 1658x286 situated at 1380,726:
+     mogrify -crop 1658x286+1380+726 *.png

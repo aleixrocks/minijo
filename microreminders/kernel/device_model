@@ -211,6 +211,34 @@ Kobjects
       user-space hotplug command. The other user-space hotplug paramenters are
       passed through environment variables.
     - The hotplug method is used to create such environment variables.
+ - Buses
+    - A bus is a channel between the processor and one or more devices.
+    - For the purpose of the device model, all devices are connected via a bus,
+      even if it is an internal, virtual, "platform" bus.
+    - Buses can plug into each other (usb controller is pluged into PCI)
+    - The device model represents the actual connections between buses and
+      the devices they control.
+    - The bus structure is defined in <linux/device.h> as:
+        struct bus_type {
+          char *name;
+          struct subsystem subsys;
+          struct kset drivers;
+          struct kset devices;
+          int (*match)(struct device *dev, struct device_driver *drv);
+          struct device *(*add)(struct device * parent, char * bus_id);
+          int (*hotplug) (struct device *dev, char **envp,
+          int num_envp, char *buffer, int buffer_size);
+          /* Some fields omitted */
+        };
+    - The name field is the name of the bus, something such as pci . You can
+      see from the structure that each bus is its own subsystem; these
+      subsystems do not live at the top level in sysfs, however. Instead, they
+      are found underneath the bus subsystem. A bus contains two ksets,
+      representing the known drivers for that bus and all devices plugged into
+      the bus.
+    - Buses are added and removed with (ldd_bus_type is a bus_type example):
+        ret = bus_register(&ldd_bus_type);
+        void bus_unregister(struct bus_type *bus);
  - Devices
     - At the lowest level, every device is represented by a struct device:
         struct device {
@@ -390,7 +418,3 @@ Kobjects
        - To remove the class:
           void class_simple_destroy(struct class_simple *cs);
      - Check ldd pg 389 for the full class interface.
-   
-       
-
-
