@@ -81,5 +81,9 @@ LOCATION COUNTER
       - . = .text + 510 -> advance location counter by 510 starting from
         the section .text.
 
+INLINE ASSEMBLY
+ - Do not use "%%" on registers if the extended gnu syntax is not used, i.e.
+   the ": OUT : IN : OPT" notation.
+
 
 

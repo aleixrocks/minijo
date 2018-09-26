@@ -6,6 +6,7 @@ DOCUMENTATION
     - https://lwn.net/Articles/375096/
     - https://lwn.net/Articles/376606/
     - https://lwn.net/Articles/378641/
+ - Documentation/filesystems/proc.txt
 
 HUGE PAGES WITH libhugetlbfs
  - Install libhugetlbfs and libhugetlbfs-utils (the later might be included
@@ -30,20 +31,29 @@ HUGE PAGES WITH libhugetlbfs
      - To allocate huge pages of a specific size, one must precede the huge
        pages boot command parameters with a huge page size selection parameter
          hugepagesz=<size> -> size in [kKmMgG] (e.g. 2M) 
-
-Some platforms support multiple huge page sizes.   "".  <size> must
-be specified in bytes with optional scale suffix .  The default huge
-page size may be selected with the "" boot parameter.
-
  - List current pools
      hugeadm --pool-list
- - Run application with hugepages (this uses a glibc hook to force it to
-   use hugepages when allocating new memory. It also prevents malloc from
-   using brk.)
+ - Run application with hugepages. This uses a glibc hook to force it to use
+   hugepages when allocating new memory. It also prevents malloc from using
+   brk. However, it only works for the main Arena, other threads arenas don't
+   make use of the morecore hook (provided by libhugetlbfs to allocate more
+   memory when needed in malloc). To force all threads to use the main arena
+   (effectively limiting the number of arenas to 1), the mallopt
+   MALLOC_ARENA_MAX=1 should be used. Be aware that this increases contetion in
+   user-space.
+   WARNING: the morecore hook will be deprecated soon.
      hugectl --heap <application>
      hugectl --heap=64k ./target-application # use 64k pages instead of default size
  - Check usage of hugepages with
-     grep Huge /proc/meminfo
+     - Amount of pages used:
+         grep Huge /proc/meminfo
+     - Shows the count of memory mapped areas grouped by the page size that
+       they are using.
+         grep KernelPageSize: /proc/<pid>/smaps | sort | uniq -c
+     - To understand all filed of /proc/<pid>/smaps, read:
+         https://www.kernel.org/doc/Documentation/filesystems/proc.txt
+     - List total 2MiB pages for a process:
+          grep -B 11 'KernelPageSize:     2048 kB' /proc/[PID]/smaps | grep "^Size:" | awk 'BEGIN{sum=0}{sum+=$2}END{print sum/1024}'
 
 
 TRANSPARENT HUGE PAGES (THP)
@@ -94,7 +104,11 @@ TRANSPARENT HUGE PAGES (THP)
            grep AnonHugePages /proc/meminfo 
            AnonHugePages:    632832 kB
     - Per process usage:
-        - cat /proc/[PID]/smaps -> show mappings and page usage
+       - cat /proc/[PID]/smaps -> show mappings and page usage. Be aware that
+         the KernelPageSize: field only applies for explicit huge pages, not
+         for transparent huge pages. In fact, a memory mapped area might use
+         different sized transparent huge pages (regardless of the explicit
+         huge page case, in which a single size per mmaped memory is used).
            - AnonHugePages
     - Other statistics. Check Documentation/vm/transhuge.txt for description.
         egrep 'trans|thp' /proc/vmstat
@@ -106,11 +120,5 @@ TRANSPARENT HUGE PAGES (THP)
         thp_split 21
 
 MONITORING/DEBUG
- - Per process usage:
-     - cat /proc/[PID]/smaps -> show mappings and page usage
-     - List total 2MiB pages for a process:
-          grep -B 11 'KernelPageSize:     2048 kB' /proc/[PID]/smaps | grep "^Size:" | awk 'BEGIN{sum=0}{sum+=$2}END{print sum/1024}'
-     - Show for how many memory regions each page size is used:
-           grep KernelPageSize /proc/[PID]/smaps | sort | uniq -c
  - Per NUMA node default size Huge page distribution
      cat /sys/devices/system/node/node*/meminfo | fgrep Huge

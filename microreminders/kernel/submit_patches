@@ -12,6 +12,12 @@ BASIC
  - git commit -v -s: Do commit. -v to add diffstat and -s to add Signed-off-by
    line.
 
+IS SOMEBODY WORKING ON THIS?
+ - Just check the git tree for recent commits. For example, to find if the
+   pi4333 driver is under active development, check its git tree (
+   (https://git.kernel.org/pub/scm/linux/kernel/git/gregkh/staging.git/) and
+   list people doing commits 'git log -- drivers/staging/pi433/'
+
 To Who should the patch be sent?
  - Patches must be send to the maintainer of the affected subsystem by the
    patch and to the relevant mailing list of the subsystem.  To determine who

@@ -59,6 +59,24 @@ PERF STAT
  - perf stat -t<pid> <command>-> measure on thread with <pid>. If <command>
    if specified, is used to determine execution time. It is useful to use it
    with <sleep 3> to measure for three seconds.
+ - RAW hardware event selection
+    - Linux lists all devices that can generate events under the path
+        /sys/bus/event_sources/devices/
+    - Each event can accept different paramenters which are found under
+        /sys/bus/event_sources/devices/format/
+    - Each file under "format" corresponds to a configurable option of the
+      event into the low-level hardware register that controls the event. To
+      understand what exactly the field means, it is necessary to check the
+      architecture developer manual of the machine (Intel, ARM, AMD, etc). When
+      read, each of this files contain the bit range within the programable
+      hardware register.
+    - Example on a Knights Landing (xeon phi) processor:
+        sudo perf stat -a -e uncore_edc_uclk_0/period=0x0,inv=0x0,edge=0x0,event=0x2,umask=0x1,thresh=0x0/,uncore_edc_uclk_0/period=0x0,inv=0x0,edge=0x0,event=0x2,umask=0x4,thresh=0x0/
+      In fact, the 0x0 values can be omitted:
+        sudo perf stat -a -e uncore_edc_uclk_0/event=0x2,umask=0x1/,uncore_edc_uclk_0/event=0x2,umask=0x4/
+        
+
+
 
 PERF SAMPLING/RECORD
  - perf record <command> -> sample command functions usage

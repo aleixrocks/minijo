@@ -357,5 +357,23 @@ PAGE TABLE STRUCTURE
        no "exec" permissions on pages so it acts as a read.
      - pte_dirty(), pte_mkdirty(), pte_mkclean() -> test, check and set access bit.
      - pte_young(), pte_mkyoung(), pte_old() -> test, check and set diry bit.
+     - mk_pte() -> takes a struct page and protection bits and returns a pte_t
+       that needs to be inserted into the page table.
+     - mk_pte_phys() -> the same as mk_pte but thakes a physical page address
+       as a parameter.
+     - pte_page(), pmd_page() -> returns the struct page which corresponds to
+       the given PTE/PMD entry.
+     - set_pte() -> set a pte_t returned by a function such as mk_pte()
+     - pte_clear() ->  delete a pte_t entry from the page table.
+     - ptep_get_and_clear() -> delete and return a pte_t entry from the page table.
+     - pgd_alloc(), pmd_alloc(), pte_alloc(), *_free() -> allocate and free a
+       page to store pgd, pmd and pte entries. These functions keep a LIFO
+       cache of pages. If the cache is empty, pages are allocated using the
+       physical page allocator.
   - The kernel currently supports 5-level page table which are named:
     PGD, P4D, PUD, PMD and PTE.
+  - the mm->page_table_lock protectes the page table hierarchy structure.
+
+
+TLB
+  - Documentation at Documentation/cachetlb.txt

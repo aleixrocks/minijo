@@ -1,8 +1,6 @@
 compile with -g[0-3] o -ggdb[1-3]. To archive most amount of information
 use -ggdb3. The number means 1 (less) 2 (medium) 3 (high) amount of info
 
-compile with -W - Wall. It gives more warnings.
-
 GENERAL
  - gdb -tui -> start gdb with text user interface. It's mandatory if you want
    to use it, otherwise, a werid behaviour is expected such as not recognizing
@@ -79,6 +77,10 @@ MEMORY
        cannot be altered. 
      - addr, starting display address -> addr is the address where you want gdb
        to begin displaying memory. It can be an operation such as: %edx + 0x14.
+
+SHARED LIBRARIES
+ - info sharedlibraries -> report memory mapping of shared libraries.
+ - info [symbol|variable|function] <name> -> report info about symbol/var/fun
 
 BREAKPOINTS
  - break functionname/linenumber -> new breakpoint

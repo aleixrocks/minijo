@@ -1,0 +1,11 @@
+
+COMPILE AGAINST CUSTOM GLIBC
+ - src: https://stackoverflow.com/questions/847179/multiple-glibc-libraries-on-a-single-host/851229#851229
+ - The -rpath linker option will make the runtime loader search for libraries
+   in /path/to/newglibc (so you wouldn't have to set LD_LIBRARY_PATH before
+   running it), and the -dynamic-linker option will "bake" path to correct
+   ld-linux.so.2 into the application.
+
+   g++ main.o -o myapp ... \
+    -Wl,--rpath=/path/to/newglibc \
+    -Wl,--dynamic-linker=/path/to/newglibc/ld-linux.so.2
