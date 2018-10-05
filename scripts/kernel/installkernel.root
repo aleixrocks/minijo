@@ -1,0 +1,11 @@
+#!/bin/bash
+
+USER=aleix
+
+INSTALLKERNEL=/home/$USER/bin/installkernel
+
+if [ -f $INSTALLKERNEL ]; then
+	exec $INSTALLKERNEL $@
+else
+	echo "Error: cannot find $INSTALLKERNEL"
+fi

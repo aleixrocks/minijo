@@ -97,8 +97,8 @@ Kobjects
       specified shortly.
     - The name assigned to the kobject (with kobject_set_name) is the name used
       for the sysfs directory. Thus, kobjects that appear in the same part of
-      the sysfs hier- archy must have unique names. Names assigned to kobjects
-      should also be rea- sonable file names: they cannot contain the slash
+      the sysfs hierarchy must have unique names. Names assigned to kobjects
+      should also be reasonable file names: they cannot contain the slash
       character, and the use of white space is strongly discouraged.
     - The sysfs entry is located in the directory corresponding to the
       kobject’s parent pointer. If parent is NULL when kobject_add is called,

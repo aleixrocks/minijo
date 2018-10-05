@@ -21,4 +21,29 @@ BASICS
       under it.
     - 2-1:1.0 describes the first configuration of the interface zero for the
       2-1 device.
+USB urb
+ - The USB code in the Linux kernel communicates with all USB devices using
+   some- thing called a urb (USB request block). This request block is
+   described with the struct urb structure and can be found in the
+   include/linux/usb.h file.
+ - A urb is used to send or receive data to or from a specific USB endpoint on
+   a specific USB device in an asynchronous manner
+ - urbs can be queued on a endpoint queue.
+ - urbs can be canceled anytime.
+ - urbs have internal reference count.
+ - It is possible to establish USB communications without urbs as well.
+
+USB DRIVER AUTOLOAD
+ - The struct usb_device_id is declared and filled to specify the devices the
+   drivers supports. At compile time, this info is extracted and the modalias
+   file is created for udev. Example:
+
+      /* table of devices that work with this driver */
+      static struct usb_device_id skel_table [ ] = {
+      { USB_DEVICE(USB_SKEL_VENDOR_ID, USB_SKEL_PRODUCT_ID) },
+      { }
+      /* Terminating entry */
+      };
+      MODULE_DEVICE_TABLE (usb, skel_table);
+
 

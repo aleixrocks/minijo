@@ -1,0 +1,43 @@
+#!/bin/bash
+
+checkerrors() {
+	if [ $? -ne 0 ]; then
+		echo "ERROR"
+		exit 1
+	fi
+}
+
+
+KVER=$1
+KIMG=$2
+KMAP=$3
+KINSTALL=$4
+
+echo "version: $KVER"
+echo "image: $KIMG"
+echo "map: $KMAP"
+echo "install: $KINSTALL"
+echo "----------------"
+
+
+echo "copying kernel image"
+cp $KIMG $KINSTALL/vmlinuz-$KVER
+checkerrors
+
+echo "copying System.map"
+cp $KMAP $KINSTALL/$KMAP-$KVER
+checkerrors
+
+echo "creating System.map symlink"
+ln -sf $KINSTALL/$KMAP-$KVER $KINSTALL/$KMAP
+checkerrors
+
+echo "creating initrd image"
+mkinitcpio -k $KVER -g $KINSTALL/initramfs-$KVER.img
+
+echo "updating grub"
+grub-mkconfig -o $KINSTALL/grub/grub.cfg
+checkerrors
+
+echo "done!"
+

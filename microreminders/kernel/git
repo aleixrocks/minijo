@@ -12,3 +12,17 @@ LINUX-NEXT SETUP
    And yes, it reallys *is* that easy.
 LINUX-NEXT LOG
  - git log linux-next/master --no-walk --pretty=oneline --decorate -> The --no-walk option hides the ancestry of the leaf commits. Hence it only shows the linux-next tags 
+
+HOW TO PREPARE A PATCH
+ - documentation under
+     - Documentation/process/submitting-patches.rst
+     - https://kernelnewbies.org/FirstKernelPatch
+ - commit your changes with
+    git commit -s -v
+      - option -s is for adding signed-off line
+      - option -v is for showing what is being done
+      - The first list of the commit message is the mail subject, be conscince,
+        follow the format:
+            Subject: [PATCH 001/123] subsystem: summary phrase
+            Subject: [PATCH] subsystem: summary phrase
+ - format patch
