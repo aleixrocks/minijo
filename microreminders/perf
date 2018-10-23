@@ -70,6 +70,11 @@ PERF STAT
       architecture developer manual of the machine (Intel, ARM, AMD, etc). When
       read, each of this files contain the bit range within the programable
       hardware register.
+    - There are additional accepted parameters per event which are not listed in format such as:
+       - name='patata' set the name of the event to be shown in the statistics
+       - period=0x0 set the period?
+      To list possible options, trigger an error and check the usage help:
+        sudo perf stat -e uncore_edc_uclk_0/invalid_value/
     - Example on a Knights Landing (xeon phi) processor:
         sudo perf stat -a -e uncore_edc_uclk_0/period=0x0,inv=0x0,edge=0x0,event=0x2,umask=0x1,thresh=0x0/,uncore_edc_uclk_0/period=0x0,inv=0x0,edge=0x0,event=0x2,umask=0x4,thresh=0x0/
       In fact, the 0x0 values can be omitted:
