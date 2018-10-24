@@ -9,8 +9,8 @@ KDIR="$BDIR/kernel/linux"
 CDIR="$BDIR/code/tasks"
 
 cd $KDIR
-tmux new-session -d -s $SESSION -n 'kernel' 'exec bash --init-file <(echo "vim -S")'
+tmux new-session -d -s $SESSION -n 'kernel' 'exec bash --init-file <(echo "source '$HOME'/.bashrc; vim -S")'
 tmux split-window -t "$SESSION:kernel.0" -h 'exec bash'
-tmux split-window -t "$SESSION:kernel.1" -v 'exec bash --init-file <(echo "cd '$CDIR'")'
+tmux split-window -t "$SESSION:kernel.1" -v 'exec bash --init-file <(echo "source '$HOME'/.bashrc; cd '$CDIR'")'
 
 tmux -2 attach-session -t $SESSION
