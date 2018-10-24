@@ -1,0 +1,49 @@
+The VFS is based on UNIX filesystem representation of objects. To implement
+other filesystems, it "fits" the implementation details into the UNIX
+implementation file strucutres (it forces other filesystems to use UNIX
+implementation structures) with the objective of having a unified
+representation of filesystems. They claim it is efficient enough.
+
+
+A namespace is a subset of a filesystem?
+
+A filesystem has four types of objects:
+ - superblock: represents a specifc mounted filesystem
+ - inode: represents a specific file, directory, symlink or pipe. It keeps
+   information such as ownershipand permissions but do not store the name of
+   the file. Inodes are identified by a numeric id.
+ - dentry: (short for "directory entry") is used to keep track of the hierarchy
+   of files in directories. Each dentry maps an inode number to a file name and
+   a parent directory.
+ - file: represents an __open__ file.
+
+ Each of those objects has a file operations object describing the operations
+ it supports. There are generic impementations of methods, but each fs can
+ implement its own.
+
+Other interesting objects:
+ - file_system_type structure: describes each registered filesystem and its capabilities.
+ - vfsmount: represents mount points. Contains information such as its location and mount flags.
+ - fs_struct: describe filesystem associatd per __process__
+ - file_struct: describe files associatd per __process__
+
+THE SUPERBLOCK
+ - also called filesystem control block.
+ - It is stored in a special sector in the disk. Not disk-based filesystems
+   (such as sysfs) generate the super_block object on the fly. Multiple backups
+   are stored at different positions in the disk, the tool
+   "dumpe2fs /dev/foo | grep -i superblock" can be used to inspect the backups.
+ - The superblock object is implemented in <linux/fs.h>
+ - A superblock object is created and initialized via the alloc_super() func-
+   tion. When mounted, a filesystem invokes this function, reads its superblock
+   off of the disk, and fills in its superblock object.
+
+TOOLS
+ - dumpe2fs /dev/foo | grep -i superblock: inspect the superblock backups on a
+   disk.
+ - /sbin/fsck.ext3 -b 163840 -B 1024 /dev/foo: try to restore a specific
+   superblock at position 163840 of size 1024.
+
+
+
+
