@@ -145,6 +145,11 @@ PERF TOP
  - perf top -F 49 -ns comm,dso -> sample cpu's and show top process names and
    segments
 
+PERF_EVENT_OPEN
+ - the syscall used to configure perf is named "perf_event_open"
+ - to see how perf configures the perf_event_attr use -vv flag e.g.
+    - perf stat -vv -a -e mem-loads
+
 TROUBLESHOOTING
  - If symbol names look like "_ZL5myfunRN9benchmark5StateE", it means that perf
    was not compiled with name demangling. To solve it, install the
