@@ -12,7 +12,32 @@ GENERAL
  - kern-tree/Documentation/sysrq.txt -> sysrq info
  - kern-tree/Documentation/printk-formats.txt -> printk formats
 
-
+KPROBES
+ - documentation:
+     - Documentation/kprobes.txt # general design
+     - Documentation/tracing/kprobetrace.rst # debugfs interface guide
+ - the blacklist file shows functions that cannot be probed. However, there are
+   more that are not listed here..
+    cat /sys/kernel/debug/kprobes/blacklist
+ - register a kprobe (see Documentation/tracing/kprobetrace.rst)
+     echo "p:mykprobe vfs_read+27 arg=%ax" >> ./kprobe_events
+ - unregister all probes:
+     echo > /sys/kernel/debug/tracing/kprobe_events
+ - enable
+     echo 1 > /sys/kernel/debug/tracing/events/kprobes/<EVENT>/enable
+ - show trace
+     cat /sys/kernel/debug/tracing/trace
+ - disassemble a function oneliner (similar to objdump -S)
+     gdb -batch -ex "file $EXECUTABLE" -ex "disassemble/rs $FUNCTION"
+ - perf interface:
+     - doc: https://events.static.linuxfound.org/slides/lfcs2010_hiramatsu.pdf
+     - analyze binary:
+        - perf probe --line vfs_read
+        - lines starting with a number might be probed (the kernel might complain)
+     - add event: perf probe --add 'vfs_read file file->f_mode'
+     - show event: perf probe --list; perf list
+     - trace event: perf record -e probe:vfs_read -aRf ls -l; perf trace
+     - delete event: perf probe --del '*"
 
 UNDERSTANDING OOPS AND PANIC
  - A out of memory Oops looks like:

@@ -231,6 +231,9 @@ GDB TEXT USER INTERFACE (GDBTUI)
     - list *(function+offset) -> where offset is hexa 0x137 for instance and
       function a function name.
 
+DISASSEMBLE
+ - disassemble a function oneliner (similar to objdump -S)
+     gdb -batch -ex "file $EXECUTABLE" -ex "disassemble/rs $FUNCTION"
 
 
 OTHER COMMANDS
