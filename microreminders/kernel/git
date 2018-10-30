@@ -26,3 +26,11 @@ HOW TO PREPARE A PATCH
             Subject: [PATCH 001/123] subsystem: summary phrase
             Subject: [PATCH] subsystem: summary phrase
  - format patch
+    - creates patch file under /tmp for current commit.
+       git format-patch -o /tmp/ HEAD^
+
+ - squash commits. To squash all commits in branch "feature" in a new branch
+   named "feature-patch" do the follwoing:
+    - git checkout master
+    - git checkout -b feature-patch
+    - git merge --squash feature

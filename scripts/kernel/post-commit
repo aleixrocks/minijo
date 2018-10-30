@@ -1,0 +1,4 @@
+#!/bin/sh
+ARCH_DEFAULT=/usr/lib/python3.7/site-packages/codespell_lib/data/dictionary.txt
+
+exec git show --format=email HEAD | ./scripts/checkpatch.pl --strict --codespell --codespellfile $ARCH_DEFAULT
