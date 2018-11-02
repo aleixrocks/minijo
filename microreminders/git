@@ -182,6 +182,29 @@ PATCH
  - git diff --cached > mypatch.patch -> create patch of all __staged__ files.
  - git apply file.patch -> apply patch
 
+BUG SEARCH
+ - find commits that touch certain files in a certian range of git history
+    git log --oneline --decorate v4.14..HEAD -- drivers/net/wireless/realtek/rtl8xxxu
+ - binary search of commit itroducing bug using git bisect
+    - start binary search with either:
+       - git bisect start -> search in the hole range git history
+       - git bisect start -- arch/i386 include/asm-i386 -> search in commits
+         touching the specified directories
+    - specify a good and a bad commit with:
+       - git bisect good a09c728
+       - git bisect bad b6a0692
+    - optionally, skip commits manually
+       - git bisect skip 0dae5f ff049ab ...
+    - mark current working directory as good or bad. git will automatically
+      checkout the next commit to test after running those:
+       - git bisect good
+       - git bisect bad
+    - optionally, feed git a script to atomate the testing. It should return 0
+      if everything is ok or exit with a code between 1 and 127 (inclusive),
+      except 125 otherwise. 125 means skip the current commit. Any other value
+      aborts git bisect.
+       - git bisect run rspec spec/features/my_broken_spec.rb
+
 SUBMODULES
  - fetch data
      - git clone --recursive -j8 <url>
