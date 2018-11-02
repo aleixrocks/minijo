@@ -4,9 +4,15 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 
 SESSION=kernel
-BDIR="$HOME/projects/kernel/eudyptula"
+
+#eudyptula
+#BDIR="$HOME/projects/kernel/eudyptula"
+#KDIR="$BDIR/kernel/linux"
+#CDIR="$BDIR/code/tasks"
+
+BDIR="$HOME/projects/kernel/kernel"
 KDIR="$BDIR/kernel/linux"
-CDIR="$BDIR/code/tasks"
+CDIR="$BDIR/code"
 
 cd $KDIR
 tmux new-session -d -s $SESSION -n 'kernel' 'exec bash --init-file <(echo "source '$HOME'/.bashrc; vim -S")'
