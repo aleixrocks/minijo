@@ -21,6 +21,79 @@ BASICS
       under it.
     - 2-1:1.0 describes the first configuration of the interface zero for the
       2-1 device.
+
+USB PROTOCOL INFOMRATION IN A DEVICE EXAMINATION
+ - Even if Linux doesn't have a driver for a USB device, it will still create a
+   usb_device object which contains all the protcol specific information of the
+   USB device. This information is exported to user-space through the file
+   /sys/kernel/debug/usb/devices . An example of the file follows:
+      cat /sys/kernel/debug/usb/devices
+      T:  Bus=01 Lev=00 Prnt=00 Port=00 Cnt=00 Dev#=  1 Spd=480  MxCh= 7
+      B:  Alloc=  0/800 us ( 0%), #Int=  0, #Iso=  0
+      D:  Ver= 2.00 Cls=09(hub  ) Sub=00 Prot=01 MxPS=64 #Cfgs=  1
+      P:  Vendor=1d6b ProdID=0002 Rev= 4.19
+      S:  Manufacturer=Linux 4.19.0-rc6 xhci-hcd
+      S:  Product=xHCI Host Controller
+      S:  SerialNumber=0000:00:14.0
+      C:* #Ifs= 1 Cfg#= 1 Atr=e0 MxPwr=  0mA
+      I:* If#= 0 Alt= 0 #EPs= 1 Cls=09(hub  ) Sub=00 Prot=00 Driver=hub
+      E:  Ad=81(I) Atr=03(Int.) MxPS=   4 Ivl=256ms
+   - E means endpoints:
+      - Ad menas address
+         - (I) for input
+         - (O) for output
+      - Atr is the kind of endpoint, i.e. control, interrupt, bulk or isochronus
+      - MxPS is the maximum packet size, the max data it can be transferred in a
+        single go.
+      - Ivl: minimum time between interrupts that the device needs.
+   - C configuration. There would be a C line per each available configuration,
+     but there is usually only one congiruation per device.
+      - MxPwr is the maximum power the device will consume under this configuration.
+   - T the usb position in the tree
+   - * after C and I means the currently used configuration and interface.
+   - D for Device
+   - I for interface
+      - if# index
+      - Alt alternate number
+      - #EPs the number of endpoints under this interface.
+      - Cls functionality class/category of this interface
+      - Driver driver associated with this interface
+   - S for vendor string provided information
+   - The complete description of each filed can be found under:
+     Documentation/usb/proc_usb_info.txt
+- Linux represents stores all this data as follows, where desc store the
+  different attributes of each usb "layer" described above:
+    struct usb_device
+    {
+        ...
+        struct usb_device_descriptor descriptor;
+        struct usb_host_config *config, *actconfig;
+        ...
+    };
+    struct usb_host_config
+    {
+        struct usb_config_descriptor desc;
+        ...
+        struct usb_interface *interface[USB_MAXINTERFACES];
+        ...
+    };
+    struct usb_interface
+    {
+        struct usb_host_interface *altsetting /* array */, *cur_altsetting;
+        ...
+    };
+    struct usb_host_interface
+    {
+        struct usb_interface_descriptor desc;
+        struct usb_host_endpoint *endpoint /* array */;
+        ...
+    };
+    struct usb_host_endpoint
+    {
+        struct usb_endpoint_descriptor  desc;
+        ...
+    };
+
 USB urb
  - The USB code in the Linux kernel communicates with all USB devices using
    some- thing called a urb (USB request block). This request block is

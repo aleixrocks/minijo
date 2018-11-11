@@ -1,0 +1,26 @@
+BASIC
+ - overview: https://unix.stackexchange.com/questions/116629/how-do-keyboard-input-and-text-output-work/116630#116630
+ - kernel details under input/input.txt
+ - Types of keys:
+    - scancode -> raw value send by a keyboard device. They are numeric.
+    - keycode  -> scancode translation done by the kernel.  The kernel do not
+      retransmit the scan codes that it doesn't know about. They are numeric.
+    - keysyms (key symbol) -> keycode translated by the X server. Keysym are
+      names such as A, aacute, F1, Control_L, .... Keysym vary depending on
+      which modifier keys are pressed.
+ - Translation of scancode to keycode is done by the kernel at kernel level.
+ - Translation of keycodes to keysyms is done by two possible mechanisms:
+   xmodmap and XKB.
+ - keysyms can be inspected by running "xev" (GUI and TUI) or "evtest" (TUI) or
+   evemu-record (TUI)
+
+HOW IT WORKS
+ - when a key is pressed, the cpu generates an interrupt so the kernel can read
+   the keyboard scancode.
+ - the kernel exposes the input device as files under /dev/input/eventNNN
+   (mouse is /dev/input/mice for a unified output for all devices or
+   /dev/input/miceN for a specic N device)
+ - The X server reads /dev/input/eventNNN, translates it to keysyms and sends
+   it to the applicattion that has the focus.
+ - The application does whatever it wants with the keycode. If it is an
+   interpreter such as BASH it will just show the key on the screen.

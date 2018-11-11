@@ -49,6 +49,7 @@ COMPARISIONS AND JUMPS
     - jeq -> jump when equal
     - jlt -> jump when less than
     - jgt -> jump when greater than
+    - ja  -> jump when greater than on unsigned
  - jmp label -> unconditional jump to label.
 
 DATA
