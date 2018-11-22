@@ -11,6 +11,8 @@ usage() {
 }
 
 abort() {
+	INF="aborting\n"
+	echo -e $INF >> $LOG
 	(>&2 cat $LOG)
 	echo "temporal files located at $TMP"
 	exit 1
@@ -91,6 +93,9 @@ then
 	echo -e $ERR >> $LOG
 	if [ "$DO_FORCE" == false ]; then
 		abort
+	else
+		INF="forcing removal\n"
+		echo -e $INF >> $LOG
 	fi
 fi
 
