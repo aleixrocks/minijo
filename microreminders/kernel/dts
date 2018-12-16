@@ -1,0 +1,10 @@
+BASIC
+ - .dtsi files are included files, while .dts files are final Device
+    Trees.
+      - .dtsi: will contain definition of SoC-level information (or sometimes
+        definitions common to several almost identical boards).
+      - .dts file contains the board-level information.
+ - runtime representation of the loaded device tree:
+     ls -l /sys/firmware/devicetree/base/
+ - All Device Tree bindings recognized by the kernel are
+ documented in Documentation/devicetree/bindings

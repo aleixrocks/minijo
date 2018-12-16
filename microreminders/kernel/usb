@@ -22,7 +22,7 @@ BASICS
     - 2-1:1.0 describes the first configuration of the interface zero for the
       2-1 device.
 
-USB PROTOCOL INFOMRATION IN A DEVICE EXAMINATION
+USB PROTOCOL INFORMATION IN A DEVICE
  - Even if Linux doesn't have a driver for a USB device, it will still create a
    usb_device object which contains all the protcol specific information of the
    USB device. This information is exported to user-space through the file

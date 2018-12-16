@@ -1,0 +1,22 @@
+From: https://stackoverflow.com/questions/10603104/the-difference-between-initrd-and-initramfs
+
+when booting:
+
+initrd
+ - A ramdev block device is created. It is a ram-based block device, that is a
+   simulated hard disk that uses memory instead of physical disks.
+ - The initrd file is read and unzipped into the device, as if you did zcat
+   initrd | dd of=/dev/ram0 or something similar.
+ - The initrd contains an image of a filesystem, so now you can mount the
+   filesystem as usual: mount /dev/ram0 /root. Naturally, filesystems need a
+   driver, so if you use ext2, the ext2 driver has to be compiled in-kernel.
+ - Done!
+initramfs
+ - A tmpfs is mounted: mount -t tmpfs nodev /root. The tmpfs doesn't need a
+   driver, it is always on-kernel. No device needed, no additional drivers.
+ - The initramfs is uncompressed directly into this new filesystem: zcat
+   initramfs | cpio -i, or similar.
+ - Done!
+And yes, it is still called initrd in many places although it is a initramfs,
+particularly in boot loaders, as for them it is just a BLOB. The difference is
+made by the OS when it boots.

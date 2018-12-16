@@ -15,7 +15,9 @@ LINUX-NEXT LOG
 
 HOW TO PREPARE A PATCH
  - documentation under
+     - Documentation/process/howto.rst
      - Documentation/process/submitting-patches.rst
+     - Documentation/process/submit-checklist.rst
      - https://kernelnewbies.org/FirstKernelPatch
  - commit your changes with
     git commit -s -v
@@ -28,6 +30,8 @@ HOW TO PREPARE A PATCH
  - format patch
     - creates patch file under /tmp for current commit.
        git format-patch -o /tmp/ HEAD^
+    - to edit [PATCH] to add a version number or use [RFC] instead, use:
+       git format-patch --subject-prefix="PATCH v2"  -o /tmp/ HEAD^
 
  - squash commits. To squash all commits in branch "feature" in a new branch
    named "feature-patch" do the follwoing:
