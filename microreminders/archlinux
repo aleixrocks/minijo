@@ -1,0 +1,5 @@
+ - show to which package a file belongs to:
+    pkgfile -u (udpate database)
+    pkgfile <file>
+ - show all information about package
+    pacman -Qi <package>

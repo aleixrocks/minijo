@@ -10,9 +10,9 @@ SESSION=kernel
 #KDIR="$BDIR/kernel/linux"
 #CDIR="$BDIR/code/tasks"
 
-BDIR="$HOME/projects/kernel/kernel"
-KDIR="$BDIR/kernel/linux"
-CDIR="$BDIR/code"
+BDIR="$HOME/projects/kernel/bpi-w2"
+KDIR="$BDIR/my_sdk/kernel/vanilla/linux"
+CDIR="$BDIR/my_sdk"
 
 cd $KDIR
 tmux new-session -d -s $SESSION -n 'kernel' 'exec bash --init-file <(echo "source '$HOME'/.bashrc; vim -S")'
