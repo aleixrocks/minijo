@@ -204,6 +204,25 @@ Clases
  - creation: 
      x = MyClass(arg1, arg2)
 
+Pandas
+ - import pandas as pd
+ - df = pd.read_csv(file, delimiter=" +")
+ - df['column_name'] -> get column
+ - dfx = df[df.columnname > 0] -> filter
+ - dfx = df[(df.col1 > 0) & (df.col2 < 3)] -> multiple filter
+ - df[0:3] -> show all columns and only four rows
+ - df[:, ["column1", "column2"]] -> show all rows of two columns
+ - df.pivot('X', 'Y', 'Values') -> from coordinates to matrix
+ - df.to_numpy() -> convert to numpy
+ - df.head(3) -> get three first rows
+ - df.tail(3) -> get three last rows
+ - df.index -> show row indexes
+ - df.columns -> show column names
+ - df.describe() -> show quick statistics
+ - df.T -> transpose
+ - df.sort_index(axis=1, ascending=False) -> sort by index
+ - df.sort_values(by='column') -> sort by index
+
 Others
  -  In Python, like in C, any non-zero integer value is true; zero is 
     false. The condition may also be a string or list value, in fact any 

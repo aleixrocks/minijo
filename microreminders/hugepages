@@ -8,42 +8,33 @@ DOCUMENTATION
     - https://lwn.net/Articles/378641/
  - Documentation/filesystems/proc.txt
 
-HUGE PAGES WITH libhugetlbfs
- - Install libhugetlbfs and libhugetlbfs-utils (the later might be included
-   in the former depending on the disto)
- - Mount a hugetlbfs per each page size that you want to use and give it
-   the right permisions if non-sudo users want to use it. If the page size
-   if not specified, the default one is used (2MiB probably). There might
-   already be a hugetlbfs mounted in your system, check it first with
-   mount.
-     mkdir -p /mnt/hugetlbfs-64K
-     mount -t hugetlbfs none -opagesize=64k,uid=<user-name> /mnt/hugetlbfs-64K
- - Allocate a number of hugepages
-     echo 50 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
-     hugeadm --pool-pages-min 2MB:50 
- - It is not needed to mount the fs if shmat/shmget or the mmap MAP_HUGETLB
-   flag is used.
- - Allocate hugepages at boot time
-     - Use the following boot parameters
-         hugepages=N -> where 'N' is the number of huge pages requested of
-         default size default_hugepagesz=<size> -> (optional) default
-         huge page size.
-     - To allocate huge pages of a specific size, one must precede the huge
-       pages boot command parameters with a huge page size selection parameter
-         hugepagesz=<size> -> size in [kKmMgG] (e.g. 2M) 
- - List current pools
-     hugeadm --pool-list
- - Run application with hugepages. This uses a glibc hook to force it to use
-   hugepages when allocating new memory. It also prevents malloc from using
-   brk. However, it only works for the main Arena, other threads arenas don't
-   make use of the morecore hook (provided by libhugetlbfs to allocate more
-   memory when needed in malloc). To force all threads to use the main arena
-   (effectively limiting the number of arenas to 1), the mallopt
-   MALLOC_ARENA_MAX=1 should be used. Be aware that this increases contetion in
-   user-space.
-   WARNING: the morecore hook will be deprecated soon.
-     hugectl --heap <application>
-     hugectl --heap=64k ./target-application # use 64k pages instead of default size
+BASIC
+ - There are Transparent Huge Pages (THP), and "explicit" Huge Pages.
+ - THP are used almost without the intervention of the user but still is
+   required some system configuration. It is not always clear that THP are
+   actually being used when running an application; the kernel might decide to
+   fall back to standard pages if it is running low on Huge Pages, for instance.
+ - "explicit" Huge Pages require of explicit coding to be used but there are
+   tools to make its usage simpler (libhugetlbfs package/library/toolchain).
+   Hence there are two ways to use explicit Huge pages: low level usage and
+   libhugetlbfs usage.
+
+EXPLICIT HUGE PAGES
+ - Allocate hugepages at system-level: It is possible to allocate either at
+   runtime or at boot time (the second is better to avoid fragmentation)
+    - Allocate at runtime
+        echo 50 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
+    - Allocate at boot time
+        - Use the following boot parameters
+            hugepages=N -> where 'N' is the number of huge pages requested of
+            default size default_hugepagesz=<size> -> (optional) default
+            huge page size.
+        - To allocate huge pages of a specific size, one must precede the huge
+          pages boot command parameters with a huge page size selection parameter
+            hugepagesz=<size> -> size in [kKmMgG] (e.g. 2M) 
+ - Allocate hugepages at application-level
+    - Allocate memory with the mmap syscall and the MAP_ANONYMOUS|MAP_HUGETLB
+      flags.
  - Check usage of hugepages with
      - Amount of pages used:
          grep Huge /proc/meminfo
@@ -55,6 +46,39 @@ HUGE PAGES WITH libhugetlbfs
      - List total 2MiB pages for a process:
           grep -B 11 'KernelPageSize:     2048 kB' /proc/[PID]/smaps | grep "^Size:" | awk 'BEGIN{sum=0}{sum+=$2}END{print sum/1024}'
 
+EXPLICIT HUGE PAGES WITH libhugetlbfs
+ - Documentation: https://github.com/libhugetlbfs/libhugetlbfs/blob/master/HOWTO
+ - To avoid the hassle of using malloc directly, libhugeltbfs provides means to
+   do this transparently but with some drawbacks.
+ - Install libhugetlbfs and libhugetlbfs-utils (the later might be included
+   in the former depending on the disto)
+ - Mount a hugetlbfs per each page size that you want to use and give it
+   the right permisions if non-sudo users want to use it. If the page size
+   if not specified, the default one is used (2MiB probably). There might
+   already be a hugetlbfs mounted in your system, check it first with
+   mount.
+     mkdir -p /mnt/hugetlbfs-64K
+     mount -t hugetlbfs none -opagesize=64k,uid=<user-name> /mnt/hugetlbfs-64K
+ - Allocate pages in the system either as explained in EXPLICIT HUGE PAGES or
+   using the libhugeltbfs command:
+     hugeadm --pool-pages-min 2MB:50  # allocate 50 pages of 2MiB
+ - List current pools
+     hugeadm --pool-list
+ - Transparently use hugepages when using malloc:
+    - Run application with hugepages. This uses a glibc hook to force it to use
+      hugepages when allocating new memory. It also prevents malloc from using
+      brk. However, it only works for the main Arena, other threads arenas don't
+      make use of the morecore hook (provided by libhugetlbfs to allocate more
+      memory when needed in malloc). To force all threads to use the main arena
+      (effectively limiting the number of arenas to 1), the mallopt
+      MALLOC_ARENA_MAX=1 should be used. Be aware that this increases contetion in
+      user-space.
+      WARNING: the morecore hook will be deprecated soon.
+        hugectl --heap <application>
+        hugectl --heap=64k ./target-application # use 64k pages instead of default size
+  - Transparently use hugepages for code, stack and BSS
+      check libhugetlbfs HOWTO file in github
+  - Check hugepage usage of an application as explained in "EXPLICIT HUGE PAGES"
 
 TRANSPARENT HUGE PAGES (THP)
  - THP is only enabled for anonymous memory regions.

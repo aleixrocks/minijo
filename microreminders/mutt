@@ -155,3 +155,7 @@ Tagging
  - ;<operation> -> apply operation to all tagged messaged, such as "d" for
    delete or "W" to clear a flag
  - $ -> commit changes
+
+
+SET MESSAGE UNREAD
+ - N (default mutt config) B (for my config)

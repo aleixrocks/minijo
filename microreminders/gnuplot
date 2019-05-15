@@ -107,6 +107,10 @@ MULTIPLE PLOTS
  - set term x11 0; plot sin(x)
  - set term x11 1; plot cos(x)
 
+3D PLOTS
+ - splot -> same as polot but to print 3d plots
+ - set size ratio 1 -> force aspect ratio to be 1
+
 OTHER CUSTOMIZATION OPTIONS
   - Plot a function. To plot a function instead of a data file, try
       plot sin(x) with lines

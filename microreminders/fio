@@ -113,6 +113,8 @@ SCRIPT COMMON OPTIONS
 - thinktime_spin=time -> pretend to spend CPU time doing something with the
   data received, before falling back to sleeping for the rest of the period
   specified by :option:`thinktime`.
+- thinktime_blocks=int -> number of requests to issue before "thinking", useful
+  to combine with iodepth (this, can actually cripple iodepth!)
 - fsync=n -> can be used to issue a sync call after every n writes issued.
 - write_iolog, read_iolog -> cause fio to write or read a log of all the IO
   requests issued. With these commands you can capture a log of the exact IO
@@ -197,8 +199,11 @@ RESULTS
    milliseconds to complete.
  - READ: bandwith stats per threads. If multiple threads were run, there would
    be multiple lines.
-     - aggrb: aggregate bandwith is ?
-     
+ - aggrb: aggregate bandwith is ?
+ - percentiles:  1% of the fastests samples are under 97us (1.00th=[   97])
+                 5% of the fastests samples are under 99us (5.00th=[   99])
+                    this includes the samples of 1% above!
+                 99% of the fastests samples are under 256us (99.99th=[  245])
 
 AIO
  - Linux kernel asynchronous I/O. A single process can issue multiple IO

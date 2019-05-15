@@ -54,6 +54,7 @@ SELECT TEXT
  - :'<, '>!command -> send selected text to command and replace it by its ouput
    - :'<, '>!colmun -t -> arranges the input text by columns
  - vip -> select current pharagraph
+ - gv -> reselect last selection
 
 ADD TEXT IN FRONT OF SELECTION
  - seleccioinar per columnes
@@ -208,6 +209,8 @@ CSCOPE SUMMARY
        tap the spacebar twice). Window split vertically.
   - !cscope -Rbq -> regenerate cscope from vim
   - :cs reset -> reload cscope database from vim
+  - :cs add <path_to_db/cscope.out> [path_to_db] -> load cscope database from
+       other than the current directory
 
 
 

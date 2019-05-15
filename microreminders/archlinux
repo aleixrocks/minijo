@@ -3,3 +3,5 @@
     pkgfile <file>
  - show all information about package
     pacman -Qi <package>
+ - update mirror list, get 10 better and keep only first 8
+    reflector --latest 10 --sort rate -n 8 --save /etc/pacman.d/mirrorlist

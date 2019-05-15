@@ -1,5 +1,4 @@
 #include "timing.h"
-#include <time.h>
 
 /* If the clock macro is defined, we use the POSIX clock_gettime,
  * and CLOCK defines which timer should be used.  Otherwise, we use
@@ -28,6 +27,8 @@ double toc(int watch)
 {
     double elapsed;
 #ifdef CLOCK
+    struct timespec now;
+
     clock_gettime(CLOCK, &now);
     //elapsed = now.tv_nsec - (double) watches[watch].tv_nsec;
     //elapsed *= 1.0E-9L;
@@ -43,6 +44,6 @@ double toc(int watch)
 #else
     clock_t now = clock();
     elapsed = (double) (now-watches[watch])/CLOCKS_PER_SEC;
-#endif    
+#endif
     return elapsed;
 }

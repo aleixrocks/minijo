@@ -345,12 +345,16 @@ PAGE TABLE STRUCTURE
      - #define PAGE_SIZE  (1UL << PAGE_SHIFT)
      - #define PAGE_MASK  (~(PAGE_SHIFT-1))
      - #define PTRS_PER_PGD -> contains the number of entries for the PGD
-     - pte_present() -> return whether page is present in memory
      - PAGE_ALIGN(addr) -> return the next page aligned to addr.
+     - pte_present() ->  returns true if and only if the page is in main
+       memory, but no in swap space. If it is in swap space, the entry is still
+       installed but it's "present" bit is set to 0. pte_present checks for the
+       present bit to be 1.
      - pgd_offset(mm, address) -> takes a process mm object and an address and
        returns the index in the page global directory of the relevant address.
        Equivalent function exists for PMD, PTE.
-     - pgd_none() -> return 1 if entry does not exists.
+     - pgd_none() -> return 1 if entry does not exists (the entry is not
+       installed). Generally it does so by checking that the entry is 0.
      - pgd_clear() -> clears the corresponding page table entry
      - pgd_bad() -> check if page is valid (I don't understand how it works)
      - pte_read(), pte_mkread() pte_rdprotect() -> test,set,clear read
