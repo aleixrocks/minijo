@@ -34,13 +34,16 @@ BASIC
      # At Mont-Blanc prototype testing
      mpirun ./mpi_binary
 
-  Interactive node
-    - srun [-w node] [-p partition] --pty bash
+INTERACTIVE MODE
+ - one linner
+    srun [-w node] [-p partition] --pty bash
+ - two steps (allows x forwarding)
+    salloc [-w node]
+    ssh -X node
 
-
- - in marenostrum
-    - bsc_queue
-    - scontrol show partitions
+MARENOSTURM
+ - bsc_queue
+ - scontrol show partitions
 
 ENVIRONMENT VARIABLES
  - SLURM_LOCALID -> Node local task ID for the process within a job.
