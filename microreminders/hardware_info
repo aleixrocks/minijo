@@ -1,6 +1,30 @@
+FILES AND COMMANDS
  - /proc/meminfo -> info about memory
- - /proc/cpu_info -> info about cpu
+ - /proc/cpuinfo -> info about cpu (see CPU ID's section below)
  - lscpu -> info about cpu
  - lshw -> list all hardware
  - lstopo -> list sockets, nodes, cpus, threads-per cpu and cache memory
  - lstopo --of fig map.fig; xfig map.fig; (File->export)
+
+CPU ID's
+ - cat /proc/cpuinfo
+    - processor: real id used everywhere (including taskset and numactl)
+    - physical id: socket id
+    - core id: per socket cpu id
+    - siblings: number of harware threads in this socket
+    - cpu cores: number of hardware cores in this socket
+ - cpus per numa node:
+    - numactl --hardware
+ - hardware threads:
+    - lstopo-no-graphics: be aware of the cpu id's returned by lstopo. Only the
+      (P#<id>) are the /proc/cpuinfo "processor" field, used everywhere. All the
+      other ID's are internal.
+         L2 L#0 (256KB) + L1d L#0 (32KB) + L1i L#0 (32KB) + Core L#0  <- hardware CPU 0 (this id is not used for affinity settings)
+           PU L#0 (P#0)  <- hardware thread of cpu0. real id is 0
+           PU L#1 (P#28) <- hardware thread of cpu0. real id is 28       
+         L2 L#1 (256KB) + L1d L#1 (32KB) + L1i L#1 (32KB) + Core L#1 <- hardware CPU 1
+           PU L#2 (P#1)                                                 
+           PU L#3 (P#29) 
+    - cat /sys/devices/system/cpu/cpu0/topology/thread_siblings_list : outputs
+      the hardware thread cpu id of the cpu 0.
+
