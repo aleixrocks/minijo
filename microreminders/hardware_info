@@ -25,6 +25,6 @@ CPU ID's
          L2 L#1 (256KB) + L1d L#1 (32KB) + L1i L#1 (32KB) + Core L#1 <- hardware CPU 1
            PU L#2 (P#1)                                                 
            PU L#3 (P#29) 
-    - cat /sys/devices/system/cpu/cpu0/topology/thread_siblings_list : outputs
-      the hardware thread cpu id of the cpu 0.
+    - check all the hardware thread ids of a hardware thread (including himself):
+        cat /sys/devices/system/cpu/cpu0/topology/thread_siblings_list
 
