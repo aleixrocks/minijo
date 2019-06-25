@@ -12,38 +12,48 @@ static struct timespec watches[NWATCHES];
 static clock_t watches[NWATCHES];
 #endif
 
+uint64_t utime_diff(struct timespec *start, struct timespec *end)
+{
+	uint64_t elapsed;
+
+	if (end->tv_sec == start->tv_sec) {
+		elapsed = end->tv_nsec - start->tv_nsec;
+		elapsed /= 1000;
+	} else {
+		elapsed = 1000000000ULL - start->tv_nsec + end->tv_nsec;
+		elapsed /= 1000;
+		elapsed += (end->tv_sec - start->tv_sec - 1)*1000000ULL;
+	}
+
+	return elapsed;
+}
+
+void us_to_timespec(uint64_t us, struct timespec *ts)
+{
+	ts->tv_sec  = us/1000000UL;
+	ts->tv_nsec = (us - ts->tv_sec*1000000UL)*1000UL;
+}
 
 void tic(int watch)
 {
 #ifdef CLOCK
-    clock_gettime(CLOCK, watches+watch);
+	clock_gettime(CLOCK, watches+watch);
 #else
-    watches[watch] = clock();
+	watches[watch] = clock();
 #endif
 }
 
 
 double toc(int watch)
 {
-    double elapsed;
+	double elapsed;
 #ifdef CLOCK
-    struct timespec now;
-
-    clock_gettime(CLOCK, &now);
-    //elapsed = now.tv_nsec - (double) watches[watch].tv_nsec;
-    //elapsed *= 1.0E-9L;
-    //elapsed += now.tv_sec - (double) watches[watch].tv_sec;
-    if (now.tv_sec == watches[watch].tv_sec) {
-        elapsed = now.tv_nsec - watches[watch].tv_nsec;
-        elapsed /= 1000;
-    } else {
-        elapsed = 1000000000 - watches[watch].tv_nsec + now.tv_nsec;
-        elapsed /= 1000;
-        elapsed += (now.tv_sec - watches[watch].tv_sec)*1000000;
-    }
+	struct timespec now;
+	clock_gettime(CLOCK, &now);
+	elapsed = utime_diff(&watches[watch], &now);
 #else
-    clock_t now = clock();
-    elapsed = (double) (now-watches[watch])/CLOCKS_PER_SEC;
+	clock_t now = clock();
+	elapsed = (double) (now-watches[watch])/CLOCKS_PER_SEC;
 #endif
-    return elapsed;
+	return elapsed;
 }
