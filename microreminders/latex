@@ -1,6 +1,13 @@
 BASIC
  - pdflatex file.tex -> create pdf from file.tex
  - \texttt{\_} -> to write _ character.
+ - highlight text:
+    \usepackage{color, soul}
+    This is a highlighted \hl{text}
+ - todo notes:
+    \usepackage{todonotes}
+    This is a \todo{todo note}
+
  
 
 TABLE

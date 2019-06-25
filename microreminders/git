@@ -90,6 +90,7 @@ DIFF
   to git diff foo bar)
 - git diff foo...bar -> difference between common ancestor and bar
   (equivalent to git diff $(git merge-base foo bar) bar)
+- git difftool --extcmd icdif -> temporarily use icdif as diff tool
 
 RECTIFY
 - git commit --amend -> substitueix el ultim commit (per si ens hem deixat de 

@@ -103,6 +103,9 @@ PERF SAMPLING/RECORD
  - perf record -F 99 -p PID -> sample on-CPU functions for the specified PID at
    99 Hertz, until ctrl-c
  - Show saved data with perf record command, see below
+ - Record per dynamic shared object (DSO)
+      perf record -a -F999 --call-graph fp ./<application>                                                                                                                
+      perf report --sort comm,dso
 
 PERF REPORT
  - perf report -> run on the same dir where perf.data is to show the data
