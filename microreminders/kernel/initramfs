@@ -20,3 +20,17 @@ initramfs
 And yes, it is still called initrd in many places although it is a initramfs,
 particularly in boot loaders, as for them it is just a BLOB. The difference is
 made by the OS when it boots.
+
+UNCOMPRESS
+ - xz format
+    - xz -dc <initrd_file> | cpio -ivd
+ - gzip format
+    - zcat <initrd_file> | cpio -idmv
+
+COMPRESS
+ - cd <initrd_root_dir>
+ - xz format
+    - find . 2>/dev/null | cpio -c -o | xz -9 --format=lzma > ../new.img
+ - gzip format
+    - find . | cpio -o -c | gzip -9 > ../new.img
+
