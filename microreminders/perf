@@ -79,6 +79,8 @@ PERF STAT
         sudo perf stat -a -e uncore_edc_uclk_0/period=0x0,inv=0x0,edge=0x0,event=0x2,umask=0x1,thresh=0x0/,uncore_edc_uclk_0/period=0x0,inv=0x0,edge=0x0,event=0x2,umask=0x4,thresh=0x0/
       In fact, the 0x0 values can be omitted:
         sudo perf stat -a -e uncore_edc_uclk_0/event=0x2,umask=0x1/,uncore_edc_uclk_0/event=0x2,umask=0x4/
+    - perf list shows all the folders in /sys/bus/event_sources/devices and
+      related events under the category [Kernel PMU event]
         
 
 

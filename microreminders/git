@@ -53,6 +53,18 @@ TERMINOLOGY
               C--D
              /
         o---o
+ - A simpler example:
+     A       B
+      \     /
+       C   D
+        \ /
+         E
+         |
+         F
+ - A..B -> show all commits of B that do not belong to A (all commits in
+   between B and A if the graph is "linear"). It returns B and D.
+ - A...B -> show all commits that are not shared by both A and B. 
+   Returns A, B, C, D.
 
 
 LOG
@@ -90,7 +102,7 @@ DIFF
   to git diff foo bar)
 - git diff foo...bar -> difference between common ancestor and bar
   (equivalent to git diff $(git merge-base foo bar) bar)
-- git difftool --extcmd icdif -> temporarily use icdif as diff tool
+- git difftool --extcmd icdiff -> temporarily use icdif as diff tool
 
 RECTIFY
 - git commit --amend -> substitueix el ultim commit (per si ens hem deixat de 

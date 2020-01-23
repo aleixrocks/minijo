@@ -1,4 +1,4 @@
-V/ pmap -d <pid>IRTUAL MEMORY
+VIRTUAL MEMORY
  - Each process belives it has its entire 32-bit or 64-bit address space for
    itself. However, this "virtual addresses" are mapped to physical pages. The
    mapping is stored in the page-table. Each process has its own page table.

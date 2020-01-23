@@ -35,9 +35,9 @@ EXPLICIT HUGE PAGES
  - Allocate hugepages at application-level
     - Allocate memory with the mmap syscall and the MAP_ANONYMOUS|MAP_HUGETLB
       flags.
- - Check usage of hugepages with
-     - Amount of pages used:
-         grep Huge /proc/meminfo
+ - Check usage of Explicit hugepages with
+     - Amount of pages used (AnonHugePages is for THP, not Explicit HP!):
+         egrep '^Huge' /proc/meminfo
      - Shows the count of memory mapped areas grouped by the page size that
        they are using.
          grep KernelPageSize: /proc/<pid>/smaps | sort | uniq -c
@@ -64,8 +64,7 @@ EXPLICIT HUGE PAGES WITH libhugetlbfs
      hugeadm --pool-pages-min 2MB:50  # allocate 50 pages of 2MiB
  - List current pools
      hugeadm --pool-list
- - Transparently use hugepages when using malloc:
-    - Run application with hugepages. This uses a glibc hook to force it to use
+ - Transparently use hugepages when using malloc: This uses a glibc hook to force it to use
       hugepages when allocating new memory. It also prevents malloc from using
       brk. However, it only works for the main Arena, other threads arenas don't
       make use of the morecore hook (provided by libhugetlbfs to allocate more
@@ -73,7 +72,12 @@ EXPLICIT HUGE PAGES WITH libhugetlbfs
       (effectively limiting the number of arenas to 1), the mallopt
       MALLOC_ARENA_MAX=1 should be used. Be aware that this increases contetion in
       user-space.
-      WARNING: the morecore hook will be deprecated soon.
+    - Do it manually:
+        export LD_PRELOAD=libhugetlbfs.so
+        export HUGETLB_MORECORE=1G # backup malloc with hugepages
+        export HUGETLB_PATH=/mnt/hugetlbfs-64K # needed if multiple hugetlbfs mounted
+        command
+    - Do it with tools: 
         hugectl --heap <application>
         hugectl --heap=64k ./target-application # use 64k pages instead of default size
   - Transparently use hugepages for code, stack and BSS
@@ -124,7 +128,7 @@ TRANSPARENT HUGE PAGES (THP)
  - They support swap (huge pages are broken into smaller pages when swapping)
  - MONITORING/DEBUG
     - System wide
-       - Number of currently used HP
+       - Number of currently used THP. This does not include explicit huge pages!
            grep AnonHugePages /proc/meminfo 
            AnonHugePages:    632832 kB
     - Per process usage:
@@ -146,3 +150,12 @@ TRANSPARENT HUGE PAGES (THP)
 MONITORING/DEBUG
  - Per NUMA node default size Huge page distribution
      cat /sys/devices/system/node/node*/meminfo | fgrep Huge
+ - Be aware that /proc/meminfo AnonPages includes also AnonHugePages! Hence, if
+   you want to see only the total amount of memory backed by 4KiB pages you
+   must calculate AnonPages - AnonHugePages
+ - /proc/meminfo PageTables: field shows the amount of memory used to hold the
+   last level of the page table. A huge number here means that maybe too many
+   individual pages have been created. Too many pages, might trigger kernel
+   daemons (kscand/kswapd) to scan for free memory. THe more pages, the more
+   work this damoens will need to do and more heavy the pressure on the CPU.
+   Hence, use huge pages!!!

@@ -282,6 +282,11 @@ REMOTE SERIAL CONSOLE
  - sudo minicom -D /dev/ttyUSB0 -b 9600 -> connect to remote kernel through
    serial port. (ctrl-A X to exit)
 
+KCSAN
+ - the Kernel Concurrency Sanitizer (KCSAN)
+ - Monitors addresses for concurrent accesses for 10us. If accesses are
+   detected, an error is reported.
+
 MY_DEBUG CONFIGURATION
  - kernel hacking
      - debug lockups and hungs
@@ -297,5 +302,8 @@ MY_DEBUG CONFIGURATION
 	   debuging symbols for debuging (gcc -g option).
          - compile the kernel with frame pointers (CONFIG_FRAME_POINTER):
 	   Generates a more accurate stack dump by keeping extra info.
- - CONFIG_LOCKDEP -> info about locks. A lot of options have to be activated
-   for this to activate, no menu entry.
+ - CONFIG_LOCK_STAT -> enable lock statistics
+ - CONFIG_LOCKDEP -> info about locks. Enabled when LOCK_STAT enabled. Needed
+   for my lttng lock contention view.
+ - CONFIG_DEBUG_INFO -> compile with debug symbols
+ - CONFIG_IKCONFIG_PROC -> enable /proc/config.gz
