@@ -9,7 +9,6 @@ Variables
  - dictionary: tel={'jack':2934, 34:66}; tel['jack']; tel[34];
                tel['hola'] = ajiak; del tel['hola']; tel.keys();
                'jack' in tel; tel=dict(key1=lalal,key2=lele)
-
 Print
  - print varA, varB # where varA, varB can be different types
  - print varA, # print varA without a new line
@@ -20,6 +19,22 @@ Modules
  - newname = module.function; newname(a,b,c) -> give new name
  - from module import functionA, functionB -> import functions directly
  - dir(module) -> return name of symbols of the module (function names, varaibles etc)
+
+DEBUG
+ - inject a python console in a script for evaluation:
+     import readline
+     import code
+     ...
+     variables = globals().copy()
+     variables.update(locals())
+     shell = code.InteractiveConsole(variables)
+     shell.interact()
+ - Inspect object methods and attributes (included the inherited ones)
+     from pprint import pprint
+     # methods of obj
+     pprint([x for x in dir(obj) if callable(getattr(obj, x))])
+     # attributes of obj
+     pprint([x for x in dir(obj) if not callable(getattr(obj, x))])
 
 Control flow
  - IF statement:

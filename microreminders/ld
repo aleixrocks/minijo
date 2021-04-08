@@ -1,3 +1,9 @@
+LINKING TROUBLESHOOTING
+ - cannot find -l<libname> problem:
+    ld -l<libname> --verbose
+    ld -static -l<libname> --verbose # static libraries need lib<libname>.a lib for linking!
+
+
 BASIC
  - The linker combines input files into a single output file.
  - ld --verbose -> display default linker script

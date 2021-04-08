@@ -1,0 +1,3 @@
+BASIC
+ - ld --verbose > linker.ld : dump default linker script
+ - ld -T linker.ld a.elf : link using linker script

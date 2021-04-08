@@ -9,6 +9,7 @@ BASH IN VIM
  - w !diff % -  -> diff between current file and last time saved. w for send the file to be written
    to the input of diff, % is a global var with the name of the vi file and - is special of diff to take
    the second file from stdin
+ - q: -> show command history view
 
 NAVIGATIN
  - G -> move cursor to the end of the file
@@ -180,6 +181,27 @@ HEX EDITOR
     - :wq 
  - An alternative to vim is:
     - od -tfF file.bin (to view floats (f) of sizeof(float) bytes (F))
+
+SPECIAL CHARACTERS
+ - i ctrl+v u2713 -> ✓ insert raw unicode characters
+ - help :h digraphs
+ - :dig -> define your own diagraphs
+ - i ctrl+k <enter diagraph code> -> print special character
+    - OK -> ✓
+    - XX -> ✗
+    - cH -> ♡
+    - -> -> → :)
+    - 0U →  ☻
+    - c, →  ç
+ - unicode-plugin:
+    - :Digraphs! <arrow> - Search for specific digraph char
+    - :UnicodeSearch     - Search for specific unicode char
+    - :UnicodeSearch!    - Search for specific unicode char (and add at current cursor position)
+    - :UnicodeName       - Identify character under cursor (like ga command)
+    - :UnicodeTable      - Print Unicode Table in new window
+    - :DownloadUnicode   - Download (or update) Unicode data
+    - :UnicodeCache      - Create cache file
+
 
 OTHERS
  - J -> join current and next line into current line

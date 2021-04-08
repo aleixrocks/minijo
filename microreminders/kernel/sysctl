@@ -1,0 +1,3 @@
+ - sysctl -a -> list all kernel parameters with its assigned values
+ - sysctl -a | grep "sched" -> only the scheduler parameters
+ - sysctl -w kernel.sched_scaling_enable=1 -> change a parameter. This changes are nor persistent on reboot!

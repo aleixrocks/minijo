@@ -250,6 +250,7 @@ The File Structure
 
 MANAGING MODULES
  - modinfo <module_name> -> list module info
+ - systool -v -m <module_name> -> display current settings of a module
  - Search for the CONFIG_ option that enables module named 'usbcore'
      fgrep -r --include=Makefile ' usbcore.o'
 

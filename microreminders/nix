@@ -1,0 +1,98 @@
+PRINCIPLES
+ - There isn't anything like apt which solves a SAT problem in order to satisfy
+   dependencies with lower and upper bounds on versions. There's no need for
+   this because all the dependencies are static: if a derivation X depends on a
+   derivation Y, then it always depends on it. A version of X which depended on
+   Z would be a different derivation. 
+ - nix derivatives : packages (including version and specific deps)
+ - nix channel : repository
+ - nix expressions : descriptions of a package/derivative
+
+BASIC
+ - nix-env -i <pkg> : install package into the current user environment
+ - nix-env --uninstall <pkdg> : remove package from the user environment
+ - nix-env -u : upgrade all packages in the environment
+
+GENERATIONS
+ - nix-env --list-generations : show history of environemnts
+ - nix-env --rollback : go back to previous environemnt state
+ - nix-env -G <environment_name> : go the specified environment as lised by --list-generations
+ - ~/.nix-profiles/ : current environment
+ - ~/.nix-profiles/bin : current binaries (these are a simlink to the nix store)
+
+STORE
+ - /nix/store : nix store where all binaries really are
+ - nix-store -q --references `which command` : shows dependencies of package.
+   Be sure that the path is either an absolute path or a symlink to a command
+   in the nix store.
+ - nix-store -qR <path> : list all dependencies including absolutely everything needed to run this
+ - nix-store -q -tree <path> : show dependencies as a tree
+
+CHANNELS
+ - nix-channel --list : list channels (repositories)
+ - nix-channel --update : update list of expressions/(descriptions of packages)
+
+DERIVATIONS
+ - nix show-derivation <path.drv> : pretty print derivation
+ - nix-store -r <path.drv> : build/realise derivation
+
+NIX LANGUAGE
+ - nix repl : open Nix interpreter
+ - in nix everything is inmutable
+ - 2/3 : this is a path, not a division
+ - 2/ 3 : division
+ - 2-3 : this is an identifier, not a substraction
+ - ${var} : variable reference. $var {$var} not allowed
+ - "foo" or ''foo'' : string. 'foo' is not allowed
+ - ''I plot a "string" without escaping''
+ - "I'm escaping \${foo}" : escape in ""
+ - ''I'm escaping ''${foo}'' : escape in ''
+ -  [ 2 "foo" true (2+3) ] : create list (separate by space, not comma). modify list creates a new list.
+ - s = { foo = "bar"; a-b = "baz"; "123" = "num"; } : attribute sets (like dict)
+   s.a-b : access element
+   s."123" : access element
+   strings can be used to access not valid keys
+ - rec { a = 3; b = a+4; } : recursive set (use a key in the definition, note the "rec" at the beginning"
+ - if a > b then "yes" else "no" : if's always must have else
+ - let a = 4; b = a + 5; in b : "let" defines and "in" evaluates
+ - with expressions:
+    longName = { a = 3; b = 4; }
+    longName.a + longName.b
+    with longName; a + b : same as above
+ - lazy evaluation:
+    let a = builtins.div 4 0; b = 6; in b
+   this works because a is not used, and expressions are only evaluated when used (in)
+ - functions
+    - x: x*2 -> annonymous function
+    - double x: x*2 -> named function
+    - double 2 -> calling function
+    - multi argument functions
+       - mul = a: (b: a*b) -> mult 3 returns function (b:3*b), then (mul 2) 3 works as expected
+       - it can be written as "mul = a: b: a*b" and "mul 2 3"
+    - mul = s: s.a*s.b -> called with mul {a=3; b=4;}
+    - mul = { a, b }: a*b -> called as above
+    - functions with argument sets mut have the same numbe of parameters when called
+    - mul = { a, b ? 2 }: a*b -> default value. Called with "mul { a = 3; }"
+    - mul = { a, b, ... }: a*b -> variadic. Can be called as "mul { a = 3; b = 4; c = 2; }"
+    - To acess variadic arguments, we must give a name to the set with "name@":
+       mul = s@{ a, b, ... }: a*b*s.c
+    - a = import ./test.nix -> import a file and store it's contest in a (test.nix contians "3")
+    - import ./test.nix {a=3} -> call a function defined (test.nix contains a function definition)
+    - let x = 5; in import ./test.nix -> the scope is not inherited (test.nix contains "x") and it fails!
+ - debug
+    - builtins.trace is a built-in function that takes two arguments. The first is the message to display, the second is the value to return. It's usually used for debugging purposes. 
+ - derivations
+    - create a derivation and build
+       d = derivation { name = "myname"; builder = "mybuilder"; system = "mysystem"; } -> create derivation. this creates the .drv file in the store, but does not build
+       :b d -> actually build
+    - { type = "derivation"; } -> this apparently general set, is interepted by the nix engine as a "derivation"
+    - builtins.toString <derivation> -> return outPath
+    - :l <nixpkgs> -> load nixkpkgs repo/channel derivations
+    - "${coreutils}" -> returns outPath string (drv path in filesystem)
+    - "${coreutils}/bin/true" -> returns outPath string (drv path in filesystem)
+ - builtins
+    - :? -> show all builtins
+    - builtins.currentSystem : returns system name, such as "x86_64-linux"
+    - builtins.isAttrs <symbol> : returns true if symbol is a set
+    - builtins.attrNames : returns names of set
+    - builtins.toString <symbol> : convert to string

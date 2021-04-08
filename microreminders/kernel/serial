@@ -1,0 +1,28 @@
+To enable boot serial support we have to configure both the linux kernel and
+the bootloader
+
+To configure the Kernel (through the bootloader), we can do it for a single
+kernel or for all kernels. Configuring serial is usually interesting for all
+kernels:
+
+KERNEL
+ - To configure all kernels:
+    - Edit /etc/default/grub and modify the default grub command line variable:
+        GRUB_CMDLINE_LINUX="console=ttyS0,115200n8 console=tty0"
+ - To configure a specific kernel:
+    - Edit /etc/grub.d/40_custom and add an entry for your OS using the contents of /boot/grub/grub.cfg as a template
+    - Add "console=ttyS0,115200n8 console=tty0" to the linux kernel arguments, for example:
+       linux  /vmlinuz-4.10.5-bsc+ root=UUID=5917dc4f-8832-4f29-bccf-f67ff32caf1f console=ttyS0,115200n8 console=tty0 intel_pstate=disable cgroup_no_v1=all
+
+BOOTLOADER (GRUB)
+ - Edit /etc/default/grub
+ - Your grub.cfg might be using GRUB_TERMINAL or the couple GRUB_TERMINAL_INPUT
+   and GRUB_TERMINAL_OUTPUT. GRUB_TERMINAL overrides the values of the INPUT
+   OUTPUT variants to the same value.
+ - If useing GRUB_TERMINAL:
+     GRUB_TERMINAL="console serial"
+ - If using INPUT/OUTPUT, ensure that in both variables the option "serial" is set.
+     GRUB_TERMINAL_INPUT="console serial"
+     GRUB_TERMINAL_OUTPUT="gfxterm serial"
+ - configure serial options:
+     GRUB_SERIAL_COMMAND="serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"

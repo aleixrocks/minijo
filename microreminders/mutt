@@ -1,6 +1,7 @@
+BASIC
  - ? -> display key bindings
  - cntl + L -> redraw screen
-
+ - N (default mutt config) B (for my config)
 
 TYPIC USAGE
  - Ctrl-R -> mark message/thread as read
@@ -156,6 +157,10 @@ Tagging
    delete or "W" to clear a flag
  - $ -> commit changes
 
+IMAP CONNECTION
+ - To connect using IMAP (instead of offlineimap if configured) just do:
+    mutt -f imaps://mail.your_provider.es
+ - To connect to a specific mailbox
+    mutt -f imaps://mail.your_provider.es/mailbox_name
 
-SET MESSAGE UNREAD
- - N (default mutt config) B (for my config)
+

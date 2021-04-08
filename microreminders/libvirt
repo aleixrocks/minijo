@@ -1,0 +1,1 @@
+ - virsh dumpxml <name> : dump vm XML description file

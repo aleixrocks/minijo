@@ -5,3 +5,16 @@
     pacman -Qi <package>
  - update mirror list, get 10 better and keep only first 8
     reflector --latest 10 --sort rate -n 8 --save /etc/pacman.d/mirrorlist
+ - pacman log
+    cat /var/log/pacman.log
+ - info about installed package
+    pacman -Qi <pacakge>
+ - info about repo package
+    pacman -Fi <package>
+ - list files an installed pacakge provides
+    pacman -Ql <package>
+ - list files a remote pacakge provides
+    pacman -Fl <package>
+ - which package a given file belongs to?
+    pacman -F <file>
+    pacman -Fx <file> # (exact path)

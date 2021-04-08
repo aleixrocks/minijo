@@ -1,0 +1,10 @@
+ - From the kernel's point of view, execution of the signal handler
+   code is exactly the same as the execution of any other user-space
+   code.  That is to say, the kernel does not record any special
+   state information indicating that the thread is currently
+   excuting inside a signal handler.  All necessary state
+   information is maintained in user-space registers and the user-
+   space stack.  The depth to which nested signal handlers may be
+   invoked is thus limited only by the user-space stack (and
+   sensible software design!). (from man 7 signal)
+

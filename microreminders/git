@@ -189,6 +189,13 @@ CLEAN, DELETE, UNSTAGE, UNDO, ETC
  - git clean -dxfn -> delete directories (d), ignored files (x), do it (f), 
    simulate it (n)
 
+REFLOG
+ - git reflog -> show history of changes in the git tree
+ - git log -g -> like git reflog but with commit messages
+ - git reset --hard <sha> -> return to that state
+ - git reset --hard HEAD@{1} -> return to that state
+ - git reset --hard ORIG_HEAD -> return to the previous state of HEAD
+
 PATCH
  - git format-patch -1 [ sha | head ] -> create path for the specified ref
  - git diff --cached > mypatch.patch -> create patch of all __staged__ files.

@@ -1,0 +1,1 @@
+ - blkdit /dev/sda1 -> returns UUID

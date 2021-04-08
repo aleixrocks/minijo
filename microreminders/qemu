@@ -2,3 +2,40 @@ CREATE DISK IMAGE
  - qemu-img create -f qcow2 <disk_name> 50G -> create disk image
  - qemu-system-x86_64 -cdrom iso_image -boot order=d -drive file <disk_name> -m 1024 -vga vmware -enable-kvm -> install iso image into disk
  - qemu-system-x86_65 -drive file <disk_name> -m 1024 -vga vmware -enable-kvm -> run disk
+
+BASIC
+ -machine [ help | <machine_model> ]: help list the supported emulated machines. The
+   nmachine "virt" is a special qemu-exclusive machine to run software without
+   emulated hardware details of other architectures. The machine selected might
+   enable additional machine-specific command line options for QEMU.
+ -bios [none | <path_to_bios_file> ]: Specify a bios firmware to be run before
+   a kernel starts. none disables bios load, ideal for bare metal runs.
+ -kernel <kernel_path>: boot with this kernel. The image must be a raw binary
+   (stripped ELF built as "make Image" or stripped manually as "objcopy -O binary <input> <ouput>"). 
+ -M 2G: Specify amount of RAM in gigabytes (also M and K)
+ -cpu [ help | <cpu_model> ] : help list available cores, otherwise specify the model to use
+ -smp 4: Specicy amout of cores
+ -nographic: run qemu in terminal instead of window
+
+BOOTING A LINUX KERNEL
+ - We need a raw binary image; without elf headers. "vmlinux" image contains
+   elf headers, "Image" has symbols stripped. Therfore, build the kernel as 
+    make Image
+   or
+    make vmlinux; objcopy -S -O binary ./vmlinux ./Image # generates Image from vmlinux
+
+EXAMPLES
+ - qemu-system-riscv64 -M virt -nographic -m 3G -kernel ./Image
+
+DEBUGGING
+ - Debug linux kernel
+    - compile kernel with CONFIG_DEBUG_INFO=y
+    - objcopy --only-keep-debug vmlinux kernel.sym # get only kernel symbols
+    - qemu-system-riscv64 -M virt -S -s -kernel ./Image : -S stops qemu
+      watining for gdb; -s makes gdb be able to attach through localhost:1234
+    - gdb; file kernel.sym; target remote :1234
+
+DTS
+ - qemu-system-riscv64 -machine virt,dumpdtb=qemu-riscv64-virt.dtb : dump qemu generated dtb
+ - dtc qemu-riscv64-virt.dtb > qemu-riscv64-virt.dts : convert back dtb to dts
+
