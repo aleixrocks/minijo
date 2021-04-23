@@ -1,0 +1,137 @@
+ - /sys/class/tty/console/active: Shows the list of currently configured
+   console devices, like 'tty1 ttyS0'. The last entry in the file is the
+   active device connected to /dev/console.  The file supports poll() to detect
+   virtual console switches. src: https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-tty
+ - /proc/consoles lists consoles defined in "console=". The last one is
+   /dev/console. Similar to the previous one.
+ - cat /sys/dev/char/5\:1/active : shows which real console is being used by
+   /dev/console (major 5, minor 1)
+
+ - The device /dev/console is automatically mapped to the active virtual console.
+   src: https://wiki.archlinux.org/index.php/Linux_console
+ - Framebuffer console:
+      console ---> fbcon ---> fbdev drivers ---> hardware
+   src: https://www.kernel.org/doc/Documentation/fb/fbcon.rst
+ - tty command: print the file name of the terminal connected to standard input
+ -  The/dev/tty is somewhat similar to a connection to the actual device being used
+   src: https://topic.alibabacloud.com/a/the-switching-process-of-terminal-tty-virtual-console-and-framebuffer_8_8_10081888.html
+ - Virtual terminals (VT): Alt-Fx. Each VT has its own device: /dev/tty<n>. The
+   VT subsystem does not draw the characters itself though,  it has a wahdware
+   specific driver for that:
+     - CONFIG_VGA_CONSOLE: legacy one, VGA cable
+     - CONFIG_FRAMEBUFFER_CONSOLE: provides text screens, but depends on
+       another driver to talk to the real hardware.
+     - CONFIG_DUMMY_CONSOLE: In case there is nothing else
+
+ - If no console= is specified, the kernel outputs to all consoles found.
+ - The init process must launch a "getty" application on each console we want a
+   login. Systemd does this by default but might depend on the Linux
+   disttribution configuration.
+
+ - earlycon=sbi enables an "bootconsole". This is used to get output even
+   before serial drivers are found.
+
+ - /dev/console is the linux console device. In many cases it is identical to
+   /dev/tty0, but that is not necessarily the case. /dev/console is not related
+   to VT. /dev/console can be driven by any kind of linux console driver (see
+   list of possible console drivers below). One of which could be a VT (the
+   common case).
+
+ - The kernel starts /sbin/init with /dev/console, thus boot messages show on
+   that device. Kernel messages also go to that device.
+ - For /dev/console only one device/driver can be used. By default (no console=
+   option), the device that registers first will be used by the one used by
+   linux kernel. This is determined at link time. The user can specify multiple
+   console devices as kerel parameters. Each of these will recive the logs of
+   the kernel.  but /dev/console ca be only one device, if multiple are
+   specified, the kernel will pick the last one e.g. "console=ttyS0
+   console=hvc0" would leads to /dev/console being /dev/hvc0.
+     src: http://www-archive.xenproject.org/files/xensummit_4/xensummit_linux_console_paper.pdf
+ - when a console is found, the kernel prints the message:
+     [    4.299420] printk: console [ttyS0] enabled                                                                                          
+ - if messages appear duplicated on the scree after a new console has been
+   registered, that is because both consoles output to the same hardware!
+ - types of consoles:
+    - CONFIG_SERIAL_*_CONSOLE: serial: ttyS0
+    - CONFIG_VT_CONSOLE: virtual: tty{1-...} (ttty0 is special, see above)
+    - CONFIG_HVC_CONSOLE: hypervisor virtal console: Fancy infrastructure where
+      you just hook in two simple functions to send/receive characters abd get
+      a full-featured terminal device. hvc0 riscv sbi console
+    - CONFIG_LP_CONSOLE: Print kernel messages on real paper, output only!
+    - CONFIG_NETCONSOLE: Dump kernel messages using NAPI to a log server on the network.
+    - earlyprintk is a simple console, output-only, quite limited. The
+      implementation does not allow to allocate memory and it is able to
+      operate very early at boot time.
+ - /dev/console, the device node with major 5 and minor 1, provides access to
+   whatever the kernel considers to be its primary means of interacting with
+   the system administrator; this can be a physical console connected to the
+   system (with the virtual console abstraction on top, so it can use tty0 or
+   any ttyN where N is between 1 and 63), or a serial console, or a hypervisor
+   console, or even a Braille device. Note that the kernel itself doesn’t use
+   /dev/console: devices nodes are for userspace, not for the kernel; it does,
+   however, check that /dev/console exists and is usable, and sets init up with
+   its standard input, output and error pointing to /dev/console.
+     src: https://unix.stackexchange.com/questions/485156/what-is-dev-console-used-for
+
+ - what does earlycon=sbi exactly do? is it really the first that plots into
+   screen? what it has to do with earlyprintk? how earlycon relates to hvc0?
+
+KERNEL CODE
+
+ - there is a list of "consoles" stored in "console_cmdline" under
+   kernel/printk/printk.c.
+ - Every time a new console is found, add_preferred_console() is called and the
+   console is added to the list. The index of the last console added is stored
+   in "preferred_console"
+ - add_prefered_console is called for each "console=" kernel parameter supplied
+   by the user. This is done in console_setup(). It is also called in
+   drivers/of/base.c:of_console_check(), which evaluates de device tree
+   stdout-path property. However, if a "console=" has been specified in the
+   kernel parameters, the stdout-path is ignored.
+ - if the user specifies console="" or console=null, the "preferred console"
+   ttynull is added to the list of preferred consoles. This console supresses
+   all output.
+ - add_prefered_console can also be called to register "system default
+   consoles". Therefore, we have two kinds of prefered consoles: "user
+   supplied" and "system supplied". This is marked with a boolean
+   "user_specified" in the "console_cmdline" list.
+ - This list is only a struct list that contains a few fields has the name
+   (ttyS0, hvc0, ...) the options passed to the "console=ttyS0,115200" and
+   wheter the user has requested it (in console= or stdout-path). At this
+   point, a real console driver might not extist yet.
+ - At some point, when a new console is registered by calling
+   register_console(), try_enable_new_console() is called and an attempt is
+   made to match any of the consoles in "console_cmdline" with the newly
+   registered console. If match, the console newcon->setup() function is called
+   and the flag CON_ENABLED is set in the newcon->flags. If this console is the
+   "preferred_console", the flag CON_CONSDEV is set and the global
+   "has_preferred_console" is set to true. For each register_console(),
+   try_enable_new_console() might be called twice. The first time, it tries to
+   match a "user_specified=true" console. If none is found, it tries again with
+   system defaults.
+ - If no "console=" or stdout-path has been set, the first registerd console in
+   register_console() is selected has the preferred_console. The order of
+   register_console() calls is determined at link time.
+ - Still in register_console(), the next step is to put the new console in the
+   "console_drivers" list. If this "newcon" is the preferred_console (has
+   CON_CONSDEV set), it is put at the beginning of the list, and the
+   CONV_CONSDEV flag is erased from the previous first console in the list. If
+   newcon is not preferred, it is set at the end of the list. The operations
+   requires to take a lock. Once the lock is unlocked, the console is
+   considered activated. It might print all the accumulated logs so far (it
+   will not if we had a bootconsole before). It the will print a new log with
+   a message similar to: 
+     [    4.299420] printk: console [ttyS0] enabled                                                                                          
+ - Finally, the last done in register_console() is to unregister all the
+   previous bootconsoles if newcon is the first real console.
+ - The kernel starts /sbin/init with /dev/console, thus boot messages show on
+   that device. Kernel messages also go to that device.
+ - Once init starts, it runs getty's on other ttys. Typically /dev/tty{1...6}.
+   These are VT, and under the hood they might directly write to the same
+   hardware as /dev/console.
+ - The driver controlling /dev/console (and /dev/tty) are registered here:
+   drivers/tty/tty_io.c:tty_init() (uses the macro TTYAUX_MAJOR for
+   /dev/console major) The code is confusing... enough for today.
+
+
+

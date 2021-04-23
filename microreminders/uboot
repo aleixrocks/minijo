@@ -15,3 +15,27 @@ NETWORK
     - netmask: set subnet mask here
  - commands:
     - ping <ip_address>
+
+FIT IMAGE
+ - doc:
+    - doc/uImage.FIT/howto.txt
+    - doc/uImage.FIT/source_file_format.txt
+
+INTERNALS
+ - entry point: arch/riscv/start.S
+ - u-boot images:
+     - make u-boot.bin: raw binary
+     - make u-boot: elf binary (useful for debug)
+ - How device drivers work: doc/driver-model/design.rst 
+ - How to debug a faulty device-tree: doc/driver-model/debug.rst 
+ - Device tree bindings (should be almost the same as linux but with a few additions)
+    doc/device-tree-bindings/{README,choosen,...}
+ - plat (or platform) data is static data associated with a u-boot device. It
+   holds info per-device wich is filled either from a device-tree node or a
+   U_BOOT_DRVINFO (like device-tree but built-in in u-boot; legacy way)
+ - OF_PLATFORM macro: this is a u-boot fearure where a device-tree is built
+   into u-boot in a special format, more lightweight than the conventional dt
+   format. Use only in extreme conditions where memory is very scarse.
+
+DEVICE TREE
+ - 'ofdata' (Open-Firmware data)
