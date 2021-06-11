@@ -5,12 +5,13 @@ GENERAL
  - Oops -> the stack is printed from the bottom to the top.  ksmoops
    saved_oops.txt -> decodes an undecoded oops trace  by using system.map.
  - check current log level: 
-
       $ cat /proc/sys/kernel/printk
            7       4       1       7
            current default minimum boot-time-default
+ - kernel parameter: ignore_loglevel -> print all log messages
  - kern-tree/Documentation/sysrq.txt -> sysrq info
  - kern-tree/Documentation/printk-formats.txt -> printk formats
+ - Documentation/networking/netconsole.txt -> enable netconsole
 
 KPROBES
  - documentation:

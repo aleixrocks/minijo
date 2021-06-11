@@ -1,0 +1,7 @@
+
+ - To enable persistent logging (save logs between reboots) see the "storage" option in man journald.conf
+ - journalctl --list-boots : list al recorded boots
+ - journalctl -b 0 : list current boot log
+ - journalctl -b -1 : list previous current boot log
+ - journalctl -b 1 : list the very first recorded boot log 
+ - journalctl -b -1 -k : list only the dmesg output of the previous boot

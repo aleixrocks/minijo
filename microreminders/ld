@@ -3,6 +3,12 @@ LINKING TROUBLESHOOTING
     ld -l<libname> --verbose
     ld -static -l<libname> --verbose # static libraries need lib<libname>.a lib for linking!
 
+LOADING TROUBLESHOOTING
+ - my application is not loading the right library even if I have it on my
+   LD_LIBRARY_PATH
+    LD_DEBUG=help ./myapp # to display options
+    LD_DEBUG=all ./myapp # display all debug info
+
 
 BASIC
  - The linker combines input files into a single output file.

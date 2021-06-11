@@ -133,5 +133,16 @@ KERNEL CODE
    drivers/tty/tty_io.c:tty_init() (uses the macro TTYAUX_MAJOR for
    /dev/console major) The code is confusing... enough for today.
 
-
-
+EXAMPLE
+ - imagine that no console= is set, but stdout-path is. First the kernel calls
+   register_console on hvc0, because that happens at init time. There is no
+   console= for it but because it is the very first in reaching
+   register_console() it is set has the prefered console. Later on, the dts is
+   scanned, and a uart node is processed. While in uart_add_one_port(),
+   of_console_check() is called to compare wheter this uart coincides with
+   stdout-path. Because no console= has been set, of_console_check() sets this
+   uart to the console_cmdline list. Now this is the preferred console. Later
+   on, on (at some point I think) register_console() is called for this uart.
+   It is found that it is the prefered console and it is set at the beginning
+   of the console_drivers list. hvco is no longer the preferred one.
+   /dev/console should now be /dev/ttyS0.

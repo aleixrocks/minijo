@@ -1,0 +1,66 @@
+BASIC
+ - gcc -march=[rv32im, rv64imafdc, ...] : define riscv extensions
+ - gcc -mabi= : Much like how the -march argument specifies which hardware generated code can run on, the -mabi argument specifies which software generated code can link against.
+     - ilp32: int, long, and pointers are all 32-bits long. long long is a 64-bit type, char is 8-bit, and short is 16-bit.
+     - lp64: long and pointers are 64-bits long, while int is a 32-bit type. The other types remain the same as ilp32.
+     - add "f" or "d" to enable 32-bit single-precission or double-precission floating-point respectively
+        - "" (the empty string): No floating-point arguments are passed in registers.
+        - f: 32-bit and smaller floating-point arguments are passed in registers. This ABI requires the F extension, as without F there are no floating-point registers.
+        - d: 64-bit and smaller floating-point arguments are passed in registers. This ABI requires the D extension.
+  - gcc -mtune= : Perform optimizations for a specific processor.
+  - march and mabi examples:
+    - -march=rv32imafdc -mabi=ilp32d: Hardware floating-point instructions can be generated and floating-point arguments are passed in registers.
+    - gcc -march=rv32imafdc -mabi=ilp32: Hardware floating-point instructions can be generated, but no floating-point arguments will be passed in registers.
+    - gcc -march=rv32imac -mabi=ilp32d: Illegal, as the ABI requires floating-point arguments are passed in registers but the ISA defines no floating-point registers to pass them in.
+
+
+ - gcc --save-temps : save intermediate temporal files:
+    - .i: preprocessor
+    - .s: assembler
+    - .o: object
+
+RELOCATION
+  - At compile time, we don't know which are the address of symbols that the
+    program uses. This is known at link time. But the compiler and assembler
+    need to generate instructions for such accesses. relocations are directives
+    inserted by the compiler for the linker, indicating which accesses need to
+    be filled.
+  - Example C code:
+      long global_symbol[2];
+      
+      int main() {
+        return global_symbol[0] != 0;
+      }
+  - Show relocations of assembly file:
+      cat relocation.s
+      main:
+        lui   a5,%hi(global_symbol)
+        ld    a0,%lo(global_symbol)(a5)
+        snez  a0,a0
+        ret
+  - Show relocations of object file (ELF no executable):
+      riscv64-unknown-linux-gnu-objdump -d -t -r relocation.o
+      
+      relocation.o:     file format elf64-littleriscv
+      
+      SYMBOL TABLE:
+      0000000000000000 l    df *ABS*  0000000000000000 relocation.c
+      0000000000000000 l    d  .text  0000000000000000 .text
+      0000000000000000 l    d  .data  0000000000000000 .data
+      0000000000000000 l    d  .bss   0000000000000000 .bss
+      0000000000000000 l    d  .text.startup  0000000000000000 .text.startup
+      0000000000000000 l    d  .comment       0000000000000000 .comment
+      0000000000000000 g     F .text.startup  000000000000000e main
+      0000000000000010       O *COM*  0000000000000008 global_symbol
+      
+      Disassembly of section .text.startup:
+      
+      0000000000000000 main:
+         0:   000007b7                lui     a5,0x0
+                              0: R_RISCV_HI20 global_symbol
+                              0: R_RISCV_RELAX        *ABS*
+         4:   0007b503                ld      a0,0(a5) # 0 main
+                              4: R_RISCV_LO12_I       global_symbol
+                              4: R_RISCV_RELAX        *ABS*
+         8:   00a03533                snez    a0,a0
+         c:   8082                    ret

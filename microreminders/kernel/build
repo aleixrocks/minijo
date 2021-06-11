@@ -1,0 +1,60 @@
+PREPARE CROSS COMPILED FILES
+  mkdir base; cd base
+  git clone <kernel> src
+  cd src; git checkout <branch>
+  mkdir -p ../$BNAME/{modules,install,build}
+  cp $OLDCONFIG ../$BNAME/build
+  make O=../$BNAME/build/ CROSS_COMPILE=aarch64-linux-gnu- ARCH=arm64 olddefconfig
+  # manually review ALL warnings here!!
+  make O=../$BNAME/build/ CROSS_COMPILE=aarch64-linux-gnu- ARCH=arm64 -j `nproc`
+  make O=../$BNAME/build/ CROSS_COMPILE=aarch64-linux-gnu- ARCH=arm64 Image.gz
+  make O=../$BNAME/build/ CROSS_COMPILE=aarch64-linux-gnu- ARCH=arm64 INSTALL_MOD_PATH=../install/modules/ modules_install
+  make O=../$BNAME/build/ CROSS_COMPILE=aarch64-linux-gnu- ARCH=arm64 INSTALL_HDR_PATH=../install/headers/ headers_install
+  cp ../$BNAME/build/.config ../$BNAME/install/config
+  cp ../$BNAME/build/vmlinux ../$BNAME/install/
+  cp ../$BNAME/build/System.map ../$BNAME/install/
+  cp ../$BNAME/build/arch/arm64/boot/Image.gz ../$BNAME/install/
+  cd ../$BNAME; tar -cvzf kernel.tar.gz ./install/
+
+MANUAL INSTALLATION
+  tar -xvzf kernel.tar.gz
+  cd install
+
+  KVER=5.12.5 #set your kernel version as stated in ./modules/lib/modules/
+  echo "removing modules ..."
+  rm -rf /lib/modules/$KVER
+  echo "copying modules ..."
+  mkdir -p /lib/modules/$KVER
+  rsync -a ./modules/lib/modules/$KVER/  /lib/modules/$KVER/
+  rm -f /lib/modules/$KVER/{build,source}
+  echo "running installkernel..."
+
+  # careful, specific to the distro
+  # Usage: installkernel <kernel_version> <bootimage> <mapfile>
+  /sbin/installkernel $KVER ./Image.gz ./System.map
+  
+  # might want to add custom entry under /etc/grub.d/40_custom
+  #   an example can be taken from /boot/grub2/grub.cfg
+  # might want to force default booting kernel /etc/default/grub
+  #   GRUB_DEFAULT='CentOS Linux (4.14.0-pmu-2019-02-25) 7 (AltArch)'
+  echo "running grub2..."
+  sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+  echo "done!"
+
+  # boot only once into the new kernel. get name from grub.cfg or custom entry.
+  # use ">" (without spaces) if found into a submenu.
+  grub2-reboot 'Linux v5.12.5 (BSC)'
+
+  # might want to try first entry with
+  grub2-emu
+
+IPMI CONSOLE
+  ipmitool -I lanplus -H <IP> -U <user> -P <password> sol activate
+
+
+CHECKS AFTER NEW KERNEL INSTALL
+  # all cpus detected?
+  lscpu
+  # get error/boot logs both the old and new kernel after a fresh boot.
+  dmesg --level=emerg,alert,crit,err,warn
+
