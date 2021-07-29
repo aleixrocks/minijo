@@ -1,0 +1,35 @@
+BASIC
+ - docker build -t "type_name" : build the Dockerfile in the current directory and
+   give the image the name "type_name"
+ - docker run "type_name" : run container "type_name". the instance gets
+   assigned a random name by default. see docker ps to see asigned names.
+ - docker run "type_name" --name="name": run container "type_name" and give it
+   name "name"
+ - docker run --rm "name" : run container "name"; automatically rm when done
+ - docker ps : show running containers
+    - docker container ls : show running containers
+    - docker container ls -all : show all containers
+ - docker attach "name" : get into the container
+ - docker stop "name": stop the currently running container. It looks like the containers remains in a "zombie" state, the "name" is still registered.
+ - docker rm "name": completely remove the container (free the name)
+
+INTERACTIVE
+ - docker run -it --name "name" "type_name": opens shell in the same terminal, prompt appears
+ - docker run -dit --name "name" "type_name": daemonizes container and waits for input
+ - docker attach "name": enter daemonized container
+
+
+PASS ARGUEMTNS AT BUILD TIME
+ - docker build ---arg var="value"
+ - then, in the dockerfile:
+   FROM archlinux
+   ARG var #args must go after FROM!
+   echo $var > /root/hello
+
+RUN COMMANDS BATCH MODE
+  docker run --entrypoint=/bin/sh --rm -i -v ${HOME}/local_dir:/dmnt nosv-interop << COMMANDS
+  pwd
+  cp -r /root/.ssh /dmnt/
+  echo Changing owner from \$(id -u):\$(id -g) to $(id -u):$(id -u)
+  chown -R $(id -u):$(id -u) /dmnt/.ssh
+  COMMANDS

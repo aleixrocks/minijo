@@ -13,6 +13,11 @@ GENERAL
  - kern-tree/Documentation/printk-formats.txt -> printk formats
  - Documentation/networking/netconsole.txt -> enable netconsole
 
+USERLAND
+ - strace --trace=%process -ff -> trace a subset of syscalls, see --trace in man
+   to enable colored output, pipe strace output to vim.
+ - ltrace -> trace library calls
+
 KPROBES
  - documentation:
      - Documentation/kprobes.txt # general design

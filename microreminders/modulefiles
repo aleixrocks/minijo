@@ -1,0 +1,5 @@
+BASIC
+ - module use <path> : make available all modulefiles in <path> 
+ - module avail : show available modulefiles
+ - module load <module> : load module
+ - module unload <module> : unload module

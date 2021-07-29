@@ -2,6 +2,10 @@ compile with -g[0-3] o -ggdb[1-3]. To archive most amount of information
 use -ggdb3. The number means 1 (less) 2 (medium) 3 (high) amount of info
 
 GENERAL
+ - to attach a remote process without sudo:
+      echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
+   then,
+      gdb -p <pid>
  - gdb -tui -> start gdb with text user interface. It's mandatory if you want
    to use it, otherwise, a werid behaviour is expected such as not recognizing
    ctl keybidings.
@@ -117,10 +121,19 @@ LOCALIZATION
  - where -> print where you are.
  - bt -> print stack trace
 
-MULTI THREAD DEBUGGING
+MULTI-THREAD DEBUGGING
  - info thread -> list current executing threads on cpu's
  - thread <thread-id> -> switch to selected thread
  - thread <name> -> assign name to thread
+
+MULTI-PROCESS DEBUGGING
+ - by default, gdb only follows the parent on fork, the child runs freely
+   outside the scope of gdb
+     - set detach-on-fork off -> keep forks under the control of gdb, suspended
+ - by default, on continue, next or step, only threads of the current process
+   are allowed to run.
+     - set schedule-multiple on -> all threads of all processes are allowed to run
+       on continue, next or step.
 
 CHECKPOINTS
  - checkpoint -> store current process status
@@ -148,6 +161,9 @@ MACROS
  - source ./gdbinit -> reload gdbinit file while gdb is running. This will
    override currently defined macros but won't delete already defined ones.
 
+LD_PRELOAD
+ - to debug an application using LD_PRELOAD:
+    gdb --args env LD_PRELOAD=$YOURLIB taskset -c 0 ls
 
 OTHERS
  - call x() -> call function (yes! during execution time!)
@@ -242,5 +258,27 @@ OTHER COMMANDS
       seccio .text or la symbol table
 
 PYTHON API
- - python-interactive -> start python shell in gdb
+ - info:
+    - root: https://sourceware.org/gdb/onlinedocs/gdb/Python.html#Python
+    - basic: https://sourceware.org/gdb/onlinedocs/gdb/Basic-Python.html#Basic-Python
+    - gdb.values: https://sourceware.org/gdb/onlinedocs/gdb/Values-From-Inferior.html#Values-From-Inferior
+    - gdb.types: https://sourceware.org/gdb/onlinedocs/gdb/Types-In-Python.html#Types-In-Python
+ - python-interactive or pi -> start python shell in gdb
+ - source script.py -> load a python script in gdb
+ - implement a gdb command in python:
+     class HelloWorld (gdb.Command):
+       """Greet the whole world."""
+       def __init__ (self):
+         super (HelloWorld, self).__init__ ("hello-world", gdb.COMMAND_USER)
+       def invoke (self, arg, from_tty):
+         print ("Hello, World!")
+     HelloWorld () # needed to register the command
+ - var = gdb.parse_and_eval("myvar") -> load an inferior's variable into
+   python. var is a gdb.Value object. The string can be more complex, like a
+   ponter dereference.
+ - var.address -> get address of object
+ - str(var) -> get string representation of var
+ - vartype = var.type -> gdb.Type object
+ - vartype.sizeof -> size in bytes of the type. if an array, this returns the whole array size.
+ - str(var) == "0x0" -> check if var is NULL
 

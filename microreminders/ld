@@ -9,9 +9,17 @@ LOADING TROUBLESHOOTING
     LD_DEBUG=help ./myapp # to display options
     LD_DEBUG=all ./myapp # display all debug info
 
-
 BASIC
- - The linker combines input files into a single output file.
+ - static linker: ld, for example
+ - dynamic linker: the loader
+ - DSO is a shared library, in the ELF terminology
+ - I think it's better to always use "gcc" isteand of "ld. gcc will add
+   explicitly the paths to the glibc library when linking. ld does not. When
+   using ld, not using explicitly glibc references doesn't fail because when
+   compiling a DSO it is ok to have completely undefined references. Note that
+   if these references use versioning, the oldest one will be picked up by the
+   dynamic loader.
+ - The static linker combines input files into a single output file.
  - ld --verbose -> display default linker script
  - ld -T script.lds -> using script.lds instead of default script.
  - ld -Ttext ld -Ttext 0x7c00 -> assume that .text section will be loaded
@@ -19,10 +27,192 @@ BASIC
  - ld --oformat=binary main.o -o main -> generate only instructions, no
    metadata, just as the source file is.
  - objdump -h objfile.o -> list sections
- - objdump -t objfile.o (or nm) -> list symbols
+ - objdump -t objfile.o (or nm) -> list symbols. versioned symbols appear wih a
+   "@". The default version is marked as "@@", such as:
+     $objdump -t /lib64/libpthread.so.0  | grep pthread_cond_wait
+     0000003cf900b240 g     F .text       00000000000001f7              pthread_cond_wait@@GLIBC_2.3.2
+     0000003cf900b8f0 g     F .text       0000000000000098              pthread_cond_wait@GLIBC_2.2.5
  - objdump -D -b binary -mi386 -Maddr16,data16 <object-file> -> disassemble
    raw x86 binary. we have to specify the arch (-mi386) and the initial size
    of addresses and data (-Maddr16,data16)
+
+DYNAMIC LOADER
+ - almost all info summarized from here: https://akkadia.org/drepper/dsohowto.pdf
+ - normal binaries (no libraries) have fixed load address. shared libraries do
+   not have fixed load addresses.
+ - when we execue a program that depends on DSO, the "dynamic linker" is also
+   loaded in memory to complete the dinamically linked application by loading
+   the DSOs it needs and perform relocations. Then control is transferred to
+   the program.
+ - The dynamic loader is also used at runtime by an application to perform lazy
+   relocations (relocation is only done when a symbol is actually used).
+ - Starting the execution of a program begins in the kernel, normally in the
+   execve system call. The currently running address space is replaced by the one described in the ELF files.
+ - Usually, there are at least these three regions:
+    - code: executable but not writable
+    - data: modifiable, but not executable
+    - data not used at runtime, not loaded at startup.
+ - These regions (or sections in ELF parlance) are defined in the "ELF Program Header Table".
+ - This structure is located by means of the "ELF Header", which is always located at the beginning of the file and contains a pointer to the "ELF Program Header Table"
+ - Entries in the "ELF Program Header Table" of type "PT_LOAD" describe
+   segments/regions of memory to be loaded in the process address space. These
+   entries point to the location of the entry in the ELF file (offset and size)
+   and the location in virtual memory and size where this section must be
+   loaded. If the size in vm is bigger than in the size in ELF, the difference
+   is filled with zeros (this is useful for BSS, for example). The virtual
+   address to load the segment is not required to be the final load address
+   (DSOs can be loaded anywhere). Entries also contais a field with flags,
+   which directly map to the mmap system call (to mark the virtual memory
+   region as read/write/execute)
+ - after loading the PT_LOAD entries, the process address space is ready.
+   However, some symbols need to be resolved still by the dynamic linker. To do
+   so the kernel loads the dynamic loader in the process address space. The
+   location of the loader is specified in an entry of the "ELF Program Header
+   Table" with the tag PT_INTERP. The dynamic linker must be complete (not
+   depend on other DSOs) and be able to be load anywhere.
+ - After the dynamic linker is loaded, we are almost ready to transfer control
+   to the dynamic loader. However, we need to tell the loader where the
+   application iself is and where it needs to transfer control after it has
+   finished. The kernel sets up a set of key-value pairs on the stack of the
+   new process named "the auxiliary vector". More key-value pairs are added for
+   the dynamic linker to avoid several system calls. The elf.h header defines
+   this tags for the auxiliary vector with the AT_ prefix.
+ - After setting up the auxiliary vector, the kernel transfers control to the
+   dynamic linker (whose entry point is defined in the e_entry field of its ELF
+   header).
+ - The dynamic linker performs three tasks:
+    - determine and load dependencies
+    - relocate the application and all dependencies
+    - Initialize the application and its dependencies in the correct order.
+ - regarding the relocations, there are two types:
+    - Dependencies to locations which are known to be in the own object. At
+      application link time we know the offset to the symbol. The dynamic
+      linker only needs to add the load address of the object to these
+      relocations. Note that applications do not have relative relocations
+      because the load address is known at link time and the static linker
+      performs the relocation.
+    - Dependencies based on symbols, which might be in another object.
+ - Each executable and DSO has a hash table with all it's symbol definitions.
+   When a symbol declaration is searched, we search in the hash table of each
+   library using the symbol name as the key. For a single symbol, there might
+   be multiple definitions.  The fist definition found, is the definition used
+   (note that weak symbols are only meaningful for static libraries).
+     - To see the number of lookups performed by the dynamic linker:
+          env LD_DEBUG=symbols ./app | grep "symbol=" | wc -l
+     - we can set the LD_BIND_NOW env variable to a non-empty value to force
+       all symbol relocations during the initial dynamic linker initialization
+       instead of doing a lazy initialization.
+ - symbol lookup scope (ulrich 1.5.4). This is quite complex. Generally, we
+   have the global scope and the local scope. The global scope contains all
+   libraries and dependencies in our executable specified by the static linker
+   (ld). libraries are added in breadth first order. When an application uses
+   dlopen, it adds another library at runtime (and its depenencies). These are
+   part of the local scope. The local scope is searched after the global scope,
+   but for the object that has used the dlopen. This behaviour can be changed
+   with serveral flags. Read the Ulrich section for more details.
+     - The main executable is usually the first object in the "global" lookup
+       scope. This means that symbols defined in the main executable would
+       override those in dependent shared libraries. Shared objects that are
+       added using the LD_PRELOAD facility are added to the global lookup
+       scope, right after the main executable.
+     - However, if the shared object being loaded uses the DF_SYMBOLIC flag,
+       then symbol references that originate within that object will look for
+       definitions within the object before searching in the global lookup
+       scope.
+     - Shared objects opened using dlopen() may have their own dependencies. If
+       the RTLD_GLOBAL flag was not set during the call to dlopen(), these
+       dependencies are added to the lookup scope for that object, but do not
+       affect the global lookup scope. If the RTLD_GLOBAL flag was passed to
+       dlopen(), then the shared object (and its dependencies) will be added to
+       the "global" lookup scope, changing the behavior of subsequent symbol
+       lookups.
+     - from: https://stackoverflow.com/questions/12666248/elf-dynamic-loader-symbol-lookup-ordering
+ - See GOT & PLT for how lazy loading is done
+ - After all relocations have been performed (but lazy), the dynamic linker
+   runs the constructors of each DSO. Constructors can use code of other DSOs,
+   the dynamic linker ensures to call first the constructors of DSOs before
+   calling the constructors of DSOs that depend on them. (the linker
+   -zinitfirst can be used for a constructor to be called first, but can only
+   be used by a library and usually pthreads has this).
+
+GOT & PLT (lazy loading)
+ - how is glibc loaded at runtime (GOT & PLT):
+     http://dustin.schultz.io/how-is-glibc-loaded-at-runtime.html
+ - Time ago, the address of shared library's functions were static, which means
+   that there were collisions.
+ - Then, it came PIC (Position Independent Code) (gcc -fPIC) which means that
+   the code can be loaded at any address in memory-space. In order to do so,
+   binaries added sections for GOT and PLT
+ - GOT (Global Offset Table): All executables have a GOT. GOT is a table that
+   holds the addresses of functions that belong to shared libraries. To inspect
+   a GOT use:
+
+     objdump -R ./binary
+
+     DYNAMIC RELOCATION RECORDS
+     OFFSET   TYPE              VALUE
+     08049564 R_386_GLOB_DAT    __gmon_start__
+     08049574 R_386_JUMP_SLOT   __gmon_start__
+     08049578 R_386_JUMP_SLOT   __libc_start_main
+     0804957c R_386_JUMP_SLOT   printf
+
+ - PLT (Procedure Linkage Table): is a wrapper added to a binary for each call
+   to a shared library function. The PLT wrappers are named printf@plt.  When
+   the main binary calls printf, it first jumps to printf@plt. This wrapper
+   checks the GOT entry for printf and jumps to the address that it stores for
+   printf. The first time, the address in the GOT for printf (A) jumps to a
+   special loader function that will figure out where printf really is (B).
+   Once B is known, the printf entry in the GOT (that contains A) is
+   overwritten with B. Therefore, the next time we call printf@plt, the got
+   will let us jump directly to the printf. To inspect plt's:
+
+      objdump -d -j .plt ./hello_world
+      
+      08048290 <__libc_start_main@plt>:
+       8048290:       ff 25 78 95 04 08       jmp    *0x8049578
+       8048296:       68 08 00 00 00          push   $0x8
+       804829b:       e9 d0 ff ff ff          jmp    8048270 <_init+0x18>
+      
+      080482a0 <printf@plt>:
+       80482a0:       ff 25 7c 95 04 08       jmp    *0x804957c
+       80482a6:       68 10 00 00 00          push   $0x10
+       80482ab:       e9 c0 ff ff ff          jmp    8048270 <_init+0x18>
+
+ - The real RAM address of printf and __libc_start_main is found in the DYNAMIC
+   RELOCATION RECORDS table, which is created in RAM by the dynamic loader when
+   the program is loaded.
+ - Note that PLTs are generated by all exported functions and variables in an
+   executable of shared library, as these might be interpositioned. To prevent
+   PLT generation, TODO
+
+
+LD_DEBUG
+ - show dynamic linker logs. See LD_DEBUG=help for options
+ - LD_DEBUG_OUTPUT=<file_path>: specify log file path
+ - LD_DEBUG=<option>,<option>,... ./app : use multiple options
+ - LD_DEBUG=symbols: show the number of symbol lookups i.e. which libraries are
+   looked while searching for each symbol?
+ - LD_DEBUG=bindings: shows for each symbol, the DSO used for that symbol (that
+   DSO must provide a definition for that symbol). The line "transferring
+   control: <path>" means that the dynamic linker has finished and starts
+   executing <app>. Relocations ("binding=" lines) shown after this line, are
+   "lazy" relocations, performed when they are needed instead of at startup.
+   Use LD_BIND_NOW=<non-empty> to relocate everything at startup.
+    - LD_DEBUG=symbols,bindings: get the whole picture about symbol lookups.
+ - LD_DEBUG=libs: show file paths traversed while finding the libraries needed
+   for the application. (this are libraries, not symbols!)
+
+COMPILING A DSO
+ - use "-shared -fPIC". -fPIC is used to allow the DSO to be loaded at any
+   memory location, without it, the resultable file would expect to be loaded
+   at a fixed address.
+ - Be aware that when compiling DSOs is ok to have completely undefined
+   references. It is expected that the dynamic loader will resolve them.
+   However, it is recomendable to use -Wl,-z,defs to exit when undefined
+   references are found.
+ - searching for unused DSOs
+     ldd -u -r <lib>
+ - let the linker automatically remove the not used dependencies, use --as-needed
 
 SECTIONS
  - Each section has a name and size.
@@ -47,11 +237,27 @@ SYMBOLS
  - Each symbol has a name and each defined symbol has an address.
  - Symbols are defined for eavry function and global or static variables in
    the program source code.
+ - Symbols with "@" indicate versioning and "@@" is the default version used
+   when linking without specifying the symbol.
  - objdump -t objfile.o (or nm) -> list symbols
  - typical sections:
     - .text -> code
     - .data -> initialized data
     - .bss  -> uninitialized data
+
+CONSTRUCTOR/DESTRUCTOR
+ - functions with __attribute__((constructor)) and __attribute__((destructor)) are
+   called before main.
+ - these accept a priority, but the priority only is considered for multiple
+   constructors/destructors in the same DSO! (it does not work between multiple
+   libraries)
+ - the order in which constructors are called are unpredictable. Howerver, the
+   loader will respecte library dependencies. i.e. if lib A depends on lib B,
+   the constructor of lib B will be called first. the constructor calling order
+   of libraries without dependencies between them is undefined.
+     see: https://www.mulle-kybernetik.com/weblog/2019/elf_init.html
+ - To see the order in which constructors/destructors are called:
+     LD_DEBUG=libs ./cmd # look for "calling init" and "calling fini" logs
 
 LINKER SCRIPT
  - comments like in C.

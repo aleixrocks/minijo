@@ -1,0 +1,3 @@
+TROUBLESHOOTING
+ - if getting a "no name" error when importing a key:
+     gpg --keyserver keyserver.ubuntu.com --recv-keys <your_key>

@@ -1,7 +1,32 @@
 INITIALIZE
  - a[100] = { 0 }; -> intialize array the 100 array elements to 0.
 
+PREPROCESSOR
+ - A macro's argument won't be expaded if it is concatenated (##) or
+   stringified (#) in the body of the macro:
+     #define NUM 3
+     #define A(a) # a
 
+     A(NUM)
+       =>  results in: NUM
+   if we want NUM to be fully expanded, we need to add a wrapper:
+     #define NUM 3
+     #define __A(a) # a
+     #define A(a)   __A(a)
+
+     A(NUM)
+       =>  results in: NUM
+   Here, when calling A, the preprocessor checks whether the argument(a) is
+   concatenated or stringified in the body of A. Because we added a wrapper,
+   the NUM is no longer directly stringified in the body of A, so it is fully
+   expanded.
+
+   see preescan for more info:
+      https://gcc.gnu.org/onlinedocs/cpp/Argument-Prescan.html#Argument-Prescan
+ - it is possible to wrap multiple arguments separted by commas in pharentesis:
+     #define fgen(a, b) void func a { return func2 b; }
+     fgen((int a, int c, char * b), (a, c, b)
+       ==> void func (int a, int c, char *b) { return func2(a, c, b); }
 
 
 INLINE ASSEMBLY

@@ -9,7 +9,10 @@
    non-privileged user can set. The hard limit is the maximum value that a
    privileged user can set. Both limits can be changed.
  - It is possible to specify "unlimited" (without quotes) to do not limit a
-   given option.
+   given option. -1 is also interpreted as "unlimited" in /etc/security/limits.conf
+ - To test the canges to /etc/security/limits.conf you need to start a new
+   session. To do so, either logout and login, or "ssh localhost".
+ - more info: man limits.conf
 
 ULIMIT COMMANDS
  - ulimit -H<option> -> check hard limit for <option> (such as -l for locked mem)

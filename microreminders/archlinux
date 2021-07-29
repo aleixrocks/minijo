@@ -18,3 +18,19 @@
  - which package a given file belongs to?
     pacman -F <file>
     pacman -Fx <file> # (exact path)
+
+RECOMPILE GLIBC WITH DEBUG SYMBOLS
+ - We need to recompile manually with debug symbols:
+     sudo pacman -Syu asb devtools
+     # we might face gpg key missing issues, see "gpg" file in this repo for
+     # more details.
+     asb checkout glibc
+     cd glibc/repos/core-x86_64/
+     edit PKGBUILD, add "debug" and change "!strip" for "strip" in "options"
+     # It turns out that the config used for building official arch packages is
+     # different from the one shipped in /etc/makepkg.conf. We need to install
+     # "devtools" and use their special config. Otherwise glibc compilation will
+     # crash.
+     makepkg --config /usr/share/devtools/makepkg-x86_64.conf
+
+

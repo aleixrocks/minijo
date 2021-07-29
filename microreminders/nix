@@ -12,6 +12,16 @@ BASIC
  - nix-env -i <pkg> : install package into the current user environment
  - nix-env --uninstall <pkdg> : remove package from the user environment
  - nix-env -u : upgrade all packages in the environment
+ - nix-env -u <pkg> : only upgrade <pkg>
+ - nix search <pkg> : search for a package to install
+ - nix-env -qa : show available pacakges for installation
+ - nix-env -qas : show installed packages: I (installed in current user env) P
+   (installed in the system) S (thre is a pre-compiled binary avaialble for
+   download)
+ - nix-env -qs --installed : show only packages in the current profile
+ - nix-shell <name.nix> : enter a nix user environemnt defined in name.nix
+ - nix-shell --pure <name.nix> : enter a nix user environemnt, only that is
+   defined in name.nix is available.
 
 GENERATIONS
  - nix-env --list-generations : show history of environemnts
