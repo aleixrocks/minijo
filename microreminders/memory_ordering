@@ -1,0 +1,278 @@
+DEFINITIONS
+ - Best documentation ever for beginners:
+    - LKMM: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/tools/memory-model/Documentation/explanation.txt
+ - LKMM: Linux Kernel Memory Model. Explains what each kernel API related to
+   ordering does and defines a model in code to run simulations.
+ - A memory model for an ISA is the specification of all legal multithreaded
+   program behaviors. 
+     - Sequencial Consistency
+     - Total Store Order: MCA and rMCA
+     - RVWMO: is a type of rMCA
+     - Relaxed memory models: non-MCA
+ - litmus test: code that examplifies a particular tricky case where memory
+   ordering matters. Typical codes are MP (message passing) SB (store buffer)
+   IRIW (independent reads of independent writes)
+ - Program order is the order in which memory access instructions appear in each thread.
+ - Global Memory order is the order in which accesses from different cores read and write memory
+ - Preserved program order (ppo) represents the subset of program order that
+   must be respected within the global memory order. Conceptually, events from
+   the same hart that are ordered by preserved program order must appear in
+   that order from the perspective of other harts and/or observers. Events from
+   the same hart that are not ordered by preserved program order, on the other
+   hand, may appear reordered from the perspective of other harts and/or
+   observers.
+ - Store atomicity disallows a core to see its own stores before they are
+   written to memory, trading off performance for a more intuitive memory mode
+ - A memory operation "performs" (enters the global memory order) when:
+    - a load determines its return value
+    - a store becomes globally visible
+ - If we have X; Y; then, Y is the younger instruction and X is the older.
+ - coherence order (co): Unique order of writes that goes from first to last
+   for each memory location.
+ - internal coherence order (coi): co link within the same cpu
+ - external coherence order (coe): co link between cpus
+ - relations between write and read 
+   - read-from (rf): a load reads a value from a previous write
+   - internal read-from (rfi): rf link on the same cpu
+   - external read-from (rfe): rf link between cpus
+   - from-read (fr): a load reaturns the intial value despite that memory
+     location was written by a previous write.
+   - from-read (fr): R fr-> W if the value that R read time ago, is now
+     overwritten by W for another value. If there are multiple W on that
+     variable after the R, there is a "fr->" for each of the writes (until
+     another load aprears I think). Sometimes is depicted in the diagrams as
+     the "this is what should have happened but instead we got something
+     totally differnet!"
+   - internal from-read (fri): fr where both w and r are in the same cpu
+   - external from-read (fre): fr where w and r are in different cpus
+ - Release consistency:
+    - RCsc: Release Consistency of sequential consistency: a release operation
+      orders all memory operations before it.
+    - RCpc: Release Consistency of processor consistency: same as RCsc but
+      excludes ordering the write->read memory operations.
+    - RCtso: Release Consistency of total store order: same as RCpc but
+      enforces MCA
+ - Syntatic dependecy vs Semantinc dependecy. Syntactically, the following code
+   has a data dependecy. However, semantically it does not, because r * 0 can
+   be optimized away! Normally this is something that the comiler can do, but
+   not the processor (RISC-V surely doesn't do it)
+     r = READ_ONCE(y)
+     WRITE_ONCE(x, r * 0) // the compiler might change r * 0 for 0, removing the dependency! 
+ - A-cumulative: This is a property that some fences have (such as smp_mb() or
+   release operation in the linux kernel). Say cpu C0 generates a store Wc0,
+   and the store is seen by cpu C1, and cpu C1 generates the store C1s. Then,
+   if cpu C1 uses a fence with the A-cumulative property, any other cpu CX will
+   see first the Wc0 store and then the Wc1 store (IOW, in order). If not using
+   a A-cumlative fence, processors using a weak memory model (such as Power)
+   might see Wc1 before Wc0.
+ - cumul-fence: This is a property that (I think) all fences have. If there is
+   a fence with  the cumul-fence property between store W and W'. Then W and W'
+   must be seen in order in all cores. However, each core can see W and W' with
+   some delay.
+
+Dependencies enforcing ordering
+ - Three type of dependencies between instructions: control (if), data and address
+ - For one of these dependencies to exist, the first instruction must be a
+   load, the second can be either a load or a store. Only stores generate data,
+   so an instruction can only depend on a load!
+ - Given memory instructions X followed by Y (first X, then Y), ppo is followed if:
+    - Y is a store:
+       - X and Y share a data, address or control dependency. Think that once a
+         store is done, we can't go back!  We can't speculate neither the
+         value, addres or whether the store is done or not!
+    - Y is a load
+       - There is an address dependency with X (any cpu can load something
+         without knowing the address). But beaware of alpha, they have a
+         split-cache design that makes loads look like they are out-of-order
+         even if there is an address dependency.
+       - Also note:
+          - If Y is a load, there can't be a data dependency!
+          - If Y is a load and there is a control dependency, nothing prevents
+            the cpu from running it speculatively and the discarding the result
+            if the "if branch" is not taken. Thus this case does not guarantee
+            ppo.
+ - If we have the case R ->dep W ->rfi R'
+    - if dep is a value depdency, R' indirectly depends on R because W can't
+      forward to R it's value if it doesn't know it!
+    - if dep is an addres depdency, R' indirectly depends on R because W can't
+      forward to R if we don't know if W and R' share the same address. Note
+      that if W and R' use the same register, a processor could know that the
+      address is the same even if it doesn't know the address itself. However,
+      no processor does forwarding in these cases. That's possibly because of
+      illegal accesses interruptions.
+    - if dep is a control dependency, R' could run before R and W
+      speculatively. If the branch is not take, it can be discarded.
+ - If X and Y share the same memory location:
+    - If Y is a store, ppo is always followed. Otherwise the store could
+      overwrite the memory contens before a load could read it or a older store
+      could overwrite a younger one!
+ - Control dependencies pair normally with other barriers. Note that a real control dependency must be of the form:
+    r1 = READ_ONCE(a);
+    if (r1)
+      WRITE_ONCE(b,1);
+   In essence, a read, followed by a write. Nothing else works. This code
+   ensures that the read happens before the write. There is no need to flush
+   the store-buffer to the cache between the load and the store, that's why it
+   works. But note that the only effect is the read and write to be ordered!
+   (you still need a strong barrier after the write if you would like the write
+   to be visible to ALL cores).
+
+
+
+Defining a memory model
+ - When defining a memory model, it can be done using the "axiomatic" or the "operational" approaches:
+    - axiomatic: defines a collection of constraints on legal program behaviors. 
+    - operational: defines an abstract machine that can run a program and directly produce its legal behaviors
+ - In both cases we need to know:
+    - Global memory order: when is respected?
+    - Preserved Program order: when is respected?
+    - Load Value Axiom: which value a load instruction will return?
+ - Simple definitions source: RISC-V Memory Consistency Model Tutorial by Dan Lusting 2017
+ - Sequential consistency:
+    - axiomatic:
+      - Global memory order: There is a total order on all memory operations. The
+        order is non-deterministic.
+      - Preserved program Order: That total order respects program order
+      - Load Value Axiom: Loads return the value written by the latest store to
+        the same address in the total order
+    - operational:
+      - Harts take turn executing instructions. The order is nondeterministic.
+      - Each hart executes its own instructions in order
+      - Loads return the value written by the most recent preceding store to the
+        same address
+ - Total Store Order (SPARC, x86, RVTSO)
+    - Axiomatic
+       - There is a total order on all memory operations. The order is
+         non-deterministic.
+       - That total order respects program order, except Store->Load ordering
+       - Loads return the value written by the latest store to the same address in
+         program or memory order (whichever is later)
+    - Operational
+       - Harts take turn executing steps. The order is non-deterministic.
+       - Each hart executes its own instructions in order
+       - Stores execute in two steps: 1) enter store buffer, 2) drain to memory
+       - Loads first try to forward from the store buffer. If that fails, they return
+         the value written by the most recent preceding store to the same address
+  - RISC-V WEAK MEMORY ORDERING (RVWMO)
+     - Axiomatic
+       - There is a total order on all memory operations. The order is
+         non-deterministic.
+       - That total order respects thirteen specific patterns (next slide)
+       - Loads return the value written by the latest store to the same address in
+         program or memory order (whichever is later)
+     - Operational
+       - Harts take turn executing steps. The order is non-deterministic.
+       - Each hart executes its own instructions in order
+       - Multiple steps for each instruction (see spec Appendix B in RISCV spec)
+       - Loads first try to forward from the store buffer. If that fails, they return
+         the value written by the most recent preceding store to the same address
+
+Memory Models
+ - Total Store Order (TSO) relaxes the store→load order with the express
+   purpose of accommodating a store buffer. The store buffer is a critical
+   component for performance. It allows a core to retire its store instructions
+   and continue executing without having to wait for the stores to write
+   memory. In TSO, a younger load bypasses older unperformed stores (on
+   different addresses) in the store buffer, hence the store→load order is
+   relaxed. 
+ - TSO implementations can come in different flavors. These flavors
+   differentiate in store atomicity guarantees. We say that store atomicity is
+   guaranteed if all cores agree in the memory order of stores.  For example,
+   IBM 370 systems and their presentday descendants, the z/Architecture series
+   [23] opt for respecting store atomicity. We refer to this store-atomic TSO
+   memory model as the 370 model. In the IBM 370, store atomicity is achieved
+   by requiring that a store in limbo, in the store buffer, must first be
+   inserted in memory order before it can be forwarded to any local load. This
+   means that whenever a load matches a store in the store buffer, the load is
+   not performed until the store buffer is drained in the memory system (at
+   least up to the matched store).
+ - On the other hand, x86 and SPARC go a step further. They relax store
+   atomicity by allowing a core to see its own stores while they are in limbo,
+   i.e., executed (and perhaps retired) but not yet inserted in memory order.
+   This is known as store-to-load forwarding and complicates the memory model.
+   In this case, it is the task of the software to guarantee memory ordering
+   when needed.
+   - Types of store atomicity:
+    - Multi-copy atomic (MCA) or store-atomicity: All cores see the new value of a store at the same time.
+    - Other multy-copy atomic or read-own-write-early Multi-copy-atomic (rMCA):
+      A store becomes visible to the issuing processor before it is advertised
+      simultaneously to all other processors, e.g., in TSO and Alpha.
+    - Non-atomic (or non-multi-copy-atomic): a store becomes visible to
+      different processors at different times, e.g., in POWER and ARM.
+    - NOTE: the definition of multi-copy atomiciy is ambiguous. There's
+      literaturte that refer to the following (RISC-V uses this T_T):
+       - Single-copy atomic: a store becomes visible to all processors at the
+         same time, e.g., in SC.
+       - Multi-copy atomic: a store becomes visible to the issuing
+         processor before it is advertised simultaneously to all other
+         processors, e.g., in TSO and Alpha [4].
+       - Non-atomic (or non-multi-copy-atomic): a store becomes visible to
+         different processors at different times, e.g., in POWER and ARM.
+      See "Weak Memory Models: Balancing Definitional Simplicity and
+      Implementation Flexibility" and Speculative Enforcement of Store
+      Atomicity" and "perfbook" for info on the definitions.
+   - NOTE2: Sometimes, the term TSO alone is used to denote TSO+rMCA
+
+
+Arquitectures
+ - RVWMO: is a type of rMCA. Still, each core might reorder loads and stores with more flexibility than TSO allows.
+
+Kernel functions
+ - READ_ONCE and WRITE_ONCE prevent the compiler from removing the associated
+   load and store instructions and to reorder them (at compiler level!!!) but
+   there are exceptions:
+     - the following code
+         r = READ_ONCE(y)
+         if (r) {
+           WRITE_ONCE(x, 2)
+         } else {
+           WRITE_ONCE(x, 2)
+         }
+       can be changed by 
+         r = READ_ONCE(y)
+         WRITE_ONCE(x, 2) // the processor can now reorder them as there is no control dependency!
+         if (r) {
+            ...
+         } else {
+            ...
+         }
+     - it can also optimize away the values of such instructions removing dependencies
+         r = READ_ONCE(y)
+         WRITE_ONCE(x, r * 0) // the compiler might change r * 0 for 0, removing the dependency! 
+     - the compiler assumes that r1 is undefined because i is not initialized,
+       so it can assume that r1 is always 0 and break the dependecy! The LKMM is unaware of this!
+        int a[1];
+        int i;
+        r1 = READ_ONCE(i);
+        r2 = READ_ONCE(a[r1]);
+ - spin_lock and spin_unlock vs load_acquire and store_release (see LKMM for details)
+    - the spin_lock uses an rmw whose load part has acquire semantincs similar
+      to load_acquire. spin_unlock uses store_relase. But they are not exaclty
+      the same for two reasons. The load acquire part in a spin_lock is named
+      lock_acquire and the release part in spin_unlock is named lock_release.
+       - critical sections protected by different locks cannot be reordered.
+         For instance:
+           write X; spin_lock(s); spin_unlock(t); write Y;
+         But the same code with acquire and release can lead to x and y
+         reordered!! I think that if the spinlock variable is the same, it can
+         be reordered.
+       - a spin_release paired with a spin_lock with the same variable on
+         different cpus guarantees that writes before the spin_release are seen
+         before writes after the spin_acquire on all cpus. Instead, when using
+         load_acquire and store_release, only the cpus involved get the
+         variables in order, but others might not!
+ - Be aware of atomics that do not return value, such as atomic_inc. In the
+   following code, it is possible for X and Y to be reordered. That's because
+   on ARM, atomic_inc does not read the value, it tells the memory subsystem to
+   do the increment. Because there is no read in the cpu, there is nothing that
+   the read fence can order.
+
+     atomic_inc(&x);
+     smp_rmb();
+     r1 = READ_ONCE(y);
+ - barrier(): this is just a compiler barrier, not a processor one!
+
+
+RISCV
+ - weird AMOSWAP ordering explained https://lore.kernel.org/linux-riscv/82beae6a-2589-6136-b563-3946d7c4fc60@nvidia.com/
+ - fence.tso is something like "fence r, rw" + "fence w, w" in a single instruction
