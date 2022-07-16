@@ -1,0 +1,320 @@
+BASIC
+ - The typical workflow is that BPF programs are written in C, compiled by LLVM
+   into object / ELF files, which are parsed by user space BPF ELF loaders
+   (such as iproute2 or others), and pushed into the kernel through the BPF
+   system call. The kernel verifies the BPF instructions and JITs them,
+   returning a new file descriptor for the program, which then can be attached
+   to a subsystem (e.g. networking). If supported, the subsystem could then
+   further offload the BPF program to hardware (e.g. NIC).
+ - The kernel as an bpf program interpreter, but if the arch supports it, it
+   will run a JIT to increase performance.
+ - man bpf-helpers:  for a list of available helpers
+ - in deep doc: https://docs.cilium.io/en/stable/bpf/
+ - BTF: BPF Trace Format, for debugging
+ - Kernel bpf test suite under tools/testing/selftests/bpf/
+ - ulimit -l unlimited : needed if we run out of lockeable memory
+ - The kernel allows unprivileged users to load only two types of BPF programs,
+   BPF_PROG_TYPE_SOCKET_FILTER and BPF_PROG_TYPE_CGROUP_SKB. You can see the
+   check in the kernel for that condition in kernel/bpf/syscall.c.
+
+
+
+Important tunnings
+ - /proc/sys/net/core/bpf_jit_harden: enable or disable hardening. If
+   performance is needed, disable it. It is used for security (it "randomizes"
+   immediate values of instructions to prevent opcode injection)
+ - /proc/sys/net/core/bpf_jit_enable: enable jit (1) for performance. Set to 2
+   for debugging info. If 0, an interpreter is used instead.
+ - /proc/sys/net/core/bpf_jit_kallsyms: set to 1 to enable bpf programs kallsym
+   export (address of functions) so it can be used by perf and stack traces. If
+   harden is enabled, this is disabled.
+ - /proc/sys/kernel/unprivileged_bpf_disabled: Enables or disable unprivileged
+   use of the bpf(2) system call. The Linux kernel has unprivileged use of
+   bpf(2) enabled by default, but once the switch is flipped, unprivileged use
+   will be permanently disabled until the next reboot
+
+Considerations
+ - During execution, BPF programs are guaranteed to never get preempted by the
+   kernel
+ - Limited stack space of maximum 512 bytes. BPF_MAP_TYPE_PERCPU_ARRAY map with
+   a single entry can be used in order to enlarge scratch buffer space.
+ - global variables can be used to pass info between the kernel and user side
+   of the bpf program!
+ - BPF programs cannot perform any function calls other than those to BPF
+   helpers. Therefore, common library code needs to be implemented as inline
+   functions. In addition, also LLVM provides some built-ins that the programs
+   can use
+ - No loops yet, but for "pragma unroll"
+ - Tail calls: call into another bpf program. The important detail that it's
+   not a normal call, but a tail call. The kernel stack is precious, so this helper reuses the current stack frame and
+   jumps into another BPF program without adding extra call frame. It's trivially
+   done in interpreter and a bit trickier in JITs.
+ - Defining const strings or other arrays in the BPF C program does not work for the same reasons as pointed out in sections 1 and 3, which is, that relocation entries will be generated in the ELF file which will be rejected by loaders due to not being part of the ABI towards loaders (loaders also cannot fix up such entries as it would require large rewrites of the already compiled BPF sequence).
+ - trace_printk() is not recommended for production because of slow performance. There are helpers that send that through the perf ring buffer
+
+
+Tools
+ - bpftool prog [--pretty]: list all bpf programs loaded
+ - bpftool map: list all maps
+ - bpftool map dump id <id> : dump the key value pairs for map <id>
+    - use BPF_ANNOTATE_KV_PAIR() macro in the source code to annotate the map
+      with a struct type for pretty printing.
+ - bpftool prog show id <id>: The program of ID 406 is of type sched_cls
+   (BPF_PROG_TYPE_SCHED_CLS), has a tag of e0362f5bd9163a0a (SHA sum over the
+   instruction sequence), it was loaded by root uid 0 on Apr 09/16:24. The BPF
+   instruction sequence is 11,144 bytes long and the JITed image 7,721 bytes.
+   The program itself (excluding maps) consumes 12,288 bytes that are accounted
+   / charged against user uid 0. And the BPF program uses the BPF maps with IDs
+   18, 20, 8, 5, 6 and 14. The latter IDs can further be used to get information
+   or dump the map themselves.
+ - bpftool prog dump xlated id <id>: dump program <id> assembly after verifier.
+   There are some instructions rewrites after the loader step. For instance,
+   inlining of helper function.
+ - bpftool prog dump jited id <id>: dump jitted version
+ - visual execution graph:
+    bpftool prog dump xlated id 406 visual &> output.dot
+    dot -Tpng output.dot -o output.png
+ - For the dumpted program to show the names of function calls correctly:
+    echo 0 > /proc/sys/kernel/kptr_restrict
+    echo 1 > /proc/sys/net/core/bpf_jit_kallsyms
+
+
+Debugging
+ - bpf_trace_printk() : sends output to kernel trace pipe:
+   tail -f /sys/kernel/debug/tracing/trace_pipe
+ - perf list | grep bpf : list tracepoints triggered by bpf code
+
+
+BPF loaders
+ - iproute2
+ - perf
+
+BPF programs
+ - XDP (eXpress Data Path). Networking. It runs the BPF program at the earliest possible
+   point in software (as soon as the network driver receives the packet). Not
+   even an skb has been allocated (native XDP, requires driver support). Some
+   network cards allow to run the BPF code INSIDE the network card (offloaded
+   XDP)! If the driver has no support, it will run it at a generic point, much
+   later in the network stack (generic XDP)
+ - tc (transmission control).  Networking. It runs the BPF program at a later
+   point in the network stack, when there is already an skb buffer allocated
+   and it is possible to do operations on the skb. It also works for both
+   ingress (in) and egress (out).
+
+
+bpftrace
+ - doc:
+    - tutorial: https://github.com/iovisor/bpftrace/blob/master/docs/tutorial_one_liners.md
+    - reference: https://github.com/iovisor/bpftrace/blob/master/docs/reference_guide.md
+ - basic
+    - bpftrace converts the awk-like provided script to LLVM intermediate
+      representation, which is then compiled to BPF
+    - be sure to run on at least LLVM 12, as previous versions had a bpftrace
+      bug hard to detect.
+    - bpftrace vs systemtap: Bpftrace is generally faster, and provides various
+      facilities for quick aggregation and reporting that are arguably simpler
+      to use than those provided by SystemTap. On the other hand, SystemTap
+      provides several distinguishing features such as: generating user-space
+      backtraces without the need for frame pointers, accessing function
+      arguments and local variables by name, and the ability to probe arbitrary
+      statements. 
+       src: https://lwn.net/Articles/852112/
+    - compile the kernel with CONFIG_DEBUG_INFO_BTF to enable debug symbols.
+    - Upon receiving a SIGUSR1 signal, bpftrace will print all maps to the standard output.
+        bpftrace -e 'kretprobe:vfs_read { @bytes = hist(retval); }' &
+        kill -s USR1 $(pidof bpftrace)
+ - things that you cannot do with bpftrace
+    - convert an integer to hex (this requires to allocate a string array, and
+      you cannot allocate arrays other than maps, but you cannot print entries
+      of a map as a single string of characters)
+
+ - bpftrace -l [SEARCH] : list all probes that match the SEARCH pattern.
+    - tracepoint: same as perf, lttng, ftrace. They are prefered over kprobes.
+      kprobes instrument functions, and functions might change between kernel
+      versions. tracepoints are more stable.
+        - run bpftrace -lv to list the tracepoint arguments!
+    - kprobe/kretprobe: dynamically injected probes. Allow an offset.
+       - kprobe instruments the beginning of a funciton (or any point if an offset is added)
+       - kretprobe only instruments the exit point. The built-int retval holds the return value if using a kretprobe
+       - to get the offset:
+           gdb -q /usr/lib/debug/boot/vmlinux-`uname -r` --ex 'disassemble do_sys_open'
+           bpftrace -e 'kprobe:do_sys_open+9 { printf("in here\n"); }'
+    - uprobe/uretprobe: dynamic user-space program probes.
+       - example
+          objdump -tT /bin/bash: find the available probe points
+          bpftrace -e 'uretprobe:/bin/bash:readline { printf("read a line\n"); }'
+       - access arguments like arg0,...argN. You need to check the code to know
+         what they mean!
+       - if the user binary had debug symbols, you can use args->arg_name
+       - bpftrace -lv 'uprobe:/bin/bash:rl_set_prompt' : to see available arguments
+       - an offset can be added for uprobe obtained with (for instance): objdump -d /bin/bash
+    - kfunc: more efficient, implemented as bpf trampolines
+    - software: the same as perf software events. They provide counts, such as
+      "cpu-clocks". A count can be provided, so this probe will trigger every n
+      events.
+        - bpftrace -e 'software:faults:100 { @[comm] = count(); }'
+    - hardware: hardware driven events. Same as perf.
+        - bpftrace -e 'hardware:cache-misses:1000000 { @[pid] = count(); }'
+    - iter: allows to define a /sys file that can print info of all processes
+      and/or files at once. IOW, it iterates all tasks and/or files and runs
+      the provided program for each of them. Creates a /sys files that can be
+      read to trigger the program.
+        - bpftrace -l iter:* -v : list the associated structures (contexes)
+        - bpftrace -e 'iter:task:list { printf("%s:%d\n", ctx->task->comm, ctx->task->pid); }'
+        - bpftrace -e 'iter:task_file:/sys/fs/bpf/files { printf("%s:%d %s\n", ctx->task->comm, ctx->task->pid, path(ctx->file->f_path)); }'
+    - watchpoint/asyncwatchpoint: monitor memory addresses! experimental. Requires arch support
+  - bpftrace -lv "struct path" : if BTF is available, it shows the struct definition!
+  - bpftrace -e PROG : where PROG is '[BEGIN{}] [events] [pattern] [action] [END{}]'
+     - there can be multiple events, but there is a 512 soft limit.
+     - BEGIN and END are optional, printed at the beginning and end of execution, respectively
+     - pattern defines a condition for the next action to trigger
+     - action is a sequence of instructions enclosed by {}
+     - multiple pairs of pattern and action can be defined
+     - it is possible to write PROG as .bt file, This is useful for long
+       programs and when needing to use "include". It can also be made
+       executable with the shebang #!/usr/local/bin/bpftrace
+  - scratch variables
+    - $<variable_name>=<value> : normal variable declaration
+    - careful! these are also how we access parameters passed to the bpftrace script!
+    - their default value is 0 if none is supplied
+  - maps
+    - kind of global variables implemeted with bpf maps. They are initialized
+      to 0 if used before being assigned.
+    - @ is the simples map. e.g. @++
+    - maps can be named "@name"
+    - all maps are printed at the end of the execution.
+    - multiple keys allowed!
+       - bpftrace -e 'BEGIN { @[1,2] = 3; printf("%d\n", @[1,2]); clear(@); }'
+    - delete(@start[tid]) deletes the variable to avoid it from printing at the end.
+    - bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @[comm] = count(); }'
+  - built-in variables
+    - comm: name of process
+    - pid
+    - tid
+    - uid: user id
+    - gid: group id
+    - cpu
+    - numaid
+    - func: name of the traced function
+    - curtask: Current task struct as a u64
+    - rand: Random number as a u32
+    - nsecs: Nanoseconds since boot. This is a high resolution timestamp counter than can be used to time events.
+    - args: structure with all arguments (only for tracepoint probes)
+    - arg0, arg1, ... argN: the argument of the function for kprobes
+    - probe: the name of the probe that triggered the current event.
+       -  bpftrace -e 'tracepoint:sched:sched* { @[probe] = count(); } interval:s:5 { exit(); }'
+    - kstack, ustack: the kernel and user current stack as a string!
+       - # bpftrace -e 'profile:hz:99 { @[kstack] = count(); }'
+       - ustack needs the user program to be compiled with frame pointers
+         check this to see if it's fixed: https://github.com/iovisor/bpftrace/issues/1744
+       - you can also set perf format kstack(perf) and/or limit the frames kstack(5)
+    - retval: holds the return value, only for kretprobe
+    - $# : number of positional parameters passed to the .bt script (access them with $1, $2, ...)
+    - more vars in the reference documentation
+  - built-in functions
+    - str(): turns a pointer into the string it points to str(args->filename)
+    - count(): @ = count() is similar to @++, but it uses a per-cpu map for efficiency.
+    - hist(<value>): histogram
+    - exit(): exit bpf program
+    - clear(map): delete map
+    - return: exit the probe, but not the program!
+    - system(): execute shell command (WTF). Unsafe option. It forks, execs and
+      waits until the command finishes. This will run with the bpf program
+      privileges!
+    - ksym(), usym(), kaddr(), uaddr(): from symbol to name and viceversa for
+      kernel and user pointers.
+        -  bpftrace -e 'kprobe:do_nanosleep { printf("%s\n", ksym(reg("ip"))); }'
+    - signal(): signal process
+    - override(): override return value. This feature only works on kernels
+      compiled with CONFIG_BPF_KPROBE_OVERRIDE and only works on functions
+      tagged ALLOW_ERROR_INJECTION.
+    - cat(): print file
+        - bpftrace -e 't:syscalls:sys_enter_execve { printf("%s ", str(args->filename)); cat("/proc/loadavg"); }'
+  - search pattern
+    - boolean operators are supported
+    - bpftrace -e 'tracepoint:syscalls:sys_exit_read /pid == 18644/ { @bytes = hist(args->ret); }'
+    - bpftrace -e 'kprobe:vfs_read { @start[tid] = nsecs; } kretprobe:vfs_read /@start[tid]/ { @ns[comm] = hist(nsecs - @start[tid]); delete(@start[tid]); }'
+       - here, if /@start[tid]/ does not exist, it will not trigger the kretprobe.
+  - intervals
+    - this triggers an action on a single cpu only, for example print every 1s:
+       - bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @syscalls = count(); } interval:s:1 { print(@syscalls); clear(@syscalls); }'
+  - profiles
+    - this triggers an acction on all cpus. This creates data for a flame graph
+       - bpftrace -e 'profile:hz:99 { @[kstack] = count(); }'
+  - include kernel structs and casting
+    - example:
+        #include <linux/path.h>
+        #include <linux/dcache.h>
+        kprobe:vfs_open { printf("open path: %s\n", str(((struct path *)arg0)->dentry->d_name.name)); }
+    - not all structs are always available, only the ones that are in headers.
+      If the kernel has BTF (BPF Type Format) data (CONFIG_DEBUG_INFO_BTF), all
+      kernel structs are always available. Use the macro bpftrace
+      BPFTRACE_HAVE_BTF macro to detect in-kernel BTF support.
+    - if you include something, the in-kernel BTF support will be disabled and
+      you will either need to include all or define all by hand!
+    - you can define your own structs in the .bt script too!
+  - loops. we have unroll and while. continue and break work as expected for while
+    - bpftrace -e 'kprobe:do_nanosleep { $i = 1; unroll(5) { printf("i: %d\n", $i); $i = $i + 1; } }'
+    - bpftrace -e 'i:ms:100 { $i = 0; while ($i <= 100) { printf("%d ", $i); $i++} exit(); }'
+  - tuples
+    - once created, they are imutable
+    - bpftrace -e 'BEGIN { $t = (1, 2, "string"); printf("%d %d %s\n", $t.0, $t.1, $t.2); }'
+
+HOW TO ADD KPROBES AT FUNCTION OFFSET AND RETREIVE LOCAL VARS
+ - see my perf doc on how make this work properly
+ - perf probe --line schedule : list available points to install a kprobe
+ - perf probe --vars schedule:5 : list available points to install a kprobe
+ - perf probe -vn --add 'aleix:test=schedule:5 tsk' : dry run of installing a
+   kprobe with verbose info. The verbose info should display the symbol
+   function + byte offset and the register to the local variable. The probe
+   will be inserted later on by bpf
+     Probe point found: schedule+61
+     Searching 'tsk' variable in context.
+     Converting variable tsk into trace event.
+     tsk type is (null).
+     Found 1 probe_trace_events.
+     Opening /sys/kernel/tracing//kprobe_events write=1
+     Writing event: p:aleix/test _text+11655757 tsk=%bx:x64
+ - bpftrace -e 'kprobe:schedule+61 { $var=reg("bx"); @map[tid, $var] = count()}' :
+   manual install a bpf probe using the previous info. Note, $var
+   holds a pointer here, but we cannot convert it to a hex string to use it as
+   a map key, so the map will print long integer values as keys instead of nice
+   hex values :(
+ - perf probes do not work directly with bpf because as explained here:
+   https://github.com/iovisor/bcc/issues/2150
+ - Optionally, the probe info is also here (but relative to _text!): cat /sys/kernel/debug/tracing/kprobe_events : read the func byte offset and var register
+
+
+LIBBPF
+ - SEC("tp/syscalls/sys_enter_write") int handle_tp(void *ctx) { ... } defines
+   the BPF program which will be loaded into the kernel.  Section name defines
+   what type of BPF program libbpf should create and how/where it could be
+   attached in the kernel. In this case, we define a tracepoint BPF program,
+   which will be called each time a write() syscall is invoked from any
+   user-space application.
+ - multiple bpf programs can be defined in the same C file, maps and globals
+   are shared among all these.
+ - bpf_printk("BPF triggered from PID %d.\n", pid); emits message to /sys/kernel/debug/tracing/trace_pipe
+ - user-kernel communication:
+    - BPF_MAP_TYPE_RINGBUF : map of type bpf ringbuffer. This is a
+      multiple-producer single-consumer (MPSC) ciruclar buffer of fixed size.
+       - ring_buffer__new(): create buffer from user-space side. You can supply
+         a callback that will be called for every written event.
+       - ring_buffer__poll(): poll events from user-space side.
+       - There are two options for writting an element using bpf ringbuffer. output and reserve/submit:
+          - bpf_ringbuf_output() : write into the buffer. Allows writting
+            elements of different sizes.
+          - bpf_ringbuf_reserve(): first reserve space for an element. Fill it,
+            and then call commit. The size must be set at compile-time, no
+            variable sizes allowed.
+          - bpf_ringbuf_submit(): submit a previously reserved element.
+     - BPF_MAP_TYPE_PERCPU_ARRAY: (probably not what you want) Per-cpu circular
+       buffer. Events can be unordered.  Cannot reserve memory prior to filling
+       it, needs to use an auxiliar chunk of memory. Allows data of different
+       sizes. An array per cpu performs better than a MCSP when millions of
+       events are generated per second, but it is possible have a per-cpu MCSP
+       bpf ring.
+
+
+
+

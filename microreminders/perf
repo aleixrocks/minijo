@@ -30,6 +30,12 @@ BASIC
    Given that kernel threads tend to be pinned to a specific CPU, it is best
    to use the cpu-wide mode.
 
+COMPILE AND INSTALL
+ - clone kernel src repo; cd src
+ - make -C tools/perf O=$PWD/../build/perf # do not build into the root of the kernel build dir!
+ - make -C tools/perf O=../build/perf/build prefix=../build/perf/install install
+ - make -C tools/perf O=../build/perf/build prefix=../build/perf/install install_man
+
 PREPRATION
  - To get complete stack traces
      - compile applications with -fno-omit-frame-pointer or
@@ -149,6 +155,49 @@ PERF TOP
  - perf top -F 49 -> sample cpu's and show top addresses and symbols
  - perf top -F 49 -ns comm,dso -> sample cpu's and show top process names and
    segments
+
+PERF PROBE
+ - define kprobes using a nice TUI!
+ - Needs a kernel with debug symbols. The kernel must be compiled with
+   CONFIG_DEBUG_INFO, (dwarf?), uncompressed and without debug symbols
+   stripped! Even if your /proc/config.gz reports that CONFIG_DEBUG_INFO=y your
+   kernel might not because it might have been stripped (quite likely). Even if
+   you use file on the binary and reports "not stripped" it might still be
+   partially stripped! For example:
+  
+    file ./vmlinux -> (no strip command): not stripped
+    file ./vmlinux.strip_debug   -> strip --strip-debug:   not stripped
+    file ./vmlinux.strip_uneeded -> strip --strip-uneeded: not stripped
+    file ./vmlinux.strip_all     -> strip --strip-all:     stripped
+
+   When compiling a kernel, the right image for this is located at the root of
+   the build directory and named "vmlinux". This should be a considerably
+   bigger image than the one under arch/<arch>/boot
+
+   Also, the buildid of the running kernel and the provided vmlinux to perf
+   probe -k must coincide. IOW, you must have a matching running kernel and
+   vmlinux image.
+
+   In archlinux, I had to install my own kernel because arch's kernel is
+   partially stripped. I used the asp method as explained here
+   https://wiki.archlinux.org/title/Kernel/Arch_Build_System#Compiling . Once
+   installed, I had to point the vmlinux and source manually to the build and
+   source directory respectively.
+
+ - perf probe --line schedule : list available points to insert a probe in the
+   kernel's schedule function
+ - perf probe -k ./vmlinux -s ~/projects/kernel/src/ --line schedule : same,
+   but manually specify the path to the vmlinux and the source file.
+ - perf probe -k ./vmlinux -s ~/projects/kernel/src/ --vars schedule:5 
+   list available local variables at line 5 of the function schedule.
+ - sudo perf probe --add 'aleix:test=schedule:10 tsk' add the kprobe named
+   aleix:test into schedule's line 10 and record the value of the local var
+   tsk.
+ - perf probe --list : list all installed probes
+ - perf probe --del aleix:test -> delete the kprobe
+ - the definition of the created kprobes and uprobes can be found under
+   /sys/kernel/debug/tracing/kprobe_events
+
 
 PERF_EVENT_OPEN
  - the syscall used to configure perf is named "perf_event_open"
