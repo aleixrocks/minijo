@@ -10,14 +10,15 @@ BASIC
    will run a JIT to increase performance.
  - man bpf-helpers:  for a list of available helpers
  - in deep doc: https://docs.cilium.io/en/stable/bpf/
- - BTF: BPF Trace Format, for debugging
+ - BTF: BPF Trace Format. Similar to DWARF but way more simple and
+   space-efficient. Kernels are compiled with it by default.
+ - btf exports the definition of ALL data strucutes. it can be read with:
+   bpftool btf dump file /sys/kernel/btf/vmlinux format c
  - Kernel bpf test suite under tools/testing/selftests/bpf/
  - ulimit -l unlimited : needed if we run out of lockeable memory
  - The kernel allows unprivileged users to load only two types of BPF programs,
    BPF_PROG_TYPE_SOCKET_FILTER and BPF_PROG_TYPE_CGROUP_SKB. You can see the
    check in the kernel for that condition in kernel/bpf/syscall.c.
-
-
 
 Important tunnings
  - /proc/sys/net/core/bpf_jit_harden: enable or disable hardening. If
@@ -41,17 +42,19 @@ Considerations
  - global variables can be used to pass info between the kernel and user side
    of the bpf program!
  - BPF programs cannot perform any function calls other than those to BPF
-   helpers. Therefore, common library code needs to be implemented as inline
-   functions. In addition, also LLVM provides some built-ins that the programs
-   can use
+   helpers and compiler built-ins. It is still possible to declare functions.
  - No loops yet, but for "pragma unroll"
  - Tail calls: call into another bpf program. The important detail that it's
-   not a normal call, but a tail call. The kernel stack is precious, so this helper reuses the current stack frame and
-   jumps into another BPF program without adding extra call frame. It's trivially
-   done in interpreter and a bit trickier in JITs.
- - Defining const strings or other arrays in the BPF C program does not work for the same reasons as pointed out in sections 1 and 3, which is, that relocation entries will be generated in the ELF file which will be rejected by loaders due to not being part of the ABI towards loaders (loaders also cannot fix up such entries as it would require large rewrites of the already compiled BPF sequence).
- - trace_printk() is not recommended for production because of slow performance. There are helpers that send that through the perf ring buffer
-
+   not a normal call, but a tail call. The kernel stack is precious, so this
+   helper reuses the current stack frame and jumps into another BPF program
+   without adding extra call frame. It's trivially done in interpreter and a
+   bit trickier in JITs.
+ - Defining const strings or other arrays in the BPF C program does not work
+   for the same reasons as pointed out in sections 1 and 3, which is, that
+   relocation entries will be generated in the ELF file which will be rejected
+   by loaders due to not being part of the ABI towards loaders (loaders also
+   cannot fix up such entries as it would require large rewrites of the already
+   compiled BPF sequence).
 
 Tools
  - bpftool prog [--pretty]: list all bpf programs loaded
@@ -78,29 +81,30 @@ Tools
     echo 0 > /proc/sys/kernel/kptr_restrict
     echo 1 > /proc/sys/net/core/bpf_jit_kallsyms
 
-
 Debugging
  - bpf_trace_printk() : sends output to kernel trace pipe:
    tail -f /sys/kernel/debug/tracing/trace_pipe
  - perf list | grep bpf : list tracepoints triggered by bpf code
 
-
 BPF loaders
- - iproute2
- - perf
+ - these are programs that can load bpf programs into the kernel. Each might
+   bring special features.
+    - libbpf
+    - iproute2
+    - perf
 
 BPF programs
- - XDP (eXpress Data Path). Networking. It runs the BPF program at the earliest possible
-   point in software (as soon as the network driver receives the packet). Not
-   even an skb has been allocated (native XDP, requires driver support). Some
-   network cards allow to run the BPF code INSIDE the network card (offloaded
-   XDP)! If the driver has no support, it will run it at a generic point, much
-   later in the network stack (generic XDP)
+ - libbpc: general one for tracing (not specific network support).
+ - XDP (eXpress Data Path). Networking. It runs the BPF program at the earliest
+   possible point in software (as soon as the network driver receives the
+   packet). Not even an skb has been allocated (native XDP, requires driver
+   support). Some network cards allow to run the BPF code INSIDE the network
+   card (offloaded XDP)! If the driver has no support, it will run it at a
+   generic point, much later in the network stack (generic XDP)
  - tc (transmission control).  Networking. It runs the BPF program at a later
    point in the network stack, when there is already an skb buffer allocated
    and it is possible to do operations on the skb. It also works for both
    ingress (in) and egress (out).
-
 
 bpftrace
  - doc:
@@ -282,20 +286,162 @@ HOW TO ADD KPROBES AT FUNCTION OFFSET AND RETREIVE LOCAL VARS
    hex values :(
  - perf probes do not work directly with bpf because as explained here:
    https://github.com/iovisor/bcc/issues/2150
- - Optionally, the probe info is also here (but relative to _text!): cat /sys/kernel/debug/tracing/kprobe_events : read the func byte offset and var register
-
+ - Optionally, the probe info is also here (but relative to _text!): cat
+   /sys/kernel/debug/tracing/kprobe_events : read the func byte offset and var
+   register
 
 LIBBPF
- - SEC("tp/syscalls/sys_enter_write") int handle_tp(void *ctx) { ... } defines
-   the BPF program which will be loaded into the kernel.  Section name defines
-   what type of BPF program libbpf should create and how/where it could be
-   attached in the kernel. In this case, we define a tracepoint BPF program,
-   which will be called each time a write() syscall is invoked from any
-   user-space application.
+ - getting started:
+    - code for getting started: https://nakryiko.com/posts/libbpf-bootstrap/
+    - examples: https://github.com/iovisor/bcc/tree/master/libbpf-tools
+    - BCC to libbpf conversion guide: https://nakryiko.com/posts/bcc-to-libbpf-howto-guide/
+    - BPF CO-RE (Compile Once – Run Everywhere) https://nakryiko.com/posts/bpf-portability-and-co-re/
+    - libbpf and co-re reference: https://nakryiko.com/posts/bpf-core-reference-guide/
+    - cilium doc with generic intro and lots of xdp and tc details: https://docs.cilium.io/en/latest/bpf/
  - multiple bpf programs can be defined in the same C file, maps and globals
    are shared among all these.
- - bpf_printk("BPF triggered from PID %d.\n", pid); emits message to /sys/kernel/debug/tracing/trace_pipe
- - user-kernel communication:
+ - you might need to generate a header with all kernel data type definitions.
+   BTF exports that info at runtime and can be read by:
+     bpftool btf dump file /sys/kernel/btf/vmlinux format c
+ - After compiling the bpf code, the tools generate a <name>.skel.h header.
+   This file includes strucutres that the user code can use to open, load,
+   destroy and communicate with the bpf application. See
+   https://nakryiko.com/posts/libbpf-bootstrap/  for how this works.
+ - includes:
+     #include "vmlinux.h"               /* all kernel types */
+     #include <bpf/bpf_helpers.h>       /* most used helpers: SEC, __always_inline, etc */
+     #include <bpf/bpf_core_read.h>     /* for BPF CO-RE helpers */
+     #include <bpf/bpf_tracing.h>       /* for getting kprobe arguments */
+ - map declaration examples
+     // array map
+     struct {
+         __uint(type, BPF_MAP_TYPE_ARRAY);
+         __uint(max_entries, 128);
+         __type(key, u32);
+         __type(value, struct my_value);
+     } my_array_map SEC(".maps");
+     
+     // hash map
+     struct {
+         __uint(type, BPF_MAP_TYPE_HASH);
+         __uint(max_entries, 10240);
+         __type(key, u32);
+         __type(value, struct my_value);
+     } my_hash_map SEC(".maps")
+
+     // per-cpu array
+     struct {
+         __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+         __uint(max_entries, 1);
+         __type(key, u32);
+         __type(value, struct my_value);
+     } heap SEC(".maps");
+
+   for other maps see ???
+
+-  BPF programs are placed in special sections of the resulting ELF file. To
+   do so, we use  constructs like SEC("tp/syscalls/sys_enter_write") int
+   handle_tp(void *ctx) { ... } to mark function that will be loaded into the
+   kernel as bpf programs.  Section name defines what type of BPF program
+   libbpf should create and how/where it could be attached in the kernel. In
+   this case, we define a tracepoint BPF program, which will be called each
+   time a write() syscall is invoked from any user-space application.
+   Follws an incomplete list of types of bpf programs:
+    - all available kinds of "SEC" can be seen here
+      https://github.com/libbpf/libbpf/blob/787abf721ec8fac1a4a0a7b075acc79a927afed9/src/libbpf.c#L7935-L8075
+      also, please see examples in 
+        https://github.com/iovisor/bcc/tree/master/libbpf-tools
+
+    - tp_btf/<name> : tracepoint, apparently the most popular option for
+      tracepoints, but I don't know why it is better.
+        SEC("tp_btf/sched_switch")
+        int BPF_PROG(sched_switch, bool preempt, struct task_struct *prev, struct task_struct *next) 
+    - raw_tp/<name> for raw tracepoint : No idea how it differs from the
+      others, but it should be bettern than tp/tracepoint as explained in
+      "BCC to libbpf conversion guide" article.
+        TODO
+    - tp/<category>/<name> or tracepoint/<category>/<name>for tracepoints. The
+      argument is generally named "struct trace_event_raw_<name> *", but if it
+      doesn't work, check for the definition in vmlinux.h
+        SEC("tracepoint/sched/sched_process_exec")
+        int tracepoint__sched__sched_process_exec(struct trace_event_raw_sched_process_exec *args)
+    - fentry/fexit : If available, use this instead of kprobes for attaching to
+      kernel functions. They are more efficient as explained in "BCC to libbpf
+      conversion guide" article. I'm not sure if we can have arguments here.
+        SEC("fentry/vfs_create")                                                                                                            
+        int BPF_PROG(fentry_vfs_create)                                                                                                     
+
+        SEC("fexit/do_page_cache_ra")
+        int BPF_PROG(do_page_cache_ra_ret)
+    - kprobe/<func_name> for kprobe and kretprobe/<func_name> for kretprobe.
+      Use BPF_KPROBE and BPF_KRETPROBE to be able to use arguments. I don't
+      know how to set an offset here, if possible.
+        SEC("kprobe/acct_collect")
+        int BPF_KPROBE(kprobe__acct_collect, long exit_code, int group_dead)
+    - cgroup_skb/ingress, cgroup_skb/egress, and a whole family of
+      cgroup/<subtype> programs.
+ - Also note that Syscall functions got renamed in 4.17 kernels. Starting from
+   4.17 version, syscall kprobe that used to be called, say, sys_kill, is
+   called now __x64_sys_kill (on x64 systems, other architectures will have
+   different prefix, of course). 
+ - global variables. They can be const or non-const.
+    - non-const globals can be used to communicate user-kernel and between bpf
+      programs.  Do not use the static keyword because of reasons. There is no
+      need to add volatile, generally.These variables must be initialized or
+      will fail at load time.
+        - bpf code:
+            int my_global_var;
+        - user code:
+            skel = bootstrap_bpf__open();
+            skel->data->my_global_var // for initialized data
+              or 
+            skel->bss->my_global_var // for zero initialized data
+
+    - const globals can be used for configuration. The user app, first opens
+      the bpf application, then modifies the values of the const variables, and
+      then loads the program into the kernel. From that point, the values
+      cannot be changed. They must be volatile or the compiler might remove
+      them. These variables must be initialized or will fail at load time.
+        - bpf code:
+           const volatile struct {
+               bool feature_enabled;
+               int pid_to_filter;
+           } my_cfg = {};
+
+        - user code:
+            struct <name> *skel = <name>__open();
+            if (!skel)
+                /* handle errors */
+            
+            skel->rodata->my_cfg.feature_enabled = true;
+            skel->rodata->my_cfg.pid_to_filter = 123;
+            
+            if (<name>__load(skel))
+                /* handle errors */
+    - In both cases, to use them, just access them normally.
+        if (my_cfg.feature_enabled) {
+ - for loops must be unrolled
+    #pragma unroll
+    for (i = 0; i < 10; i++) { ... }
+ - static functions on kernels older than 4.16 have to be marked as alway
+   inlined with static __always_inline. Otherwise, its even better for static
+   functions to be declared __noinline, "which quite often will improve code
+   generation and will avoid some of the common BPF verification failures due
+   to unwanted register-to-stack spilling"
+ - Non-inlined global functions are also supported starting from 5.5 kernels,
+   but they have different semantics and verification constraints than static
+   functions. Make sure to check them out as well!
+ - bpf_printk("BPF triggered from PID %d.\n", pid); emits message to
+   /sys/kernel/debug/tracing/trace_pipe It accepts printf-like format string
+   and can handle only up to 3 arguments. It's quite expensive, making it
+   unsuitable to be used in production. Use only for debugging.
+     char comm[16];
+     u64 ts = bpf_ktime_get_ns();
+     u32 pid = bpf_get_current_pid_tgid();
+     
+     bpf_get_current_comm(&comm, sizeof(comm));
+     bpf_printk("ts: %lu, comm: %s, pid: %d\n", ts, comm, pid);
+ - user-kernel communication using maps:
     - BPF_MAP_TYPE_RINGBUF : map of type bpf ringbuffer. This is a
       multiple-producer single-consumer (MPSC) ciruclar buffer of fixed size.
        - ring_buffer__new(): create buffer from user-space side. You can supply
@@ -314,7 +460,102 @@ LIBBPF
        sizes. An array per cpu performs better than a MCSP when millions of
        events are generated per second, but it is possible have a per-cpu MCSP
        bpf ring.
-
-
-
-
+ - BPF CO-RE
+    - compile once, run everywhere. In essence, CO-RE is about reading kernel
+      data inside a bpf program in a portable way. This is the new framwork
+      which deprecates bcc. The whole idea is that you no longer need to
+      distribute a compiler embedded in your bpf program and don't need to
+      compile at initialization time with it. Instead, lots of relocation info
+      are added when compiling and uses BTF to smartly deal with symbol offsets
+      that vary between kernel versions (think of a pid member of struct
+      task_struct that migth change its position, name or meaning in differnt
+      kernel version). CO-RE provides ways to make this portable, sometimes
+      with automation, sometimes with tools that allows the developer to
+      manually write alternatives (ifs) dependeing on the kernel version. 
+    - doc
+       - reference https://nakryiko.com/posts/bpf-core-reference-guide/
+       - intro https://nakryiko.com/posts/bpf-portability-and-co-re/
+       - api: https://github.com/libbpf/libbpf/blob/master/src/bpf_core_read.h
+    - Note, there are some type of bpf programms like (tp_btf,
+      kfunc/fentry,kretfunc/fexit,fmod_ret, LSM) that do not need to use the following
+      bpf_core_read() functions and variants, you can access the memory
+      directly. You sill need the *_str versions through. See the reference
+      above for more info.
+    - bpf_core_read(&parent_task, sizeof(void *), &task->parent); : read field
+      from kernel. It stores relocation info on the field offset that is later
+      filled by the loader (libbpf) at runtime using the system's BTF info. Be
+      careful with size, as this is not recorded in the relocation. You need to
+      explicitly control it.
+    - bpf_core_read_str(): read a null terminated string. stores reloc info as
+      well.  be aware, this only reads explicit c arrays like var[3] but not
+      pointers to strings of texts. If you want to read a char * string, first
+      do a bpf_core_read of the pointer (which stores reloc data), and once you
+      have the pointer, call bpf_probe_read_kernel_str() instead (note,
+      "probe", not "core"!) because we no longer need reloc data for this case,
+      we already have the offset in the previous read!
+    - name = BPF_CORE_READ(t, mm, exe_file, fpath.dentry, d_name.name) : read a
+      chain of pointers. This example is equivalent to name =
+      t->mm->exe_file->fpath.dentry->d_name.name; if there is any error, it
+      will return 0. If that can be confused with the original value, you need
+      to do a bpf_core_read for each dereference!
+    - err = BPF_CORE_READ_INTO(&name, ...): it returns an error code instead.
+    - BPF_CORE_READ_STR_INTO(): For cases when the last field is a character array field
+    - BPF_CORE_READ_BITFIELD() and BPF_CORE_READ_BITFIELD_PROBED(): read a
+      bitfield (in c, structs like field:2). Probed is used in the same cases
+      as BPF_CORE_READ is needed (reloc info). These return return properly
+      signed-extended 8-byte integers back (work with any integer, not only
+      bitfields).
+    - bpf_core_enum_value(): for bitfields that are auto-generated at compile
+      time based on enabled CONFIG_*, like enum cgroup_subsys_id
+    - bpf_core_type_size(), bpf_core_field_size(): return size of variable. It
+      can be used to bpf_core_read to make the call fully relocatable, for
+      example.
+    - bpf_core_field_exists(): used to detect if a field exist. the field
+      itself is never read, so it is safe to do: bpf_core_field_exists(((union
+      bpf_attr *)0)->link_create.perf_event.bpf_cookie). If used in an if, the
+      non-taken branch will never be validated and treated as dead-code.
+    - bpf_core_type_exists(struct bpf_ringbuf): check if the type itself exist.
+      But seems tricky to use because of forward declarations. Better check the
+      reference manual before using.
+    - bpf_core_enum_value_exists(): detect if enums exist, it can be used to
+      detect the availability of bpf helpers.
+    - extern int LINUX_KERNEL_VERSION __kconfig : include the kernel version for feature checks.
+      if (LINUX_KERNEL_VERSION > KERNEL_VERSION(5, 15, 0)) {
+    - you can also check for CONFIG_* macros with extern keyword but it's a bit
+      tricky. Better check the docs
+    - in cases where including vmlinux.h does not contain the definition that we want, we can declare the struct that we want with only the fields that we will use. The order is not important either. For example, for struct task_struct, we can define:
+        struct task_struct {
+            int pid;
+            char comm[16];
+            struct task_struct *group_leader;
+        } __attribute__((preserve_access_index));
+      preserve_access_index is used for accesing members directly (without
+      bpf_core_read) for the types of bpf programs that allow it. But it's ok
+      to use it always for all kinds of bpf programs.
+    - For cases where a kernel struct definition changes, we can define both
+      versions of the structs in our bpf program. if the suffix <name>___sufix
+      is added, the verifier will relocate <name>___sufix against <name>. There
+      we can do:
+        struct task_struct {
+            int __state;
+        } __attribute__((preserve_access_index));
+        
+        struct task_struct___old {
+            long state;
+        } __attribute__((preserve_access_index));
+      and then cast the appropiate one:
+        struct task_struct *t = (void *)bpf_get_current_task();
+        int state;
+        
+        if (bpf_core_field_exists(t->__state)) {
+            state = BPF_CORE_READ(t, __state);
+        } else {
+            /* recast pointer to capture task_struct___old type for compiler */
+            struct task_struct___old *t_old = (void *)t;
+        
+            /* now use old "state" name of the field */
+            state = BPF_CORE_READ(t_old, state);
+        }
+     - bpf_core_read_user() and family: same as the non-user part. Allow to
+       read a kernel var form user space.
+          
