@@ -13,6 +13,18 @@ BASIC
  - echo 50 > buffer_size_kb -> set buffer size per cpu
  - sysrq-z -> trigger ftrace dump
 
+BOOT TIME TRACING
+ - compile with CONFIG_BOOTTIME_TRACING=y
+ - add to kernel parameters:
+     trace_options=sym-addr trace_event=initcall:* tp_printk trace_buf_size=1M ftrace=function ftrace_filter="vfs*"
+     trace_options=sym-addr trace_event=sched:* tp_printk trace_buf_size=1M
+ - tp_printk sends tracepoint (TRACE_EVENT) to printk buffer
+ - trace_event=[subsytem:event]; accepts
+    - *:<event_name>
+    - <subsystem>:*
+    - *:* all
+ - many more options at https://www.kernel.org/doc/html/latest/trace/boottime-trace.html
+
 TRACERS
  - function -> records entry to functions, a bit hard to folow
  - function_graph -> records entry and exit to functions

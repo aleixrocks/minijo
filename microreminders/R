@@ -17,6 +17,10 @@ Read/Write
  - save.image("whatever") -> save an image with all R variables
  - source("whatever") -> loads a R script.
 
+Tidyverse
+ - R Graphics Cookbook: Practical Recipes for Visualizing Data
+   https://r-graphics.org/index.html
+
 Management
  - variable$attribut -> accedir a atribut de data frame
  - attribut(variable) -> igual que el anterior, es pot elegir

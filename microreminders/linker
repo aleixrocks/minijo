@@ -1,3 +1,6 @@
 BASIC
+ - documentation: https://sourceware.org/binutils/docs/ld/Scripts.html#Scripts
  - ld --verbose > linker.ld : dump default linker script
  - ld -T linker.ld a.elf : link using linker script
+ - objdump -h a.o : show sections of the output file
+ - objdump -t a.o : show symbols of the output file (also nm works)

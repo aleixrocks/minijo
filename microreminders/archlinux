@@ -21,7 +21,7 @@
 
 RECOMPILE GLIBC WITH DEBUG SYMBOLS
  - We need to recompile manually with debug symbols:
-     sudo pacman -Syu asb devtools
+     sudo pacman -Syu asp devtools
      # we might face gpg key missing issues, see "gpg" file in this repo for
      # more details.
      asb checkout glibc

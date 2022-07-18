@@ -19,6 +19,7 @@ BASIC
          - this will exectue only once. After the firs execution 
            /home/aleix/target will exists (touch $@) and make would avoid 
            further executions of the rule.
+
 CONTROL FLOW
  - if/else/elseif (be careful with spacing!!!)
      ifeq ($(TARGET_CPU),x86)
@@ -28,6 +29,15 @@ CONTROL FLOW
      else
        TARGET_CPU_IS_X86 := 0
      endif
+
+Variables
+ - declare makefile varible in recipe
+    $(eval MAKEVAR=$(shell echo "patata"))
+    echo $(MAKEVER)
+ - declare makefile variable in body
+    MAKEVAR=$(shell echo "patata")
+ - use shell vars in make rules
+    echo $$PWD # double dollar!
 
 UTILS
  - make V=1 -> show exactly the commands used.

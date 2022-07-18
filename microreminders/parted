@@ -1,0 +1,19 @@
+BASIC
+ - parted : start
+ - help : list commands
+ - unit s/MiB/KiB set default units used in the rest of commands
+ - print : print current partitions
+
+Example usage in Makefile
+
+	parted --script $(DISK) \
+		mklabel gpt \
+		unit s \
+		mkpart primary       $(UBOOT_START)s $(UBOOT_END)s \
+		mkpart primary fat16 $(LINUX_START)s $(LINUX_END)s \
+		mkpart primary ext4  $(ROOT_START)s  $(ROOT_SIZE)s \
+		name 1 uboot  \
+		name 2 kernel \
+		name 3 root \
+		set  1 bios_grub on \
+		set  2 legacy_boot on

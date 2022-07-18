@@ -1,0 +1,5 @@
+BASIC
+ - systemd-nspawn -D ./rootfs # enter rootfs as with chroot. use this to set root passwd first
+ - systemd-nspawn -M <name> -b -D ./rootfs # boot systemd, a prompt will appear
+ - machinectl : list containers
+ - machinectl terminate <name> : stop container

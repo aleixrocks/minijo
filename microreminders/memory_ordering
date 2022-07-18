@@ -1,6 +1,8 @@
 DEFINITIONS
  - Best documentation ever for beginners:
     - LKMM: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/tools/memory-model/Documentation/explanation.txt
+    - memory barriers: https://www.kernel.org/doc/Documentation/memory-barriers.txt
+    - atomics and specially atomic_mb__{after,before}: https://www.kernel.org/doc/Documentation/atomic_t.txt
  - LKMM: Linux Kernel Memory Model. Explains what each kernel API related to
    ordering does and defines a model in code to run simulations.
  - A memory model for an ISA is the specification of all legal multithreaded
@@ -12,6 +14,8 @@ DEFINITIONS
  - litmus test: code that examplifies a particular tricky case where memory
    ordering matters. Typical codes are MP (message passing) SB (store buffer)
    IRIW (independent reads of independent writes)
+ - plain access vs marked access: a plain access is "p = a", while a marked
+   access uses a function like "p = READ_ONCE(a)"
  - Program order is the order in which memory access instructions appear in each thread.
  - Global Memory order is the order in which accesses from different cores read and write memory
  - Preserved program order (ppo) represents the subset of program order that
@@ -70,6 +74,18 @@ DEFINITIONS
    must be seen in order in all cores. However, each core can see W and W' with
    some delay.
 
+Rationale
+ - why we need barriers in both a read and write side of a synchronization?
+    - A barrier on the write side enforces that all previous operations have
+      been flushed from the store buffer to the cache coherency system.
+    - On the read side to prevent processor speculation. The processor might
+      perform reads speculation in the sense that it reads a po-later variable
+      before a po-earlier variable because it already has the cache line for
+      the po-later variable, for example. Also, Some processors also have
+      invalidation queues which contains requests to invalidate cache lines
+      that have not yet been applied. A read barrier ensures that all
+      invalidations have been processed before continuing.
+
 Dependencies enforcing ordering
  - Three type of dependencies between instructions: control (if), data and address
  - For one of these dependencies to exist, the first instruction must be a
@@ -116,6 +132,11 @@ Dependencies enforcing ordering
    works. But note that the only effect is the read and write to be ordered!
    (you still need a strong barrier after the write if you would like the write
    to be visible to ALL cores).
+ - Data dependencies between loads are not data barriers.
+    r1 = load A
+    r2 = load r1 /*pointer dereference*/
+   This might look out of order, even if there is a write barrier on the write
+   side. I think this only happens in alpha though.
 
 
 
@@ -216,11 +237,65 @@ Memory Models
 
 Arquitectures
  - RVWMO: is a type of rMCA. Still, each core might reorder loads and stores with more flexibility than TSO allows.
+ - x86, x86_64 (or amd64) and SPARC are TSO
+ - POWER and ARM are weakly ordered but they have more coherent options
+
+
+C11 Memory model
+ - main doc:
+    - https://en.cppreference.com/w/cpp/atomic/memory_order
+    - https://en.cppreference.com/w/c/atomic/memory_order
+    - the official c spec is unreadable c'mon!
+ - acquire-release pairs synchronize variables seen by the involves cpus, but
+   not any other cpu! Hence, C11 model does not enforce other-MCA (stores can be
+   seen in diferent orders in diferent cpus)
+ - memory_order_seq_cst acts as a full barrier (a store acts as a release and a
+   load as an acqurie) but also enforces total store ordering among all
+   operations tagged seq_cst (all cpus see these values in the same order).
+   Essentially, this means that a seq_cst store is propagated to all cpus
+   before continuing, and two seq_cst stores will be seen in all cpus in the
+   same order. This is what the sync (power) and dmb (arm) instructions do. See the final example under
+   https://en.cppreference.com/w/cpp/atomic/memory_order#Sequentially-consistent_ordering
+ - An atomic RMW operation tagged with memory_order_acq_release or memory_order_seq_cst won't allow:
+    - subsequent operations to be seen before the load (R) part
+    - previous operations to be seen after the store (W) part
+   However, previous and subsequent operations might get mixed in between the R
+   and W part! And between them, you might end up performing a subsequent
+   operation before a previuos operation! See cppmem example below. Note that
+   two seq_cst operations won't get interwined.
+ - cppmem tool: memory model simulator: http://svr-pes20-cppmem.cl.cam.ac.uk/cppmem/
+    - x.load(memory_order_relaxed).readsvalue(0): Only considers executions
+      where this loads of x ends up being 0.
+    - r1 = x.load(memory_order_relaxed):  stores read value in register r1, shown in final graph
+    - {{{ { x = 1; r1 = y; } ||| { y = 1; r2 = x; } }}} defines two threads for simplicity
+    - cas_strong(), and cas_strong_explicit are aliases for atomic_compare_exchange_strong
+    - more accepted functions: https://github.com/goodell/cppmem/blob/master/cil-parser/clexer.mll#L169
+    - example code:
+       int main() {
+         atomic_int x=0; atomic_int y=0;
+         {{{ { 
+               cas_strong_explicit(x,0,1,memory_order_acq_rel,memory_order_relaxed);
+               y.store(1,memory_order_relaxed); 
+         } ||| { 
+               r1=y.load(memory_order_acquire).readsvalue(1);
+               r2=x.load(memory_order_acquire);
+         } }}}
+         return 0;
+       }
+      The outcome r1=1 and r2=0 is allowed, because with acq_rel or seq_cst in
+      cas_strong, the y store can be mixed between the R and W part of the CAS.
+      Changing the y.store to memory_order_release will prevent this outcome.
 
 Kernel functions
  - READ_ONCE and WRITE_ONCE prevent the compiler from removing the associated
-   load and store instructions and to reorder them (at compiler level!!!) but
-   there are exceptions:
+   load and store instructions and to reorder them (at compiler level!!!). This
+   means that the compiler won't reorder READ_ONCE or WRITE_ONCE calls with
+   other READ_ONCE, WRITE_ONCE, barrier or similar calls, but can reorder them
+   with other plain memory accesses. READ_ONCE() and WRITE_ONCE() are
+   implemented as volatile casts, which has no effect when its argument is
+   already marked volatile. Hence, do not use *_ONCE when the variable is
+   volatile. Next follows some exeptions when the compiler might still reorder
+   *_ONCE accesses:
      - the following code
          r = READ_ONCE(y)
          if (r) {
@@ -258,21 +333,44 @@ Kernel functions
          be reordered.
        - a spin_release paired with a spin_lock with the same variable on
          different cpus guarantees that writes before the spin_release are seen
-         before writes after the spin_acquire on all cpus. Instead, when using
+         before writes after the spin_acquire on __ALL__ cpus. Instead, when using
          load_acquire and store_release, only the cpus involved get the
          variables in order, but others might not!
- - Be aware of atomics that do not return value, such as atomic_inc. In the
-   following code, it is possible for X and Y to be reordered. That's because
-   on ARM, atomic_inc does not read the value, it tells the memory subsystem to
-   do the increment. Because there is no read in the cpu, there is nothing that
-   the read fence can order.
-
-     atomic_inc(&x);
-     smp_rmb();
-     r1 = READ_ONCE(y);
- - barrier(): this is just a compiler barrier, not a processor one!
+ - barrier(): this is just a compiler barrier, not a processor one! This calls
+   ensures ordering of all previous memory operations with the following memory
+   operations. As a consequence, the compiler must discard the value of all
+   memory locations that it has currently cached in any machine registers,
+   which means it is somewhat expensive.
+ - atomic functions
+    - Be aware of atomics that do not return value, such as atomic_inc. In the
+      following code, it is possible for X and Y to be reordered. That's because
+      on ARM, atomic_inc does not read the value, it tells the memory subsystem to
+      do the increment. Because there is no read in the cpu, there is nothing that
+      the read fence can order.
+        atomic_inc(&x);
+        smp_rmb();
+        r1 = READ_ONCE(y);
+    - When atomic RMW operations with acquire release semantics, only either
+      the read or the write part has the acquire or release semantincs. Think
+      of load-conditional (LC) and store-conditional (SC) instructions used to
+      perform RMW instead of using a single machine instruction. Either the LC
+      or the SC part has the acquire or release semantincs. In particular:
+        {}_relaxed: unordered
+        {}_acquire: the R of the RMW (or atomic_read) is an ACQUIRE
+        {}_release: the W of the RMW (or atomic_set)  is a  RELEASE
 
 
 RISCV
  - weird AMOSWAP ordering explained https://lore.kernel.org/linux-riscv/82beae6a-2589-6136-b563-3946d7c4fc60@nvidia.com/
+   this is mentioned as a general architecture phenomenon in the memory-barriers.txt linux doc!
+     *A = a;
+     RELEASE M
+     ACQUIRE N
+     *B = b;
+   could occur as:
+     ACQUIRE N, STORE *B, STORE *A, RELEASE M 
+   but this cannot introduce a deadlock. The cpu is running both the release
+   and acquire operations simultaneously in its pipeline. Consider that even if
+   the acquire spins, the cpu will eventually execute the release, and, at some
+   point, it will indirectly allow the acquire to finish.
  - fence.tso is something like "fence r, rw" + "fence w, w" in a single instruction

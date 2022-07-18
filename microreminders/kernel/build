@@ -16,6 +16,9 @@ PREPARE CROSS COMPILED FILES
   cp ../$BNAME/build/arch/arm64/boot/Image.gz ../$BNAME/install/
   cd ../$BNAME; tar -cvzf kernel.tar.gz ./install/
 
+KERNEL VERSION
+  make O=../$BNAME/build/ CROSS_COMPILE=aarch64-linux-gnu- ARCH=arm64 -s kernelrelease # this includes de localversion
+
 MANUAL INSTALLATION
   tar -xvzf kernel.tar.gz
   cd install
@@ -58,3 +61,8 @@ CHECKS AFTER NEW KERNEL INSTALL
   # get error/boot logs both the old and new kernel after a fresh boot.
   dmesg --level=emerg,alert,crit,err,warn
 
+Types of image builds
+ - <builddir>/arch/<your_arch>/build/Image: uncompressed and stripped mage (but
+   I think it depends on the arch, please check)
+ - <builddir>/arch/<your_arch>/build/bzImage: compressed and stripped mage
+ - <builddir>/vmlinux : uncompressed and unstripped image

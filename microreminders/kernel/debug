@@ -13,6 +13,10 @@ GENERAL
  - kern-tree/Documentation/printk-formats.txt -> printk formats
  - Documentation/networking/netconsole.txt -> enable netconsole
 
+FTRACE
+ - see ftrace file here
+ - this includes how to enable tracepoints at boot time in the prink buffer! (dmsg)
+
 USERLAND
  - strace --trace=%process -ff -> trace a subset of syscalls, see --trace in man
    to enable colored output, pipe strace output to vim.

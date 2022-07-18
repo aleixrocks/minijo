@@ -15,6 +15,13 @@ SESSIONS
  - tmux kill-session -t session-name -> kill
  - kill-window -> kill window
 
+EXAMPLES
+ - tmux new-session -c "/inital/directory" -s "patato" -d -n "window-name" # -d is start detached
+   tmux new-window -c "/initial/directory2" -n "carrot" -t potato:1
+   tmux send-keys -t potato:1 "sleep 1; ls" C-m # C-m means enter, last command cannot have ";" !
+   tmux a -t potato # attach
+   tmux kill-session -t potato
+
 Windows
  - c -> create new window
  - , -> rename the current window

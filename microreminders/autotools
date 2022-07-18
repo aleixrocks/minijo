@@ -1,22 +1,54 @@
+ 
+BASIC
+ - Documentation:
+     - https://elinux.org/images/4/43/Petazzoni.pdf -> "simple"
+     - https://www.lrde.epita.fr/~adl/autotools.html -> in depth explanation.
  - main files: configure.ac, Makefile.am and src/Makefile.am
  - In essence, configure.ac check if there are programs installed on the system
    and define variables such as AWK=/usr/bin/awk or HAVE_WCHAR. The makefile.am
    uses this variables to speficy the programs, libraries and the compilation
    order that must be followed.
+ - who generates what?
+    - autoconf Creates configure from configure.ac.
+    - autoheader Creates config.h.in from configure.ac.
+    - automake Creates Makefile.ins from Makefile.ams and configure.ac.
+    - aclocal Scans configure.ac for uses of third-party macros, and gather definitions in aclocal.m4.
+    - autom4te Autoconf driver for M4. All tools that process configure.ac do so through ‘autom4te’.
+    - see https://www.lrde.epita.fr/~adl/autotools.html for all details
  
 
 configure.ac
+ - It's a shell script, processed with the m4 preprocessor. it's macro
+   definitions are stored by default under /usr/share/autoconf/autoconf/. Extra
+   configs might be installed under /usr/share/aclocal. The gnu autoconf
+   archive contains many many macros
+   https://www.gnu.org/software/autoconf-archive/
  - Basic config
     - AC_INIT([amhello], [1.0], [bug-report@address]) -> initalize Autoconf,
       Specify package's name, version number and bug-report address.
     - AM_INIT_AUTOMAKE([foreign -Wall -Werror]) -> Initialize Automake. Turn on
-      all Automake warnings and report them as errors. This is a foreign package,
-      foreign ignores some GNU coding standards such as requiring a ./README file.
-      Other options available.
-    - AC_PROG_CC -> Check for a C compiler
-    - AC_CONFIG_HEADERS([config.h]) -> Declare config.h as output header.
+      all Automake warnings and report them as errors. This is a foreign
+      package, foreign ignores some GNU coding standards such as requiring a
+      ./README file.  Other options available. This automatically generates a
+      Makefile.in from a Makefile.am.
+    - AC_CONFIG_HEADERS([config.h]) -> Declare config.h as output header. This
+      header contains definitions such as HAVE_<library> for the source code
+      to use. See "configuration header" below for more info.
     - AC_CONFIG_FILES([Makefile src/Makefile]) -> Declare Makefile and
-      src/Makefile as output files. See AC_CONFIG_FILES below for more info.
+      src/Makefile as output files. AC_OUTPUT will expand the macros in the .in
+      files specified here. Note that we do not write Makefile.in files, we
+      write Makefile.am. The .in files are generated using automake form .am.
+      It’s legitimate to process non-Makefiles too. Example
+      script.in:
+          #!/bin/sh
+          SED=’@SED@’
+      It is also legit to use it for any file such as
+          AC_CONFIG_FILES([script.sh:script.in])
+      Here the user has manually written script.in, and this rule will generate
+      script.sh. .in files are templates where @XYZ@ are placeholders for
+      AC SUBST([XYZ]) definitions. 
+    - AC_PROG_CC -> Check for a C compiler
+    - AC_PROC_AWK/SED/GREP/... -> check for existance of program
     - AC_OUTPUT -> Actually output all declared files.
  - Misc checks
     - AC_PREREQ(VERSION) -> Require a minimum Autoconf version
@@ -40,50 +72,48 @@ configure.ac
     - AC_MSG_ERROR(ERROR-DESCRIPTION, [EXIT-STATUS]) -> Print ERROR-DESCRIPTION
       (also to config.log ) and abort ‘configure’.
     - AC_MSG_WARN(ERROR-DESCRIPTION) -> Likewise, but don’t abort.
+    - AC_MSG_NOTICE(message) -> just print
+    - AC_MSG_CHECKING -> notify user about configuring checking a feature
+    - AC_MSG_RESULT -> notify result of something
  - Defines
     - AC_DEFINE(VARIABLE, VALUE, DESCRIPTION) -> Output the following to config.h.
-
           /* DESCRIPTION */
           #define VARIABLE VALUE
     - AC_SUBST(VARIABLE, [VALUE]) -> Define $(VARIABLE) as VALUE in Makefile.
-          AC_SUBST([FOO], [foo])  FOO=foo            AC_SUBST([FOO])
-                                  AC_SUBST([FOO])    FOO=foo
-      are all equivalent.
+          AC_SUBST([FOO], [foo])
+ - Checking for components
     - AC_CHECK_LIB(LIBRARY, FUNCT, [ACT-IF-FOUND], [ACT-IF-NOT]) -> Check whether
       LIBRARY exists and contains FUNCT.  Execute ACT-IF-FOUND if it does,
       ACT-IF-NOT otherwise.
-
           AC_CHECK_LIB([efence], [malloc], [EFENCELIB=-lefence])
           AC_SUBST([EFENCELIB])
-
       We would later use $(EFENCELIB) in the link rule.
-    - AC_CHECK_HEADERS(HEADERS...) -> Check for HEADERS and #define HAVE_HEADER_H
-      for each header found.
-          AC_CHECK_HEADERS([sys/param.h unistd.h])
-          AC_CHECK_HEADERS([wchar.h])
-      Might #define HAVE_SYS_PARAM_H, HAVE_UNISTD_H, and HAVE_WCHAR_H.
-          #if HAVE_UNISTD_H
-          #include <unistd.h>
-          #endif
-    - AC_CONFIG_FILES(FILES...) -> Automake creates FILE.in for each FILE that
-      has a FILE.am. It’s legitimate to process non-Makefiles too. Example
-      script.in:
-          #!/bin/sh
-          SED=’@SED@’
-          TAR=’@TAR@’
-          d=$1; shift; mkdir "$d"
-          for f; do
-          "$SED" ’s/#.*//’ "$f" \
-          >"$d/$f"
-          done
-          "$TAR" cf "$d.tar" "$d"
-      It is also legit to use it for any file such as
-          AC_CONFIG_FILES([script.sh:script.in])
-      Here the user has manually written script.in, and this rule will generate
-      script.sh. .in files are templates where @XYZ@ are placeholders for
-      AC SUBST([XYZ]) definitions. 
-      Makefile.ins also use @XYZ@ as placeholders but Automake makes all
-      XYZ=@XYZ@ definitions and you may simply use $(XYZ) as needed. more info
+    - AC_FUNC_MALLOC -> check for malloc function existance
+    - AC_CHECK_FUNC (function, [action-if-found], [action-if-not-found]) ->
+      check for existance of a generic function. This defines 
+        - ac_cv_func_<function> variable in configure.ac
+        - HAVE_<FUNCTION> defines in configuration header.
+    - AC_HEADER_* -> similar to AC_FUNC_* but for headers.
+        - ac_cv_header_<header-file> variable in configure.ac
+        - HAVE_<HEADER>_H define in config.h
+    - AC_CHECK_HEADERS(HEADERS...) -> similar to AC_CHECK_FUNCTION but for headers
+ - Requesting packages
+    - AC_ARG_WITH (package, help-string, [action-if-given], [action-if-not-given]).
+      For --with-<package>=<arg> and --without-<package>
+    - AC_ARG_ENABLE (feature, help-string, [action-if-given], [action-if-not-given])
+      For --enable-<feature> and --disable-<feature>
+ - Checking for libraries
+    - AC_SEARCH_LIBS (function, search-libs, [action-if-found], [action-if-not-found], [other-libraries])
+      search for function in list of libraries. If a library is found, -llibrary
+      is prepended to the LIBS variable, so programs will be linked against it.
+      action-if-found is executed.
+         - Result in ac_cv_search_<function>
+    - But its better to use pkg-config files. They are usually stored in
+      usr/lib/pkgconfig but can also be found in PKG_CHECK_MODULES.
+    - PKG_CHECK_MODULES(prefix, list-of-modules, action-if-found, action-if-not-found)
+      creates  <prefix>_CFLAGS and <prefix>_LIBS with the flags in the .pc
+      file. It also calls AC_SUBST.
+ - Others
     - AM CONDITIONAL(NAME, CONDITION) -> Declare conditional NAME. CONDITION
       should be a shell instruction that succeeds iff NAME should be enabled.
          configure.ac
@@ -92,8 +122,6 @@ configure.ac
       Will enable WANT_BAR only if bar.h is present on the system. WANT_BAR
       can be used on the makefiles.
     
-    
-
 
 Makefile.am
  - SUBDIRS = src -> build recursively in src/. They are built in the order
@@ -120,8 +148,19 @@ Makefile.am
 
 src/Makefile.am
  - compile program
-    - bin_PROGRAMS = hello -> The "hello" program whill be built on the "bin" dir.
-    - hello_SOURCES = main.c -> To build "hello" we need the sources "main.c"
+    - bin_PROGRAMS = hello -> The "hello" program whill be built on the "bin"
+      dir. This rule is called "Product List Variable".
+    - hello_SOURCES = main.c -> To build "hello" we need the sources "main.c".
+      This rule is called "Product Source Variable"
+    - Product list variables are of the form: prefix_PRIMARY.
+       - prefix describes where this thing should be installed. all autotools
+         prefix like bindir, includedir, datadir but without the "dir" prefix.
+       - PRIMARY describes what type of thing is built. Which can be LIBRARIES,
+         PROGRAMS, HEADERS, DATA, PYTHON, JAVA, SCRIPTS, MANS, TEXINFOS, etc
+    - Product source variables are of the form: product_SOURCES, where:
+       - product: the normalized name as specified in product source variable.
+         Normalized means chaning - and + for _.
+       - SOURCES just as is :) (thank god)
  - compile library
     - lib_LIBRARIES = libfoo.a libbar.a -> These libraries will be 
       installed in $(libdir). Also, library names must match lib*.a.
@@ -138,6 +177,25 @@ src/Makefile.am
     - foo_LIBADD -> Additional link objects, -ls and -Ls (if foo is a library)
     - foo_LDFLAGS -> Additional linker flags
  - compile for anything
-    - LDADD = ../lib/libcompat.a -> added only at linking time
     - AM_CPPFLAGS = -I$(srcdir)/../lib -> contains additional preprocessor flags
+    - AM_CFLAGS -> compiler flags
+    - AM_LDFLAGS -> linker flags
+    - LDADD = ../lib/libcompat.a -> added only at linking time
     - The default value for foo_XXXFLAGS is $(AM_XXXFLAGS).
+ - useful vars
+    - top_srcdir, the relative path to the top of the source tree
+    - srcdir, the relative path to the directory that contains the current Makefile
+    - top_builddir, the relative path to the top of the build tree
+    - builddir, the current directory
+    - abs_top_srcdir, abs_srcdir, abs_top_builddir, abs_builddir, absolute
+      variants of the previous variables
+ - others
+    - AM_SILENT_RULES([yes]) -> the output is quiet by default, and verbose
+      if V=1 is passed. It looks like a kernel compilation.
+
+Configuration header
+ - autoheader generates config.h.in. configure then generates config.h.
+ - The source code can include config.h and use its macros to detect the
+   presence of components such as HAVE_PAPI.
+ - AC_DEFINE([VAR], [3], [This is a comment]) is used to explicitly set a
+   define in config.h from configure.ac

@@ -1,11 +1,64 @@
 
 COMPILE AGAINST CUSTOM GLIBC
- - src: https://stackoverflow.com/questions/847179/multiple-glibc-libraries-on-a-single-host/851229#851229
- - The -rpath linker option will make the runtime loader search for libraries
-   in /path/to/newglibc (so you wouldn't have to set LD_LIBRARY_PATH before
-   running it), and the -dynamic-linker option will "bake" path to correct
-   ld-linux.so.2 into the application.
+ - official instructions: https://sourceware.org/glibc/wiki/Testing/Builds
+ - to test an application compiled agains the system glibc, but instead, load
+   your custom glibc installation, best is to use the testrun.sh script in the
+   build directory. Be aware that we will still be using the system glibc c
+   runtime (crt0.o and others). Also be sure to pass it the absolute binary path.
+ - for debugging, use the debugglibc.sh script in the build dir. If your binary
+   doesn't have debug symbols in a separte file, run the script with the "-s"
+   option. Also be sure to pass it the absolute binary path. Please check the
+   script help for the full options, note that you can pass env variables to it
+   without using 'env' with -e !
 
-   g++ main.o -o myapp ... \
-    -Wl,--rpath=/path/to/newglibc \
-    -Wl,--dynamic-linker=/path/to/newglibc/ld-linux.so.2
+ENTRY POINT
+ - rough startup guide: https://sourceware.org/glibc/wiki/DynamicLoader
+ - The kernel first invokes the loader.
+ - The loader entry point is _start.
+ - _start is defined in glibc source code under sysdeps/x86_64/dl-machine.h
+ - _start first calls _dl_start, which returns the user entry-point. The user
+   entry point is the binary _start symbol.
+
+ - then it calls _dl_init, which does lots of things I don't understand yet.
+ - when it returns, it calls the _dl_start returned address (__libc_start_main).
+ - This, is the user-binary _start address.
+ - _start quickly jumps to __libc_start_main and it's expected to do not return.
+
+      STATIC int LIBC_START_MAIN (int (*main) (int, char **, char ** MAIN_AUXVEC_DECL),                                                                             
+         int argc, char **argv,                                                                                                
+      #ifdef LIBC_START_MAIN_AUXVEC_ARG                                                                                                       
+         ElfW(auxv_t) *auxvec,                                                                                       
+      #endif                                                                                                                                  
+         __typeof (main) init,
+         void (*fini) (void),
+         void (*rtld_fini) (void),
+         void *stack_end
+      )                                                                                            
+
+ - __libc_start_main simply calls the constructors of all shared objects and
+   binary. It also registers the function that calls all destructors, which is
+   passed as an arguemnt (rtld_fini).
+ - 
+
+DESTRUCTORS
+ - each process has a list of functions to call at exit (atexit())
+ - this list is processed when returning from LIBC_START_MAIN or when the user
+   calls exit(). notice that calling _exit() skips this step.
+ - In this list, it is registered the _dl_fini() loader function at LIBC_START_MAIN.
+ - The _dl_fini function, when called after all user atexit() functions, calls de destructors.
+ - To do so, it needs to sort all the loaded DSOs in the right order (a
+   destructor of a library is only called if all destructors of the library it
+   depends on have been called).
+ - We cannot simply use the inverse constructor order because the user might
+   have added new libraries at runtime with dlopen.
+ - sorting the DSOs is done by the function _dl_sort_maps() which uses an algorithm similar to an "insert sort"
+
+
+ LINK MAP
+  - struct link_map, defined in include/link.h represents a DSO.
+
+
+
+TLS
+ - this contains the definition of the "header" sysdeps/x86_64/nptl/tls.h the
+   pthread_t of the current thread is stored there.
