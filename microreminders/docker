@@ -1,4 +1,5 @@
 BASIC
+ - example run from scratch: docker run -it --rm archlinux bash -c "echo hello world"
  - docker build -t "type_name" : build the Dockerfile in the current directory and
    give the image the name "type_name"
  - docker run "type_name" : run container "type_name". the instance gets
@@ -13,11 +14,29 @@ BASIC
  - docker stop "name": stop the currently running container. It looks like the containers remains in a "zombie" state, the "name" is still registered.
  - docker rm "name": completely remove the container (free the name)
 
+LIST
+ - docker image ls : list downloaded images
+ - docker ps --all : list containers (spawned by the image). The --all show also stopped containers.
+
+BUILD
+ - docker build --tag aleixrocks/gitlab-jekyll-rst:1.0 .
+ - docker build --no-cache --tag aleixrocks/gitlab-jekyll-rst:1.0 . : rebuild all
+ 
+RUN
+ - sudo docker run --network host --name web aleixrocks/gitlab-jekyll-rst:1.0
+
+REMOVE
+ - docker rm --force web
+ - docker system prune : clean all images and builds
+
+ATTACH
+ - docker exec -it [container-id] bash : attach to container into new tty
+ - docker attach [conainer-id] : attach to container into current tty
+
 INTERACTIVE
  - docker run -it --name "name" "type_name": opens shell in the same terminal, prompt appears
  - docker run -dit --name "name" "type_name": daemonizes container and waits for input
  - docker attach "name": enter daemonized container
-
 
 PASS ARGUEMTNS AT BUILD TIME
  - docker build ---arg var="value"
