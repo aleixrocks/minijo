@@ -7,6 +7,24 @@ PRINCIPLES
  - nix derivatives : packages (including version and specific deps)
  - nix channel : repository
  - nix expressions : descriptions of a package/derivative
+ - nix components:
+    - /nix/store : installation path of all packages
+    - /nix/var/nix/db : sqlite database that keep track of packages
+    - ~/.nix-profile : this is a nix package that works as a kind
+      of a root directory. But nothing is installed here, is only a
+      simlink. We can install packages in this "profile". For each
+      package installed, a new generation is created (another
+      profile) which is installed in the store and this simlink is
+      updated to point to the new one. Profiles are here
+      /nix/var/nix/profiles/per-user/aleix/ but they are only
+      simlinks to the store.
+    - ~/.nix-defexpr/channels : this contains the repos with the "expressions"
+      of packages.
+    - NIX_PATH : env var containing the path to the channels
+    - nix-env : command to manage the environment (profiles and
+      packages installed there)
+    - nix-store: command to manage the store itself
+    - nix-channel: command to manage channels (repos)
 
 BASIC
  - nix-env -i <pkg> : install package into the current user environment
@@ -36,7 +54,9 @@ STORE
  - nix-store -q --references `which command` : shows dependencies of package.
    Be sure that the path is either an absolute path or a symlink to a command
    in the nix store.
- - nix-store -qR <path> : list all dependencies including absolutely everything needed to run this
+ - nix-store -q --referrers `which command` : shows which packages depend on this package.
+ - nix-store -qR <path> : list all dependencies including absolutely everything
+   needed to run this. This is named "closure" in nix terminology.
  - nix-store -q -tree <path> : show dependencies as a tree
 
 CHANNELS
