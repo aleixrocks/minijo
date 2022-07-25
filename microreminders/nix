@@ -7,6 +7,34 @@ PRINCIPLES
  - nix derivatives : packages (including version and specific deps)
  - nix channel : repository
  - nix expressions : descriptions of a package/derivative
+ - The Nix language is used to write expressions that produce derivations. The
+   nix-build tool is used to build derivations from an expression.
+ - The .nix files are like .c files. The .drv files are intermediate files like
+   .o files. The .drv describes how to build a derivation, it's the bare
+   minimum information. The output of a build is the "output" path.
+ - Derivations are also stored in the nix store. But they only contain the
+   instructions on how to build a program. Derivations can be created with the
+   nix "derivation" function. 
+ - The hash of the out path of a package is based solely on the input
+   derivations in the current version of Nix, not on the contents of the build
+   product (no sha on the resulting binary). It's possible however to have
+   content-addressable derivations for e.g. tarballs.
+ - The environment variables passed to the builder are just those you see in
+   the .drv plus some other Nix related configuration (number of cores, temp
+   dir, ...). The builder will not inherit any variable from your running
+   shell, otherwise builds would suffer from non-determinism.
+ - An attribute set (ej. {a=3; b="patata";}  with type="derivation" is nix's
+   magic way to let it now that the set is a derivation. Another set special
+   attribute is "outPath". If it exist, the builtins.toString or
+   "${derviationVariable} will essentially return the contents of outPath.
+ - The idea is that all sources should reside in the Nix store, since all
+   inputs to a derivation should reside in the Nix store.
+ - During build, every attribute in the derivation is passed as an environment
+   variable to the builder. See
+   https://nixos.org/manual/nix/stable/expressions/derivations.html for more
+   details.
+ - if an attribute of "derivation" is a path (/...) it is copied into the nix
+   store first. hence, we can keep track of all sources in the store.
  - nix components:
     - /nix/store : installation path of all packages
     - /nix/var/nix/db : sqlite database that keep track of packages
@@ -20,11 +48,22 @@ PRINCIPLES
       simlinks to the store.
     - ~/.nix-defexpr/channels : this contains the repos with the "expressions"
       of packages.
+    - /etc/nix/nix.conf : nix global configurations. See
+      https://nixos.org/manual/nix/stable/command-ref/conf-file.html for
+      options
     - NIX_PATH : env var containing the path to the channels
     - nix-env : command to manage the environment (profiles and
       packages installed there)
-    - nix-store: command to manage the store itself
+    - nix-instantiate <name>.nix : command that takes a .nix file and build a
+      .drv file.
+    - nix-store: command to manage the store itself and build. nix-store -r
+      takes a .drv file and build the package itself.
+    - nix-build: command that takes a .nix file, builds a .drv file and runs
+      nix-store -r on the .drv to build the package.
     - nix-channel: command to manage channels (repos)
+    - nix-repl: command to try the NIX language interactively
+    - source ~/.nix-profile/etc/profile.d/nix.sh : load all nix commands and
+      envs (used when nix is not installed using the system's packet manager)
 
 BASIC
  - nix-env -i <pkg> : install package into the current user environment
