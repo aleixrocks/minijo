@@ -145,6 +145,7 @@ bpftrace
            bpftrace -e 'kprobe:do_sys_open+9 { printf("in here\n"); }'
     - uprobe/uretprobe: dynamic user-space program probes.
        - example
+          bpftrace -l 'uretprobe:/bin/bash:readline : find available probe points
           objdump -tT /bin/bash: find the available probe points
           bpftrace -e 'uretprobe:/bin/bash:readline { printf("read a line\n"); }'
        - access arguments like arg0,...argN. You need to check the code to know
@@ -152,6 +153,8 @@ bpftrace
        - if the user binary had debug symbols, you can use args->arg_name
        - bpftrace -lv 'uprobe:/bin/bash:rl_set_prompt' : to see available arguments
        - an offset can be added for uprobe obtained with (for instance): objdump -d /bin/bash
+    - usdt: static user-space tracepoints
+       - bpftrace -l 'usdt:/usr/lib64/libc.so.6:*' : list available points
     - kfunc: more efficient, implemented as bpf trampolines
     - software: the same as perf software events. They provide counts, such as
       "cpu-clocks". A count can be provided, so this probe will trigger every n

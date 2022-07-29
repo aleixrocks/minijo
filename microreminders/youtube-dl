@@ -1,0 +1,5 @@
+Download playlist:
+  youtube-dl --yes-playlist --ignore-errors --continue --no-overwrites --download-archive progress.txt -f worst <playlist url (not a video in the playlist, but the playlist itself!>
+  -f worst downloads the worst quality available. By default is best.
+  - check youtube-dl github for the documentation on the available options
+

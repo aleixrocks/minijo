@@ -5,7 +5,10 @@ PRINCIPLES
    derivation Y, then it always depends on it. A version of X which depended on
    Z would be a different derivation. 
  - nix derivatives : packages (including version and specific deps)
- - nix channel : repository
+ - nix channel : repository of nix packages. a channel can be just a directory
+   with the git clone of the nixpkgs repo. Essentially it must have a
+   default.nix file that evalutes to an attribute set ( {ping=...; bash=...; ...;}
+   containing derivatives.
  - nix expressions : descriptions of a package/derivative
  - The Nix language is used to write expressions that produce derivations. The
    nix-build tool is used to build derivations from an expression.
@@ -35,6 +38,14 @@ PRINCIPLES
    details.
  - if an attribute of "derivation" is a path (/...) it is copied into the nix
    store first. hence, we can keep track of all sources in the store.
+ - each derivation can have multiple outputs. Each output has a name (out is
+   the generic one) and this corresponds to a path in the nix store. These
+   names are exported as env variables to the builder who needs to do what's
+   necessary to copy into each output path what's expected (e.g. headers, libs,
+   dev libs, doc, etc).
+ - derivations have dependencies to other derivations. When inspecting one with
+   nix show-derivation <name>.drv, you will see the .drv dependencies and the
+   specific outputs of the .drv this derivation depends on.
  - nix components:
     - /nix/store : installation path of all packages
     - /nix/var/nix/db : sqlite database that keep track of packages
@@ -51,7 +62,17 @@ PRINCIPLES
     - /etc/nix/nix.conf : nix global configurations. See
       https://nixos.org/manual/nix/stable/command-ref/conf-file.html for
       options
-    - NIX_PATH : env var containing the path to the channels
+    - NIX_PATH : env var containing the path to repositories of nix
+      expressions. They contain a default.nix which nix commands evaluate to
+      find derivatives. These repositories are paths with names assigned, e.g.
+      : nixpkgs=/nix/var/nix/profiles/per-user/aleix/channels/nixpkgs . When
+      referring to this repos inside nix expressions (.nix files) you can do so
+      as <nixpkgs>. Be aware that nix-env does not uses NIX_PATH but
+      ~/.nix-defexpr as source for its repositories. If you want to use a repo
+      from NIX_PATH in nix-env, use nix-env -f '<myRepo>' -A <attrName> . You
+      can also use -I <path> in some nix tools to add a path instead of
+      NIX_PATH. For more info, see
+      https://nixos.org/guides/nix-pills/nix-search-paths.html
     - nix-env : command to manage the environment (profiles and
       packages installed there)
     - nix-instantiate <name>.nix : command that takes a .nix file and build a
@@ -59,11 +80,20 @@ PRINCIPLES
     - nix-store: command to manage the store itself and build. nix-store -r
       takes a .drv file and build the package itself.
     - nix-build: command that takes a .nix file, builds a .drv file and runs
-      nix-store -r on the .drv to build the package.
+      nix-store -r on the .drv to build the package. If no file is provided, it
+      will read a "default.nix" in the current directory. If this file contains
+      an attribute set, you can specify which attribute you want it to read
+      with -A, e.g. nix-build -A graphviz. Instead of default.nix, you can also
+      specify a NIX_PATH such as nix-build '<nixpkgs' -A bash.
     - nix-channel: command to manage channels (repos)
     - nix-repl: command to try the NIX language interactively
     - source ~/.nix-profile/etc/profile.d/nix.sh : load all nix commands and
       envs (used when nix is not installed using the system's packet manager)
+    - nix-shell file.nix :  builds a derivation and opens an interactive bash
+      with the build environment loaded, but no build is done. From here, it is
+      possible to run the builder to build the package, but you might not have
+      permissions to write into the store nor you will be cd into a nix
+      temporal build dir.
 
 BASIC
  - nix-env -i <pkg> : install package into the current user environment
@@ -105,6 +135,273 @@ CHANNELS
 DERIVATIONS
  - nix show-derivation <path.drv> : pretty print derivation
  - nix-store -r <path.drv> : build/realise derivation
+
+GARBAGE COLLECTOR
+ - /nix/var/nix/gcroots : contains simlinks to garbage collector roots
+   (gcroots). These packages nor their dependencies will never be deleted.
+   everythingelse will if the gargabe collector is run. all links under
+   /nix/var/nix/profiles are also gcroots, so our env and generations are not
+   deleted. the "results" link after a build is also a gc root (the softlink
+   file itself, not the .drv it points to!)
+ - nix-collect-garbage : command to run the garbage collector
+ - nix-store -q --roots `which fortune` : points to the gcroot derivation that
+   keeps the fortune package alive after runninc the garbage collector
+ - nix-store --gc --print-roots : prints all gc roots
+ - clean up all
+    - steps: 
+       nix-channel --update
+       nix-env -u --always
+       rm /nix/var/nix/gcroots/auto/*
+       nix-collect-garbage -d
+    - First, we download a new version of the nixpkgs channel, which holds the
+      description of all the software. Then we upgrade our installed packages
+      with nix-env -u. That will bring us into a fresh new generation with all
+      updated software.
+    - Then we remove all the indirect roots generated by nix-build: beware,
+      this will result in dangling symlinks. You may be smarter and also remove
+      the target of those symlinks.
+    - Finally, the -d option of nix-collect-garbage is used to delete old
+      generations of all profiles, then collect garbage. After this, you lose
+      the ability to rollback to any previous generation. So make sure the new
+      generation is working well before running the command.
+    - more info at: https://nixos.org/guides/nix-pills/garbage-collector.html
+
+
+UNDERSTANDING NIXPKGS REPOSITORY
+ - The <nixpkgs> repository is a function that accepts some parameters and
+   returns the set of all packages. Due to laziness, only the accessed
+   derivations will be built.
+ - the default.nix evalutes to a function instead of an attribute set. If
+   nix-build finds a function instead of an attribute set, it will call the
+   function once and evaluate the resulting derivation. This works if the
+   function has default parameters of if parameters are passed with --arg
+   option. (actually, note that nix-build expectes a derivation, not an
+   attribute set, that's why we specify allways the derivation inside the set
+   using -A).
+ - One of the parameters is system. we can use it for cross compilation. e.g.
+   nix-build -A psmisc --argstr system i686-linux (but I'm not much confident
+   on this)
+ - nixpkgs default.nix reads the nixpkgs config file at
+   ~/.config/nixpkgs/config.nix . This con be accesses inside nix repl as "pkgs
+   = import <nixpkgs> {}; pkgs.config". The location can also be specified at
+   import time as import <nixpkgs> {config = import ./config.nix}
+ - If we want to modify a nixpkgs package and also want all packages that
+   depend on the modified one to recompile, we need to override it. To do so,
+   we can add the following in the config file:
+    {
+      packageOverrides = pkgs: {
+        graphviz = pkgs.graphviz.override { xorg = null; };
+      };
+    }
+   this uses fixed point as explained below. However, it is more powerful to
+   use overlays. packageOverrides acts as an overlay with only the super
+   argument. It is therefore appropriate for basic use, but overlays are more
+   powerful and easier to distribute.
+ - Overlays are used to add or modify a nixpkgs package and all related
+   packages in cascade (fix point below). Here is all info on overlays:
+   https://nixos.org/manual/nixpkgs/stable/#chap-overlays
+     import <nixpkgs> { overlays = [ overlay1 overlay2 ]; }.
+     
+     overlay1 = self: super:
+     {
+       boost = super.boost.override {
+         python = self.python3;
+       };
+       rr = super.callPackage ./pkgs/rr {
+         stdenv = self.stdenv_32bit;
+       };
+     }
+
+   The first argument (self) corresponds to the final package set. You should use
+   this set for the dependencies of all packages specified in your overlay. For
+   example, all the dependencies of rr in the example above come from self, as
+   well as the overridden dependencies used in the boost override.
+
+   The second argument (super) corresponds to the result of the evaluation of
+   the previous stages of Nixpkgs. It does not contain any of the packages added
+   by the current overlay, nor any of the following overlays. This set should be
+   used either to refer to packages you wish to override, or to access functions
+   defined in Nixpkgs. For example, the original recipe of boost in the above
+   example, comes from super, as well as the callPackage function.
+
+ - stdenv is a "package" used to build other packages in nixpkgs. stdenv
+   contains only a "setup" bash script that defines functions to automatically
+   build with autotools. You can see it with cd $(nix-build '<nixpkgs>' -A
+   stdenv). This is sourced by the nixpkgs builder and calls genericBuild
+   function in setup to build everything. The stdenv derivative also contains
+   the mkDerivative function, which is used by to create derivatives of all
+   nixpkgs packages. Note that mkDerivative is only in the stdenv derivative
+   attribute set, but not in the "binary" (nix store). stdenv derivative is
+   defined in pkgs/stdenv/generic/default.nix . To build the derivation it uses
+   the "derivation" builtint directly instead of mkDerivation, of course. It
+   provides its out builder.sh to build itself. It just copies setup.sh and a
+   few more lines in the output directory. Note how "mkDerivation" is defined
+   as an attribute inside the stdenv derivative attribute set, and note that
+   the stdenv itself is passed to mkDerivation. 
+
+   To build a package with nixpackge, use mkDerivation
+
+   Low level stdenv: https://nixos.org/guides/nix-pills/fundamentals-of-stdenv.html
+   All stdenv info can be found in https://nixos.org/manual/nixpkgs/stable/#chap-stdenv
+
+ - mkDerivation essentially calls the "derivation" builtin to create a nix
+   derivation attribute set, but first it provides a standard build environment
+   through stdenv including gcc, tar, gzip, ... and the stdenv setup build
+   script to actually build something made with autotools. To see the
+   mkDerivation builder.sh, run "nix-build '<nixpkgs>' -A stdenv; cat
+   result/setup" here you can see the code for all variables, hooks and phases.
+   The mkDerivation doc can also be found under
+   https://nixos.org/manual/nixpkgs/stable/#chap-stdenv
+
+     stdenv.mkDerivation rec {
+       pname = "libfoo"; # The final drv name is "pname-version".
+       version = "1.2.3";
+       src = fetchurl {
+         url = "http://example.org/libfoo-source-${version}.tar.bz2";
+         sha256 = "0x2g1jqygyr5wiwg4ma1nd7w4ydpy82z9gkcv8vh2v8dn3y58v5m";
+       };
+     }
+     
+    - buildInputs = [ which hello ]; : direct dependencies of the package
+    - propagatedBuildInputs = [ which hello ]; : like buildInputs, but these
+      packages are written into $out/nix-support/propagated-build-inputs for
+      the current package. Then, if another package imports this package, it
+      will source all what's in $out/nix-support/propagated-build-inputs . This
+      allows for a package "A" using propagateBuildInputs to make a set of
+      packages "Aset" available to a package "B" having "A" as its buildInputs
+      to accesses "Aset" without importing them explicitly in its buildInputs.
+      see for more info: https://nixos.org/guides/nix-pills/basic-dependencies-and-hooks.html
+    - buildPhase = substitute the generic builder build phase for the contents
+      of this variable. Example:
+        buildPhase = ''
+          gcc foo.c -o foo
+        '';
+    - installPhase = subsitute the generic builder install phase for the
+      contents of this variable. Example:
+        installPhase = ''
+          mkdir -p $out/bin
+          cp foo $out/bin
+        '';
+    - we can skip phases by adding dontInstall=true; dontBuild=true;
+      dontConfigure=true; etc. Look at stdenv setup for the available options, it's
+      easy to spot.
+    - NIX_CFLAGS_COMPILE : this env var adds options to the underlying
+      compiler. This works because stdenv provies a cc wrapper that parses this
+      env var among doing other things.
+    - setuphook: If a package has a setupHook=./setup-hook.sh attribute, all
+      packages that include this package will run the setup-hook.sh script.
+      This allows to run arbitrary code in any package. This works by storing
+      the hook under the package pkg/nix-support/setup-hook.  this will be
+      sourced by any stdenv-based build including that as a dependency. 
+      more info: https://nixos.org/manual/nixpkgs/stable/#ssec-setup-hooks
+      The following example, forces all packages inlcluding 'middle-man' to be
+      compiled with frame pointers.
+
+        --- middle-man.nix ---
+        {stdenv}:
+        stdenv.mkDerivation {
+          name = "middle-man";
+          src = ./middle-man.sh;
+          setupHook = ./setup-hook.sh;
+
+          dontUnpack=true;
+          dontPatch=true;
+          dontConfigure=true;
+          dontBuild=true;
+          #dontFixup=true; #this loads setupHook!
+                                                                                                                                            
+          installPhase = ''
+            mkdir -p $out/bin
+            cp $src $out/bin
+          '';
+        }
+
+        --- ./setup-hook.sh ----
+        echo "@@@@@@@@@@@@@@@@@I'm the setup hook!@@@@@@@@@@@@@@@@@"                                                                        
+        export NIX_CFLAGS_COMPILE="-fno-omit-frame-pointer "$NIX_CFLAGS_COMPILE 
+        
+        --- hello.nix ---
+        {stdenv, middle-man}
+        stdenv.mkDerivation {
+           name = hello;
+           src = ...
+           buildInputs = [middle-man];
+        }     
+        
+    - envHooks: similar to setuphook. see fore more
+      https://nixos.org/guides/nix-pills/basic-dependencies-and-hooks.html
+
+
+
+
+ - callPackage: nix trick to transparently find the arguments of a function.
+   Given a function, it gets its argument names and intersects them with
+   derivations found in allPkgs (nixpkgs).
+     callPackage = path: overrides:
+     let f = if builtins.isPath path then import path else path;
+     in f ((builtins.intersectAttrs (builtins.functionArgs f) allPkgs) // overrides);
+   see for more details: https://nixos.org/guides/nix-pills/callpackage-design-pattern.html
+
+ - makeOverridable: nix trick to embedd a function into a derivation. This
+   function allows to recreate the derivation with a new set of arguments. the
+   new set overrides the original one, but keeps all fields that have not been
+   explicitly set by the override method. Here is how it works:
+     makeOverridable = f: args:
+       let origRes = f args;
+       in origRes // {myOverride = newArgs: makeOverridable f (args // newArgs); };
+   see for more details: https://nixos.org/guides/nix-pills/override-design-pattern.html
+ - Fixed point with lazy evaluation: we use this technique to modify a package
+   in nixpkgs and all its dependencies.
+     fix = f: let result = f result; in result
+     pkgs = self: { a = 3; b = 4; c = self.a+self.b; } #assume that this is nixpkgs, where a, b and c are derivations, but c depends on a and b.
+     fix pkgs
+   Now we expand this step by step: 
+     fix = pkgs*: let result = pkgs* result; in result
+     fix = pkgs*: let result = pkgs* result; in pkgs* result
+     fix = pkgs*: let result = pkgs* result; in pkgs* (pkgs* result)  # instead of evaluating the innermost pkgs, we evaluate first the outermost pkgs!
+     fix = pkgs*: let result = pkgs* result; in self: { a = 3; b = 4; c = self.a+self.b; } #self is the paramter to the outermost pkgs call.
+     fix = pkgs*: let result = pkgs* result; in (pkgs* result): { a = 3; b = 4; c = (pkgs* result).a + (pkgs* result).b; }
+     fix = pkgs*: let result = pkgs* result; in (pkgs* result): { a = 3; b = 4; c = ({ a = 3; b = 4; c = self.a+self.b; }).a + ({ a = 3; b = 4; c = self.a+self.b; }).b; } #pkgs result gets evaluated again
+     fix = pkgs*: let result = pkgs* result; in (pkgs* result): { a = 3; b = 4; c = ({ a = 3; b = 4; c = (pkgs* result).a+(pkgs* result).b; }).a + ({ a = 3; b = 4; c = (pkgs* result).a+(pkgs* result).b; }).b; } #we expand self to pkgs result
+     fix = pkgs*: let result = pkgs* result; in (pkgs* result): { a = 3; b = 4; c = (a = 3;).a + (b = 4;).b; } #we don't really need to expand pkgs again because c is not evaluated, we only need a and b.
+     fix = pkgs*: let result = pkgs* result; in (pkgs* result): { a = 3; b = 4; c = 3 + 4; } 
+     fix = pkgs*: let result = pkgs* result; in (pkgs* result): { a = 3; b = 4; c = 7; } # done!
+   Ok, can this lead to an infinite recursion? sure, if we have something like
+      f = self: {a=self.b; b=self.c; c=self.d; d = self.a; };
+   But the nixpkgs carefully avoids this situation.
+
+   How does this work with nixpkgs? nixpkgs packages that depend on another
+   nixpkgs package refer to their dependencies as "self." (e.g.  grahpviz =
+   callPackage ./graphviz.nix {xorg=self.xorg}). nixpkgs is a function that
+   accepts a parameter "self". That parameter is nixpkgs itself (i.e. a
+   function). When the first nixpkgs is evaluated, "(pkgs(pkgs(... " it will
+   make use of the nixpkgs that has been passed to it in the arguments when it
+   encounters a package that refers to a package in nixpkgs (self.xorg, that
+   self is the argument to nixpkgs that is a possibly modified nixpkgs).  When
+   we want to override nixpkgs, we pass a modified nixpkgs as argument, we do
+   something like nixpkgs(nixpkgs // override). This way, the first nixpkgs
+   will pick the overriden version when it refers to "self".  Note however that
+   the result of nixpkgs(nixpkgs // override) contains the old version of
+   "override", it has just rebuilt everything with the new override, but kept
+   the old override. To pick the new override we do "nixpkgs(nixpkgs //
+   override) // override"
+
+   Here is another example
+
+    let
+      f = self: {a=self.b; b=self.c; c=self.d; d = 1; };
+      override = {d = 2;};
+      res = let result = f result; in result;
+      ove = let result = f (result//override); in result;
+      ovefull = let result = ((f (result // override)) // override); in result;
+     in {res=res; ove=ove; ovefull=ovefull;}
+   where 
+     res     = { a = 1; b = 1; c = 1; d = 1; }
+     ove     = { a = 2; b = 2; c = 2; d = 1; }
+     ovefull = { a = 2; b = 2; c = 2; d = 2; }
+
+
+
 
 NIX LANGUAGE
  - nix repl : open Nix interpreter
@@ -161,8 +458,13 @@ NIX LANGUAGE
     - "${coreutils}" -> returns outPath string (drv path in filesystem)
     - "${coreutils}/bin/true" -> returns outPath string (drv path in filesystem)
  - builtins
-    - :? -> show all builtins
+    - :? -> show all nix repl commands
+    - builtins. <press tab> : to show all builtins
     - builtins.currentSystem : returns system name, such as "x86_64-linux"
     - builtins.isAttrs <symbol> : returns true if symbol is a set
     - builtins.attrNames : returns names of set
     - builtins.toString <symbol> : convert to string
+
+
+
+
