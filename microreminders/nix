@@ -207,6 +207,21 @@ UNDERSTANDING NIXPKGS REPOSITORY
    use overlays. packageOverrides acts as an overlay with only the super
    argument. It is therefore appropriate for basic use, but overlays are more
    powerful and easier to distribute.
+
+ - What if we want to override a package internal attributes rather than the
+   arguments that it accepts before calling mkDerivation? we can use the helper
+   <package>.overrideAttrs. The oldAttrs argument refers to the unmodified
+   attributes:
+
+     glibc = super.glibc.overrideAttrs (oldAttrs: rec {
+        version = "2.27";
+        name = "glibc-${version}";
+        src = builtins.fetchurl {
+            url    = "https://ftp.gnu.org/gnu/glibc/glibc-${version}.tar.xz";
+            sha256 = "0wpwq7gsm7sd6ysidv0z575ckqdg13cr2njyfgrbgh4f65adwwji";
+        };
+     });
+
  - Overlays are used to add or modify a nixpkgs package and all related
    packages in cascade (fix point below). Here is all info on overlays:
    https://nixos.org/manual/nixpkgs/stable/#chap-overlays
@@ -341,7 +356,6 @@ UNDERSTANDING NIXPKGS REPOSITORY
     - envHooks: similar to setuphook. see fore more
       https://nixos.org/guides/nix-pills/basic-dependencies-and-hooks.html
 
-
  - How to recompile the whole system with some compilation option. Create a new
    stdenv with a modified mkDerivation that appends the extra compilation
    option to NIX_CFLAGS_COMPILE. To create a new stdenv, we use an "adapter"
@@ -359,8 +373,56 @@ UNDERSTANDING NIXPKGS REPOSITORY
    Storing this as default.nix and running in the same directory nix-build -A
    hello, will trigger building all hello dependencies (including glibc) with
    the new options.
+ 
+ - Override the glibc. This causes a whole system build. Be aware that the
+   glibc is built with a boostrap stdenv which has an older compiler than the
+   current "gcc" in nixpkgs.
+
+     glibc = super.glibc.overrideAttrs (oldAttrs: rec {
+        version = "2.27";
+        name = "glibc-${version}";
+        src = builtins.fetchurl {
+            url    = "https://ftp.gnu.org/gnu/glibc/glibc-${version}.tar.xz";
+            sha256 = "0wpwq7gsm7sd6ysidv0z575ckqdg13cr2njyfgrbgh4f65adwwji";
+        };
+     });
+
+ - update boostrap tools. The boostrapTools or boostrapFiles are a set of
+   pre-built binaries uses to boostrap a system. They are downloaded from the
+   nixpkgs servers and used to build stdenv in 5 steps. A good introduction can
+   be found here:
+     http://trofi.github.io/posts/240-nixpkgs-bootstrap-intro.html
+   We can change the boostrap tools, but we first need to generate a new one. To do so, run:
+     nix build -f ./pkgs/stdenv/linux/make-bootstrap-tools.nix bootstrapFiles
+   this will take the current nixpkgs gcc and pack it into boostrap.  then,
+   modify nixpkgs and add the path to the generated boostrap tools. I have
+   found no way to override this, so I needed to hardcore it. 
+     pkgs/stdenv/linux/bootstrap-files/x86_64.nix
+   to use your modified nixpkgs instead of the default one, modify the
+   "nixpkgs" path inside NIX_PATH.
+
+ - How nixpkgs is boostraped. First check this:
+     http://trofi.github.io/posts/240-nixpkgs-bootstrap-intro.html
+   It first loads default.nix in nixpkgs. This leads to 
+     ./default.nix
+     ./pkgs/top-level/impure.nix
+     ./pkgs/top-level/default.nix
+   The last one, build a list "stages" containg functions that describe how to
+   build the 5 stdenv stages. The "boot" is a function that builds the stdenv
+   functions by piping them one after the other (I think)
+     129   pkgs = boot stages;
+   The stdenv stages are here:
+     ./pkgs/stdenv/default.nix # this selects the stdenv for linux
+     ./pkgs/stdenv/linux/default.nix # this acutally contains the 5 stages
+   To build the stages, it uses a prebuilt set of binaries named boostrapTools.
+   This is fetched from nix server instead of being built. However, nixpkgs
+   also contains the .nix describing how to build it. This is found under:
+     ./pkgs/stdenv/linux/make-bootstrap-tools.nix
 
 
+
+
+FUNDAMENTAL NIXPKGS
 
  - callPackage: nix trick to transparently find the arguments of a function.
    Given a function, it gets its argument names and intersects them with

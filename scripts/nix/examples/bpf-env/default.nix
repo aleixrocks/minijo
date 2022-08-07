@@ -13,17 +13,12 @@ let
     #    nix build -f ./pkgs/stdenv/linux/make-bootstrap-tools.nix bootstrapFiles
     # then change the path to point to the generated tar.gz in:
     #    pkgs/stdenv/linux/bootstrap-files/x86_64.nix
+    # finally, update your NIX_PATH nixpkgs entry to point to your custom
+    # nixpkgs repository
 
-    # override glibc example
-    #
-    #glibc = super.glibc.overrideAttrs (oldAttrs: rec {
-    #   version = "2.27";
-    #   name = "glibc-${version}";
-    #   src = builtins.fetchurl {
-    #       url    = "https://ftp.gnu.org/gnu/glibc/glibc-${version}.tar.xz";
-    #       sha256 = "0wpwq7gsm7sd6ysidv0z575ckqdg13cr2njyfgrbgh4f65adwwji";
-    #   };
-    #});
+
+    # build all with frame pointer support for bpf user-space stack traces
+    stdenv = super.withCFlags [ "-fno-omit-frame-pointer" ] super.stdenv;                                                       
 
     # the original libsystemtap stdenv depends on packages that depend on the
     # glibc, including fetchurl which is tricky. We need an offline
@@ -32,30 +27,29 @@ let
     # configure which we skip here.
     libsystemtap-headers = super.callPackage ./libsystemtap-headers { stdenv = super.glibc.stdenv; };
 
+    # this libsystemtap should also work.  this overrided libsystemtap removes
+    # all dependencies and rebuilds a patched configure. we don't want to
+    # compile, we just want the generated header file and then copy the
+    # headers. I had to patch configure because it complained if no python and
+    # other packages where found, althoug they where not needed to just
+    # generate that config file. This needs the systemtap sources because it
+    # cannot use fetchurl due to a dependency with the glibc (nothing before
+    # the glibc can use it see comment under pkgs/development/libraries/glibc/common.nix)
+    # to get them, use nix-shell $(nix-instantiate '<nixpkgs>' -A libsystemtap)
+    # and "unpackPhase".
+    libsystemtap-patched = super.libsystemtap.overrideAttrs(oldAttrs: {
+      src = ./systemtap;
+      patches = [ ./libsystemtap.patch ];
+      nativeBuildInputs = [ super.autoreconfHook ];
+      configureFlags = [ "--without-python2-probes" "--without-python3-probes" "--disable-translator" ];
+    });
+
     # compile glibc with systemtap support
     glibc = super.glibc.overrideAttrs (oldAttrs: {
       configureFlags = oldAttrs.configureFlags ++ [ "--enable-systemtap" ];
       #buildInputs = oldAttrs.buildInputs ++ [ self.libsystemtap-headers ];
-      buildInputs = oldAttrs.buildInputs ++ [ self.libsystemtap-headers ];
+      buildInputs = oldAttrs.buildInputs ++ [ self.libsystemtap-patched ];
     });
-
-    # to try to change the compiler that compiles the glibc, I tried by
-    # overriding the glibc stdenv but this does not work due to a recursive
-    # stdenv dependency between glibc and stdenv. glibc is compiled with a
-    # boostrap stdenv (type glibc.stdenv in nix repl).  On the other hand, the
-    # current stdenv depends on the current glibc. We can't just force the
-    # glibc stdenv to point to the current stdenv!
-    #
-    #glibc = super.glibc.override {
-    #  stdenv = super.gcc12Stdenv;
-    #}
-
-    # However, it works if we do not override the current glibc by giving it
-    # another name. But this is useless because no package would use this
-    # version.
-    #glibc_potato = super.glibc.override {
-    #  stdenv = super.gcc12Stdenv;
-    #}
     
   };
 
