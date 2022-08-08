@@ -1,0 +1,37 @@
+#!/usr/bin/bpftrace
+
+BEGIN {
+	printf("bpf tracing pid=%d\n", $1);
+}
+
+usdt:/usr/lib64/libc.so.6:libc:mutex_entry /pid==$1/ {
+	printf("%d hit! %s\n", tid, probe);
+}
+
+usdt:/usr/lib64/libc.so.6:libc:mutex_acquired /pid==$1/ {
+	printf("%d hit! %s\n", tid, probe);
+	//@stacks[ustack] = count();
+	@mutex[tid]++;
+}
+
+usdt:/usr/lib64/libc.so.6:libc:mutex_release /pid==$1/ {
+	printf("%d hit! %s\n", tid, probe);
+	@mutex[tid]--;
+}
+
+tracepoint:sched:sched_switch / pid == $1 / {
+	printf("%d hit! %s state=%d vruntime=%lld\n", tid, probe, args->prev_state, curtask->se.vruntime);
+	if (!@mutex[tid]) {
+		return;
+	}
+
+	if (args->prev_state == 1) {
+		@sleep_on_mutex = count();
+	} else if (args->prev_state == 0) {
+		@preempted_on_mutex = count();
+	}
+}
+
+END {
+	clear(@mutex)
+}
