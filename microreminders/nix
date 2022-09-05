@@ -106,6 +106,8 @@ BASIC
    (installed in the system) S (thre is a pre-compiled binary avaialble for
    download)
  - nix-env -qs --installed : show only packages in the current profile
+ - nix-env -qa --description neovim : show version of package. Rememeber
+   using -f <path> if specifiying a local nix repository.
  - nix-shell <name.nix> : enter a nix user environemnt defined in name.nix
  - nix-shell --pure <name.nix> : enter a nix user environemnt, only that is
    defined in name.nix is available.
@@ -171,6 +173,15 @@ GET THE SOURCE OF A PACKAGE
    loaded.
  - eval ${unpackPhase:-unpackPhase} : get and unpack source code in the current
    directory. Now you can examine it!
+
+GET URL AND SHA OF A GITHUB PACKAGE
+ - you can get the github tar.gz of a commit as:
+     https://github.com/PROJECT/REPO/archive/COMMITID.tar.gz
+   e.g.
+     https://github.com/nixos/nixpkgs/archive/481f9b246d200205d8bafab48f3bd1aeb62d775b.tar.gz
+ - you can easily calculate the sha256 as:
+     nix-prefetch-url --unpack  <url>
+
 
 WHERE IS DEFINED THE NIX SOURCE OF A FUNCTION?
  - type in nix repl:
@@ -555,6 +566,8 @@ NIX LANGUAGE
     - builtins.attrNames : returns names of set
     - builtins.toString <symbol> : convert to string
 
-
+TROUBLESHOOTING
+ - if you have locale issues:
+     export LOCALE_ARCHIVE=/usr/lib/locale/locale-archive
 
 

@@ -1,7 +1,7 @@
-compile with -g[0-3] o -ggdb[1-3]. To archive most amount of information
-use -ggdb3. The number means 1 (less) 2 (medium) 3 (high) amount of info
 
 GENERAL
+ - compile with -g[0-3] o -ggdb[1-3]. To archive most amount of information
+   use -ggdb3. The number means 1 (less) 2 (medium) 3 (high) amount of info
  - info gdb -> don't use man! gdb is gnu and its parictular doc in in info.
     - remember to use "i" to search!
  - to attach a remote process without sudo:
@@ -16,6 +16,7 @@ GENERAL
  - continue -> continue execution
  - step -> execute just one step entering inside functions
  - next -> execute just one step without entering inside functions
+ - fin -> execute until the current function returns
  - help command -> help!
  - where (same as bt) -> print where you are.
  - when enter is pressed without typing a command, last comand is used.
@@ -26,6 +27,7 @@ GENERAL
  - frame n (f n) -> change stack frame (a frame is a function call info stored
    in the stack, each call one frame). Displays args and local vars.
  - up, down -> go up and down on the stack frames
+ - to restart gdb from the beginning, just type "run"
 
 ATTACH AND DEATACH
  - attach processID -> debug an alreeady running process. The process
@@ -101,6 +103,17 @@ BREAKPOINTS
  - clear -> remove by its location
  - delete -> remove by its identifier
  - commands -> specify gdb commands to run when the breakpoint is reached.
+
+WATCHPOINTS
+ - watchpoints monitor memory location access. There are hardware and
+   software. software works by single-stepping and rechecking the value for
+   changes.
+ - show can-use-hw-watchpoints -> if 1, you have hardware support.
+ - watch -l <variable> -> watch for writes on the specified variable VALUE.
+   We need  -l for gdb to compute the addres of the VALUE and monitor even
+   when we are out of the scope of the variable.
+ - rwatch -l <variable> ->  monitor reads to variable
+ - awatch -l <variable> -> monitor both read and writes to the varaible
 
 LIST
  - list or "l" -> list code
