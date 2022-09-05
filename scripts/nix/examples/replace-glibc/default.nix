@@ -23,6 +23,8 @@ let
     # refers to the directory "../glibc-2.*" and it will end with error
     # "ambiguous redirect" if not named properly. See
     # <nixpkgs>/pkgs/development/libraries/glibc/common.nix.
+    # Alternatively, it is possible to use postUnpack to rename the source
+    # directory ("src" in this case) properly.
     #
     # To generate a glibc source, you can clone the glibc source from the
     # official repos or get the nixpkgs one:
@@ -44,6 +46,13 @@ let
 
     glibc = super.glibc.overrideAttrs (oldAttrs: {
       src = /home/aleix/bsc/projects/sched_coop/taglibc/glibc-2.35;
+
+      #src = /home/aleix/bsc/projects/sched_coop/taglibc/src;
+      #postUnpack = ''
+      #  mv src glibc-2.35
+      #  sourceRoot=glibc-2.35
+      #'';
+
       patches = builtins.filter removeGlibcPatch oldAttrs.patches;
     });
   };
