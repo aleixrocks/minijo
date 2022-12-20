@@ -113,6 +113,48 @@ BASIC
    defined in name.nix is available.
  - nix log <path to store> : show build log
 
+
+NIX SHELL
+ - nix-shell opens a shell and provides the specified packages to build a
+   derivation. It can also be used as a virtual shell where some packages have
+   been made available into PATH.
+     nix-shell --pure -p vim gdb curl
+ - nix-shell attemps to read ./shell.nix and, if not found, default.nix from
+   the current dir.
+ - nix-shell -p <derivation1> <derivation2> ... : add packages to shell. These
+   packages are read from <nixpkgs>, not from the current shell.nix or
+   default.nix! If you need to add here custom packages, you need to redefine
+   nixpckgs in NIX_PATH or instead of -p use shell.nix. Example:
+     - NIX_PATH='nixpkgs=.' nix-shell -p mypkg
+ - nix-shell -A <derivation> : open a shell with all the packages needed to
+   build the derivation.
+ - nix-shell --pure : clean up env and provide only nix packages instead of
+   system ones.
+ - shell.nix example:
+     { pkgs ? import <nixpkgs> {} }:
+     with pkgs;
+     mkShell {
+       name = "sc-shell";
+     
+       buildInputs = [
+         vim
+       ];
+     
+       shellHook = ''
+         alias l="ls -l --color=auto -v"
+         alias ll="ls -l --color=auto -v"
+         alias lh="ls -hAl --color=auto -v"
+         alias ls="ls --color=auto -v"
+         alias ..="cd .."
+     
+         export LANG=C
+         export SHELL=${bash}/bin/bash
+       '';
+     }
+
+SEARCH FOR A PACKAGE
+ - search using webiste: https://search.nixos.org/packages#openshift
+
 GENERATIONS
  - nix-env --list-generations : show history of environemnts
  - nix-env --rollback : go back to previous environemnt state
@@ -168,6 +210,32 @@ GARBAGE COLLECTOR
       generation is working well before running the command.
     - more info at: https://nixos.org/guides/nix-pills/garbage-collector.html
 
+UTILITIES
+ - lib.lists.<function> : operations on lists at lib/lists.nix
+ - lib.lists.remove 3 [ 1 2 3 ] : returns [ 1 2 ]
+ - makeExtensible (lib/fixed-points.nix) : make a function to accept an overlay
+    nix-repl> obj = makeExtensible (self: { })
+    nix-repl> obj = obj.extend (self: super: { foo = "foo"; }) # the new obj is extensible too!
+ - substituteInPlace <file> --replace "old" "new" : replace old by new in <file>
+ - patchShebangs <script>.{sh,py} : replace the shebang interpreter. The
+   file must be executable for this to be effective!
+ - abort s : abort expression and print "s"
+ - throw s : abort expression and print "s" but it won't abort if only
+   attempting to print info of the derivation
+ - lib.optional (a == 0) b : returns [ b ] if a == 0 is true
+ - lib.optionalString (a == 0) "b" : returns "b" if a == 0 is true
+ - a -> b : a implies b
+ - assert (a == 0) : a normal assert, can be used just as "with"
+ - assert lib.assertMsg (a == 0) "message" : assert with message 
+ - nixpkgs.path: contains the path to the nixpkgs source code. It can be
+   useful to redefine a derivation from the nix expression in an overlay, as
+   done in the nixpkgs' top level. e.g.
+     llvmPackages_11 = super.callPackage (super.path + /pkgs/development/compilers/llvm/11
+ - <nixpkgs>/pkgs/stdenv/adapters.nix: contain functions that modify an stdenv
+ - <derivation>.outPath : the real path to the installed derivation (where the
+   "out" is in the system). Useful on nix repl to figure out where something is
+   installed, like stdenv.cc.cc.outPath
+
 GET THE SOURCE OF A PACKAGE
  - nix-shell -A hello : opens a shell with stdenv and build dependencies
    loaded.
@@ -182,11 +250,53 @@ GET URL AND SHA OF A GITHUB PACKAGE
  - you can easily calculate the sha256 as:
      nix-prefetch-url --unpack  <url>
 
+WHICH SHA IS MY CURRENT NIXPKGS ON?
+ - use the sha after the dot stored in:
+     cat .nix-defexpr/channels/nixpkgs/svn-revision 
+ - note that this file is not in the original nixpkgs github repo!
 
 WHERE IS DEFINED THE NIX SOURCE OF A FUNCTION?
  - type in nix repl:
      nix-repl> glibc.overrideAttrs
      «lambda @ /nix/store/86242z3mxd6lqxyrhdl6vv78rzww6k3z-nixpkgs/nixpkgs/lib/customisation.nix:85:73»
+
+PYTHON DOCUMENTATION
+ - doc/languages-frameworks/python.section.md
+
+SHELL WITH PYHTON PACKAGES
+ - nix-shell -p python3 python310Packages.pandas
+
+BUILDING A PYTHON PACKAGE
+ - nix build -f . python310Packages.pyfakefs # package pyfakefs for python 3.10
+
+OVERRIDE A PYTHON PACKAGE USING OVERLAYS
+ - doc: https://nixos.org/manual/nixpkgs/stable/#how-to-override-a-python-package-using-overlays
+ - careful when copying this code, be sure to remove trailing whitespaces
+    python310 = super.python310.override {
+      packageOverrides = python-self: python-super: {
+        pyfakefs = python-super.pyfakefs.overrideAttrs(oldAttrs: {
+          ''
+            substituteInPlace pyfakefs/tests/fake_pathlib_test.py \
+              --replace "test_owner_and_group_posix" "notest_owner_and_group_posix"
+          '';
+      };
+    };
+
+INSTALLING NIX
+ - you might need to set up NIX_SSL_CERT_PATH to your certificate file for both the client and the server.
+ - to generate a certificate bundle, you can build one with nix on a machine with an already running nix installation
+     nix-build -A cacert '<nixpkgs>'
+   and transfer it to your new machine
+ - you might need to setup proxy for the nix daemon in mira en /etc/systemd/system/nix-daemon.service.d/override.conf
+    [Service]
+    Environment=http_proxy=localhost:23080
+    Environment=https_proxy=localhost:23080
+    Environment=ftp_proxy=localhost:23080
+    Environment=NIX_SSL_CERT_FILE=/home/Computational/arocanon/cert/cacert.pem
+    LimitNOFILE=64000                                                                
+    TasksMax=infinity 
+
+
 
 UNDERSTANDING NIXPKGS REPOSITORY
  - The <nixpkgs> repository is a function that accepts some parameters and

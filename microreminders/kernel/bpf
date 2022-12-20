@@ -180,6 +180,9 @@ bpftrace
      - it is possible to write PROG as .bt file, This is useful for long
        programs and when needing to use "include". It can also be made
        executable with the shebang #!/usr/local/bin/bpftrace
+  - bpftrace -c <command>: run command and finish bpf program when command
+    ends. The command runs with the same privileges as bpftrace, which is
+    usually root!
   - scratch variables
     - $<variable_name>=<value> : normal variable declaration
     - careful! these are also how we access parameters passed to the bpftrace script!
@@ -214,6 +217,7 @@ bpftrace
        - # bpftrace -e 'profile:hz:99 { @[kstack] = count(); }'
        - ustack needs the user program to be compiled with frame pointers
          check this to see if it's fixed: https://github.com/iovisor/bpftrace/issues/1744
+         to build a whole system with frame pointers, take a look at my nix examples
        - you can also set perf format kstack(perf) and/or limit the frames kstack(5)
     - retval: holds the return value, only for kretprobe
     - $# : number of positional parameters passed to the .bt script (access them with $1, $2, ...)

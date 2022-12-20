@@ -1,0 +1,7 @@
+BASICS
+ - cdk init --language typescript : start a demo repo in the current folder
+    - bin/cdk-demo.ts : entry point
+    - lib/cdk-demo-stack.ts : define your stack here
+ - aws sts get-caller-identity : get account id
+ - aws configure get region : get current default region
+ - npm install @aws-cdk/aws-ec2 : install ec2 module

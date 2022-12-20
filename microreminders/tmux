@@ -53,3 +53,7 @@ Copy Mode
  - enter -> end and exit
  - use vim bindings to move arroun
  - configure vim bindings: setw -g mode-keys vi
+
+Force client deatach
+ - tmux attach -t <tmux_session_name> -d
+ - <prefix>D : and select a client to detach

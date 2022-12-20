@@ -1,4 +1,5 @@
 
+
  - -fsanitize=address -> detect Memory access instructions will be
    instrumented to detect out-of-bounds and use-after-free bugs. address can
    be "undefined"
@@ -6,3 +7,162 @@
  - -O{1,2,3} -> optimize code without breaking compilance. Check gcc man to see
    exactly which options enable -O1, -O2 and -O3.
  - -Ofast -> optimize still more than O3 but breaks compilance.
+
+SYSROOT
+ - gcc --sysroot=$TAGLIBC_INSTALL --print-file-name=libm.so : show the absolute
+   path of the file using a sysroot. if only the name is printed, it could not
+   find it.
+
+ - when linking libraries, ld by itself does not look for libraries in either
+   LIBRARY_PATH or LD_LIBRARY_PATH. It's only when gcc invokes ld that
+   LIBRARY_PATH becomes used.
+
+
+ABOUT LINKING
+ - gcc is a simple wrapper around the tools that do the work: cc, cpp, ar and
+   ld. It uses a DSL (domain specific language) to decide how to translate gcc
+   options to their corresponding backends. This "spec" can be modified. To
+   learn about it, read
+      https://stackoverflow.com/questions/7493620/inhibit-default-library-paths-with-gcc
+      https://gcc.gnu.org/onlinedocs/gcc-4.2.3/gcc/Spec-Files.html
+ - gcc -dumpspec: dump the spec file
+ - gcc -spec=./spec.txt : override the default spec with the current one.
+ - gcc -v : output the real linking script. It will call collect2 instead of
+   ld. collect2 is a wrapper to ld.
+ - gcc -Map=link.map : dump a file where it is shown the file procedence of
+   each .section included in the final executable. Very useful to see where c
+   runtime files com from, for example.
+ - gcc -nostdinc : do not use the system include paths for headers
+ - gcc -nostartfiles: do not use the system's startup files (crt files)
+ - gcc -nodefaultlibs: do not use the system libraries (but use the system startup files)
+ - gcc -nostdlib: do not use neither startup files (crt files) nor system
+   libraries (equal to gcc -nostartfiles -nodefaultlibs). Note however, that
+   this is a lie. It is sill importing the libgcc, and will find it in a
+   standard system location like /usr/lib64. This translates to -L/usr/lib64 to
+   the linker, which might end up adding other system libraries!
+ - gcc -nostdinc -nodefaultlibs: automatically include the system crts, but do
+   not use the system libraries nor the includes.
+ - gcc -Wl,-trace-symbol=<symbol> show who requestes <symbol> at link time
+ - strace -ff gcc ... : super useful to see where glibc is looking for includes and libs!
+ - also, note that ld will automatically use the library search paths listed
+   under /etc/ld.so.conf (which might "include" other files with more paths,
+   look inside).
+ - at runtime (dynamic linking) it will automatically load all libraries in
+   /etc/ld.so.preload and LD_PRELOAD env var. And it will look for libs to
+   include in /etc/ld.so.cache unless the app was statically linked with -z
+   nodefaultlib. moreover, ld will automatically look for libs under /lib and
+   /usr/lib. see man lib and search for -rpath-link
+
+Linking against a custom glibc
+ - create a directory (sysroot) and install there glibc
+ - build with gcc -nostdinc to drop system header paths.
+ - if we build with gcc -nostdlib it will also drop crt files. This means that
+   gcc will not attempt to include them, and we need to supply them manually.
+   That's possible but depending on weather we are building a shared lib, static,
+   pie, etc, we need to use different crt files. You can check the gcc
+   -dumpspec to see exactly which rules are applied. see the "endfile" and
+   "startfile" spec string rules. Therefore, it's best if we let gcc use it's
+   rules to fetch the right crt files. But we want to use our path, not the
+   system path (see %s in the dumpspec)
+ - The gcc adds some c-runtime files, and the glibc adds some more c-runtime
+   files. gcc will attempt to include these automatically. The problem is that
+   gcc will search for c runtime files using the same paths it searches for
+   standard libraries (-L) and that might, as a side effect, import other
+   system libraries that we do not want (we want only our glibc libraries)
+ - If we run gcc -nostdinc, no system paths will be added. BUT then crt files
+   won't even be searched so we don't want that. Instead we want -nodefaultlibs
+   AND  remove system paths. To do so, we need to remove the %D dumpsepc switch
+   of the *link_libgcc: rule and tell gcc where to search for it's libgcc files
+   with the -B option (otherwise it will search for them at a builtin system
+   path).
+ - newer compilers do not process the -B options if the link_libgcc rule is not
+   present. Therefore, I also add redundant -L to the glibc installation path
+ - Because we also use -nostdinc, we need to manually specify our glibc system
+   paths with -isystem
+ - And we need to specify our lib paths with --sysroot=
+ - the dynamic loader is distributed with the glibc, so we need to add it as
+   well with -Wl,-dynamic-linker
+ - Ensure that we add the -lgcc and -lc after the user supplied files!
+   Otherwise, symbols required by the user files and supplied with these won't
+   be resolved. In these cases, a symbol like __popcountsi2 part of gcc and
+   usually COPIED into the user files, will be left undefined (U) at runtime.
+   When setup properly, the user object file should have this symbols as
+   defined (t).
+ - Be sure to install the linux kernel header files in your sysroot! some
+   symbols like errno and __NR_* macros for syscalls are defined there and
+   glibc expects to find them.
+
+       echo "Fetching Linux Kernel source code..."
+       git clone --depth 1 git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git $SC_KERNEL_SRC
+       echo "Installing kernel headers..."
+       cd $SC_KERNEL_SRC
+       make headers_install INSTALL_HDR_PATH=$SC_KERNEL_HEADERS/usr
+       rsync -avz $SC_KERNEL_HEADERS/usr/include/ $SYSROOT/usr/include/
+
+ - the specs file (ta.specs in the script below) only remove a rule that adds
+   %D, which adds a set of -L flags with system paths to locate crts. We
+   override it (note, two blank lines after the rule!). See more about this
+   here https://stackoverflow.com/questions/7493620/inhibit-default-library-paths-with-gcc
+     *link_libgcc:
+
+
+ - finally, install the compiler crt objects into your sysroot, otherwise you
+   will need to add a system path, where other system libraries are, and
+   everything will be messed up again.
+
+     # copy the current compiler's c runtime files
+     CRTBEGIN_STATIC=$(gcc -print-file-name="crtbeginT.o")
+     CRTBEGIN_PIE=$(gcc -print-file-name="crtbeginS.o")
+     CRTBEGIN_NORMAL=$(gcc -print-file-name="crtbegin.o")
+     CRTEND=$(gcc -print-file-name="crtend.o")
+     CRTEND_PIE=$(gcc -print-file-name="crtendS.o")
+     
+     mkdir -p $SYSROOT/usr/include/
+     mkdir -p $SYSROOT/usr/lib64
+     mkdir -p $SYSROOT/gcc_crt
+     cp \
+       $CRTBEGIN_STATIC \
+       $CRTBEGIN_PIE \
+       $CRTBEGIN_NORMAL \
+       $CRTEND \
+       $CRTEND_PIE \
+       $INSTALL/gcc_crt/
+     cp  /lib64/libgcc* $SYSROOT/usr/lib64
+
+ - final gcc wrapper to link against a custom glibc:
+
+    SYSROOT=<your sysroot>
+    DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+    
+    unset LIBRARY_PATH
+    unset LD_LIBRARY_PATH
+    unset LD_PRELOAD
+    
+    # glibc pieces:
+    DYNLINKER=-Wl,-dynamic-linker,$SYSROOT/lib64/ld-linux-x86-64.so.2
+    LINKPATH=-Wl,-rpath=$SYSROOT/lib64,-rpath=$SYSROOT/usr/lib64
+    
+    # gcc pieces:
+    GCCINSTALL=$(gcc -print-search-dirs | grep 'install:' | sed -e 's,^install: ,,g')
+    
+    rm -f linker.map
+    
+    #strace -ff \
+    gcc \
+     -nodefaultlibs \
+     -nostdinc \
+     -B$SYSROOT/gcc_crt \
+     -B$SYSROOT/lib64 \
+     -B$SYSROOT/usr/lib64 \
+     -Wl,-L$SYSROOT/lib64 \                                                                                                                                           
+     -Wl,-L$SYSROOT/usr/lib64 \
+     -specs=$DIR/ta.specs \
+     --sysroot=$SYSROOT \
+     -isystem $GCCINSTALL/include \
+     -isystem $SYSROOT/usr/include \
+     -isystem $SYSROOT/usr/include/linux \
+     $DYNLINKER $LINKPATH \
+     $@ \
+     -L$GCCINSTALL -lgcc -lc -lgcc
+
+

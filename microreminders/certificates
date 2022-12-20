@@ -1,0 +1,4 @@
+- you can download the firefox certificate bundle from here: 
+    https://curl.se/docs/caextract.html
+- then, set this env variable point to it:
+    SSL_CERT_FILE

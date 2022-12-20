@@ -1,0 +1,80 @@
+BASIC
+ - doc
+    - https://spack-tutorial.readthedocs.io/en/latest/tutorial_basics.html
+ - install spack
+    git clone -c feature.manyFiles=true https://github.com/spack/spack.git
+    cd spack
+    git checkout releases/v0.19
+    . share/spack/setup-env.sh
+   Next, you might need to add compilers to spack in case these are not
+   detected automatically. To do so, check the compilers section.
+ - an spec is the description of a package with its options and dependencies.
+   in spack, a hash is calculated based on the spec.
+ - some packages are not packages perse, they are interfaces such as mpi.
+   Spack handles these through "virtual dependencies" A package, such as HDF5,
+   can depend on the MPI interface. Other packages (openmpi, mpich, mvapich2,
+   etc.) provide the MPI interface. Any of these providers can be requested for
+   an MPI dependency.
+ - spack options can be configured using a yaml file:
+    - https://spack.readthedocs.io/en/latest/config_yaml.html
+ - packages are installed by default at $spack/opt where $spack is the
+   directory of the cloned git repo. It can be changed using the install_tree
+   setting in the yaml file.
+ - careful! use a clean environment to build spack packages. A dirty PATH of
+   LD_LIBRARY_PATH might interfer with the spack paths. Consider using
+   nix-shell --pure
+
+COMPILERS
+ - it is not enough for a compiler to be in the env. Spack need to be told
+   about the compiler for it to use it.
+ - spack compiler list: show compilers
+ - spack compiler add <path> : add system compiler to spack
+ - spack config edit compilers: open $EDITOR and opens
+   ~/.spack/<platform>/compilers.yaml for manual edition.
+
+SPACK LIST
+ - spack list: list all packages to install
+ - spack list 'py-*': list all packages to install matching the expression
+ - spck compilers: list available compilers
+
+SPACK INSTALL
+ - spack install <app>+option1+option2-option3-option4@version ^<dep> %compiler
+    - use + to specify per-packages options (aka variants). Use - or ~ to disable them. Use one sigil or another to avoid shell expansion.
+    - use @ to specify a package version.
+    - use % to specify a compiler
+    - use ^ to specify a dependency. deps are specified just as normal packages
+      with all the sigils as "top-level" packages.
+ - spack install zlib : install package. It will install from a binary cache if
+   the requested packages is found there or from source otherwhise.
+ - spack install zlib %clang: install with clang compiler 
+ - spack versions zlib : list available versions of package
+ - spack install zlib@1.2.8 : install specific version
+ - spack install zlib %glibc@6.5.0 : install with specific compiler
+ - spack install zlib@1.2.8 cppflags=-O3 : install with extra
+   cpplags
+ - spack install tcl ^zlib@1.2.8 %clang : install tcl with a specific version
+   for one of its dependencies.
+ - spack install tcl ^/zqd: same as above, but refer to the specific dep with
+   its hash, note the / at the beginning to denote a hash.
+ - spack install hdf5 ~mpi: install hdf5 without mpi. -mpi could also be used.
+ - spack install hdf5+hl+mpi ^mpich: install hdf5 with hl and mpi optional
+   deps, and specify the version
+
+SPACK UNINSTALL
+ - spack uninstall zlib %gcc@6.5.0: this only works if there is only one zlib matching this spec.
+ - We can use either -f (force) or -R (remove dependents as well) to remove
+   packages that are required by another installed package.
+     - spack uninstall -R zlib/2xc : here we use a hash
+ -  spack uninstall --all zlib : uninstall all variants of zlib.
+
+FIND INSTALLED PACKAGES
+ - spack find: show installed packages
+ - spack find -lf: show hash (-l) and non-empty compiler flags (-f)
+ - spack find -lfd: also, show deps
+ - spack graph hdf5+hl+mpi ^mpich: show graph of deps
+ - spack graph --dot trilinos | dot -Tpdf > trilinos_graph.pdf
+
+COMPILER FLAGS
+ - spack accepts cppflags, cflags, cxxflags, fflags, ldflags, and ldlibs
+   parameters:
+     spack install zlib@1.2.8 cppflags=-O3

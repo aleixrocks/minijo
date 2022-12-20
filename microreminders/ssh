@@ -31,3 +31,12 @@ OTHERS
      ~& puts it directly into background,
      ~# gives a list of forwarded connections in this session.
      If you want to simply enter a tilde at the beginning of a line, you have to double it: ~~.
+
+Tunnel
+ - create a tunnel:
+     ssh -vNL 23080:localhost:23080 <proxy server>
+   then set
+     export  http_proxy=localhost:23080 
+     export   ftp_proxy=localhost:23080
+     export https_proxy=localhost:23080
+

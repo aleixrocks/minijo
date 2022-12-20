@@ -35,6 +35,9 @@ DEBUG
      pprint([x for x in dir(obj) if callable(getattr(obj, x))])
      # attributes of obj
      pprint([x for x in dir(obj) if not callable(getattr(obj, x))])
+ - Run a script but keep the interactive shell open with all the env loaded
+   after it ends:
+     python -i script.py
 
 Control flow
  - IF statement:
