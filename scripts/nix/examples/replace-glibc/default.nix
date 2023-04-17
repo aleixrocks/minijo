@@ -45,13 +45,13 @@ let
     # it here.
 
     glibc = super.glibc.overrideAttrs (oldAttrs: {
-      src = /home/aleix/bsc/projects/sched_coop/taglibc/glibc-2.35;
+      #src = /home/aleix/bsc/projects/sched_coop/taglibc/glibc-2.35;
 
-      #src = /home/aleix/bsc/projects/sched_coop/taglibc/src;
-      #postUnpack = ''
-      #  mv src glibc-2.35
-      #  sourceRoot=glibc-2.35
-      #'';
+      src = /home/aleix/bsc/projects/sched_coop/taglibc/src;
+      postUnpack = ''
+        mv src glibc-2.35
+        sourceRoot=glibc-2.35
+      '';
 
       patches = builtins.filter removeGlibcPatch oldAttrs.patches;
     });

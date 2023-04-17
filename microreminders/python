@@ -10,8 +10,11 @@ Variables
                tel['hola'] = ajiak; del tel['hola']; tel.keys();
                'jack' in tel; tel=dict(key1=lalal,key2=lele)
 Print
- - print varA, varB # where varA, varB can be different types
- - print varA, # print varA without a new line
+ - To format a string there are three ways: %, .format, and "f"-strings. Long
+   story short, use f-strings:
+     person=pablo
+     print(f"hello {person}")
+   prints "hello pablo"
 
 Modules
  - import module (if module is named module.py)
@@ -224,6 +227,9 @@ Clases
 
 Pandas
  - import pandas as pd
+ - pd.set_option('display.max_rows', None) -> do not truncate rows
+ - pd.set_option('display.max_columns', None)  -> do not truncate columns
+ - pd.set_option('display.max_colwidth', None) -> do not split columns
  - df = pd.read_csv(file, delimiter=" +")
  - df['column_name'] -> get column
  - dfx = df[df.columnname > 0] -> filter

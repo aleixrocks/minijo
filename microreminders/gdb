@@ -13,6 +13,7 @@ GENERAL
    ctl keybidings.
  - run -> run the program
      - you can specify argumentes here. to reset arguments type "set args"
+ - start -> run the program, but stop at main
  - continue -> continue execution
  - step -> execute just one step entering inside functions
  - next -> execute just one step without entering inside functions
@@ -87,7 +88,8 @@ MEMORY
        to begin displaying memory. It can be an operation such as: %edx + 0x14.
 
 SHARED LIBRARIES
- - info sharedlibraries -> report memory mapping of shared libraries.
+ - info sharedlibraries -> report memory mapping of shared libraries. This is
+   very useful to see whichs libs have debug symbols.
  - info [symbol|variable|function] <name> -> report info about symbol/var/fun
 
 BREAKPOINTS
@@ -274,6 +276,19 @@ DISASSEMBLE
  - disassemble a function oneliner (similar to objdump -S)
      gdb -batch -ex "file $EXECUTABLE" -ex "disassemble/rs $FUNCTION"
 
+
+SOURCE CODE
+ - gdb source code search path rules:
+     https://sourceware.org/gdb/onlinedocs/gdb/Source-Path.html
+ - gdb searches source files at $cwd (current working directory) and $cdir
+   (build directory recoreded in the debug info, if present).
+ - You can add additional paths with the "dir" command.
+ - you can add simple substitution rules:
+     (gdb) set substitute-path /usr/src/include /mnt/include
+     (gdb) set substitute-path /usr/src /mnt/src
+   GDB would then rewrite /usr/src/include/defs.h into /mnt/include/defs.h by
+   using the first rule. However, it would use the second rule to rewrite
+   /usr/src/lib/foo.c into /mnt/src/lib/foo.c.
 
 OTHER COMMANDS
     - command linux size: size of elements of an object file .o

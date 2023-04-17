@@ -1,7 +1,8 @@
 CREATE DISK IMAGE
  - qemu-img create -f qcow2 <disk_name> 50G -> create disk image
- - qemu-system-x86_64 -cdrom iso_image -boot order=d -drive file <disk_name> -m 1024 -vga vmware -enable-kvm -> install iso image into disk
- - qemu-system-x86_65 -drive file <disk_name> -m 1024 -vga vmware -enable-kvm -> run disk
+ - qemu-system-x86_64 -cdrom iso_image -boot d -hda <disk_name> -m 1024 [-vga vmware | -nographic] -enable-kvm -> install iso image into disk
+ - qemu-system-x86_64 -hda <disk_name> -m 1024 [ -vga vmware | -nographic ] -enable-kvm -> run disk
+ - exit qemu: Ctrl-a x (first press Ctrl-a, release and then x)
 
 BASIC
  -machine [ help | <machine_model> ]: help list the supported emulated machines. The
@@ -24,8 +25,66 @@ BOOTING A LINUX KERNEL
    or
     make vmlinux; objcopy -S -O binary ./vmlinux ./Image # generates Image from vmlinux
 
+NOGRAPHIC
+ - Run qemu directly on the terminal
+     qemu -nographic 
+ - qemu sends data to your host terminal via serial connection. This means that
+   your guest must send data over your serial connection. There are three guest
+   components that need to be aware of that: the bootloader, the kernel and
+   user-space (systemd).
+     - bootloader: TODO (might work out-of-the-box)
+     - kernel: pass the parameters "console=tty1 console=ttyS0,115200". On nixos
+         boot.kernelParams = [
+           "console=tty1"
+           "console=ttyS0,115200"
+         ];
+     - systemd: on standard linux distros, it is generally started by default.
+       On nixos, add this to your config:
+         systemd.services."serial-getty@ttyS0" = {                                      
+           enable = true;                                                               
+           wantedBy = [ "getty.target" ]; # to start at boot                            
+           serviceConfig.Restart = "always"; # restart when session is closed           
+         };
+  - While on serial line, the screen size is limited, on the long run is better
+    to just use ssh. To enable ssh, open the port 2222 on the host and redirect
+    it to the guest 22:
+      qemu -net nic -net user,hostfwd=tcp::2222-:22
+    Enable sshd service on the guest. And then connect from the host to the guest:
+      ssh user@localhost -p 2222
+
+
+SHARED FOLDER
+ - doc: https://wiki.qemu.org/Documentation/9psetup
+ - The virtiofs shares a folder between guest and host as is. For the guest to
+   write or read into the folder, it must match the permissions on the host. In
+   essence, if the folder is only writtable by a user with uid=1000, the guest
+   user MUST have uid=1000. Another option is to give the folder in the host
+   777 permissions.
+ - create a virtio device
+     qemu -virtfs local,path=./shared,mount_tag=host0,security_model=none,id=host0 \
+   and then, on the guest, mount it with (on nixos)
+     fileSystems."/shared" = {                                                      
+       device = "host0";                                                            
+       fsType = "9p";                                                               
+       options = [                                                                  
+         "trans=virtio,version=9p2000.L"                                            
+       ];                                                                           
+     }; 
+   or manually
+     mount -t 9p -o trans=virtio,version=9p2000.L host0 /shared/
+
+
 EXAMPLES
- - qemu-system-riscv64 -M virt -nographic -m 3G -kernel ./Image
+ - qemu-system-riscv64 -M virt -nographic -m 3G -kernel ./Image 
+ - qemu-system-x86_64 \
+     -bios ./OVMF.fd \
+     -enable-kvm \
+     -nographic \
+     -m 2048 \
+     -virtfs local,path=./shared,mount_tag=host0,security_model=none,id=host0 \
+     -net nic -net user,hostfwd=tcp::2222-:22 \
+     -hda ./image
+
 
 DEBUGGING
  - Debug linux kernel

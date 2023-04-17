@@ -122,9 +122,68 @@ PERF REPORT
        exactly the current function.
      - The column "children" shows the total percentage of the accumulated
        number of samples caught in the current function plus all the child
-       functions from this function. (if function A calls function B, and B
-       calls function C, then C is a child of B. Also, B and C are child of A)
+       functions from this function. But be aware, children here does __not__
+       mean all the functions B,C,D that are called by a function A. It's just
+       the other way around, functions that call A.  Here is an example:
+
+           Children      Self  Command        Shared Object         Symbol
+         -   82.47%    82.46%  cholesky_task  liblapack.so.3        [.] dgemm_kernel_HASWELL
+            + 2.86% clone3                                                                                                                      ▒
+            + 0.80% gomp_barrier_handle_tasks
+         +   15.41%     0.00%  cholesky_task  libomp.so             [.] __kmp_invoke_task_func
+         +   15.41%     0.00%  cholesky_task  libomp.so             [.] __kmp_invoke_microtask
+
+       The "children" of dgemm_kernel_HASWELL accounts for 82.47% on the
+       children column. This means that 82.47% of the recorded callstacks have
+       this symbol. When unfolding the dgemm_kernel_HASWELL entry, it shows 2
+       lines, each of which corresponds to the start of a callstack that
+       contains dgemm_kernel_HASWELL, i.e. the first function that a thread
+       runs. Here we have clone3 and gomp_barrier_handle_tasks. The percentage
+       show for each of these entries is their "self" value (I think).
+
+       *** NEEDS TO BE VALIDATED
+       So,
+       2.86% of the callstacks recorded contain only the "clone3" entry.
+       ***
+
+       To make it more clear, it is possible to show relative rates instead of
+       percentage of overall samples. In essence, given the four callstack
+       starts that contain dgemm_kernel_HASWELL, we ask perf to show us the
+       percentage of callstacks with respect to the dgemm_kernel_HASWELL symbol
+       (the sum of the four must be 100%)
+
+         perf record --call-graph="fractal"
+
+       In the above example, we would see:
+
+          Children      Self  Command        Shared Object         Symbol
+         -   82.47%    82.46%  cholesky_task  liblapack.so.3        [.] dgemm_kernel_HASWELL                                                    ◆
+            + 3.47% clone3                                                                                                                      ▒
+            + 0.97% gomp_barrier_handle_tasks
+
+       But wait! 3.47% and 0.97% do not sum up 100%! That's because by default
+       perf will hide entries with less 0.5% self value. To void this, run
+
+         perf record --call-graph="fractal,0"
+
+          Children      Self  Command        Shared Object         Symbol
+        -   82.47%    82.46%  cholesky_task  liblapack.so.3        [.] dgemm_kernel_HASWELL                                                    ◆
+           + 3.47% clone3                                                                                                                      ▒
+           + 0.97% gomp_barrier_handle_tasks                                                                                                   ▒
+           + 0.26% gomp_task_maybe_wait_for_dependencies                                                                                       ▒
+           + 0.02% 0x200                                                                                                                       ▒
+             0.01% dgemm_kernel_HASWELL                                                                                                        ▒
+           + 0.00% 0xbeff418e279ab4ec                                                                                                          ▒
+           + 0.00% 0xbfb729fe411846ed                                                                                                          ▒
+           + 0.00% 0x400920af472f7078                                                                                                          ▒
+           + 0.00% 0x4011091caf54f4e2
+           ...
+
+       And now we see that perf was hiding many many many callstacks that it
+       didn't know how to translate!
+
      - see more info in man perf-report, under "OVERHEAD CALCULATION"
+
  - perf report --hierarchy -> The default perf report display is confusing
    because is shows the same entry several times. The hierarchy view shows
    entries folded from the first function called that can be unfolded

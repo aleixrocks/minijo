@@ -98,7 +98,8 @@ PRINCIPLES
 BASIC
  - nix-env -i <pkg> : install package into the current user environment
  - nix-env --uninstall <pkdg> : remove package from the user environment
- - nix-env -u : upgrade all packages in the environment
+ - nix-env -u : upgrade all packages in the environment. Remember to run first
+   nix-channel --update to update the local nixpkgs repo!
  - nix-env -u <pkg> : only upgrade <pkg>
  - nix search <pkg> : search for a package to install
  - nix-env -qa : show available pacakges for installation
@@ -123,8 +124,9 @@ NIX SHELL
    the current dir.
  - nix-shell -p <derivation1> <derivation2> ... : add packages to shell. These
    packages are read from <nixpkgs>, not from the current shell.nix or
-   default.nix! If you need to add here custom packages, you need to redefine
-   nixpckgs in NIX_PATH or instead of -p use shell.nix. Example:
+   default.nix! If you need to add here custom packages, you can use the -I
+   option, or redefine nixpkgs in NIX_PATH or use shell.nix. Example:
+     - nix-shell -I nixpkgs=./default.nix -p mypkgs
      - NIX_PATH='nixpkgs=.' nix-shell -p mypkg
  - nix-shell -A <derivation> : open a shell with all the packages needed to
    build the derivation.
@@ -282,6 +284,36 @@ OVERRIDE A PYTHON PACKAGE USING OVERLAYS
       };
     };
 
+
+NIX PORTABLE
+ - patch nix portable to create a full isolation:
+      diff --git a/default.nix b/default.nix
+      index b8f4def..6ef2a96 100644
+      --- a/default.nix
+      +++ b/default.nix
+      @@ -241,7 +241,7 @@ let
+             ### gather paths to bind for proot
+             # we cannot bind / to / without running into a lot of trouble, therefore
+             # we need to collect all top level directories and bind them inside an empty root
+      -      pathsTopLevel="\$(find / -mindepth 1 -maxdepth 1 -not -name nix -not -name dev)"
+      +      pathsTopLevel="\$(find / -mindepth 1 -maxdepth 1 -not -name nix -not -name dev -not -name opt -not -name apps -not -name usr -not -name lib -not -name lib64 -not -name bin)"
+       
+       
+             toBind=""
+      @@ -330,8 +330,8 @@ let
+               --bind \$dir/emptyroot /\\
+               --dev-bind /dev /dev\\
+               --bind \$dir/ /nix\\
+      +        --bind \$dir/busybox/bin/busybox /bin/sh\\
+               \$binds"
+      -        # --bind \$dir/busybox/bin/busybox /bin/sh\\
+           else
+             # proot
+             collectBinds
+  - build x86 static nix-portabl
+      nix build #packages.x86_64-linux.nix-portable
+
+
 INSTALLING NIX
  - you might need to set up NIX_SSL_CERT_PATH to your certificate file for both the client and the server.
  - to generate a certificate bundle, you can build one with nix on a machine with an already running nix installation
@@ -422,15 +454,22 @@ UNDERSTANDING NIXPKGS REPOSITORY
         buildPhase = ''
           gcc foo.c -o foo
         '';
+    - configureFlags = a list of strings containing options to pass to configure.
+    - makeFlags = a list of variables to pass to make. you can check them in
+      your nix-shell! echo $makeFlags.
     - installPhase = subsitute the generic builder install phase for the
       contents of this variable. Example:
         installPhase = ''
           mkdir -p $out/bin
           cp foo $out/bin
         '';
+    - you can inspect any of the functions defined by nix in a bash shell with:
+       - type installPhase
     - we can skip phases by adding dontInstall=true; dontBuild=true;
       dontConfigure=true; etc. Look at stdenv setup for the available options, it's
       easy to spot.
+    - To skip the configure phase, use doCheck = false and doInstallCheck =
+      false instead.
     - NIX_CFLAGS_COMPILE : this env var adds options to the underlying
       compiler. This works because stdenv provies a cc wrapper that parses this
       env var among doing other things.

@@ -1,0 +1,68 @@
+#!/usr/bin/bpftrace --unsafe
+
+BEGIN {
+	printf("bpf tracing pid=%d\n", $1);
+}
+
+usdt:$2:libc:mutex_entry /pid==$1/ {
+	printf("%d hit! %s\n", tid, probe);
+}
+
+usdt:$2:libc:mutex_acquired /pid==$1/ {
+	printf("%d hit! %s\n", tid, probe);
+	@stacks[tid, ustack] = count();
+	@mutex[tid]++;
+}
+
+usdt:$2:libc:mutex_release /pid==$1/ {
+	printf("%d hit! %s\n", tid, probe);
+	@mutex[tid]--;
+}
+
+tracepoint:sched:sched_switch / pid == $1 / {
+	printf("%d hit! %s state=%d vruntime=%lld\n", tid, probe, args->prev_state, curtask->se.vruntime);
+	if (!@mutex[tid]) {
+		return;
+	}
+
+	if (args->prev_state == 1) {
+		@sleep_on_mutex = count();
+	} else if (args->prev_state == 0) {
+		@preempted_on_mutex = count();
+	}
+}
+
+// we need to print the stacks before the process exit to have
+// addres to symbol resolution done by bpftrace automatically
+//
+// these are too late
+//tracepoint:sched:sched_process_exit /pid == $1 / {
+//	printf("sched_process_exit intercepted!\n");
+//	print(@stacks);
+//	exit();
+//}
+//
+//uprobe:$2:_exit /pid == $1/ {
+//	printf("_exit intercepted!\n");
+//	print(@stacks);
+//	printf("before system...\n");
+//	system("/usr/bin/sleep 5");
+//	printf("after system...\n");
+//	exit();
+//}
+
+// this prints the stack of main, but not the pthreads stacks, they
+// have already exited at pthread_join at this point.
+uprobe:$3:stupid_delay /pid == $1/ {
+	printf("stupid_delay intercepted!\n");
+	print(@stacks);
+	exit();
+}
+
+// check the example capturing user stack traces and resolving symbols in libbpf:
+// bcc/libbpf-tools/offcputime.bpf.c 
+
+END {
+	clear(@stacks);
+	clear(@mutex);
+}

@@ -18,6 +18,8 @@
  - which package a given file belongs to?
     pacman -F <file>
     pacman -Fx <file> # (exact path)
+ - remove package and dependencies
+    pacman -Rs <pacakge>
 
 RECOMPILE GLIBC WITH DEBUG SYMBOLS
  - We need to recompile manually with debug symbols:

@@ -1,0 +1,97 @@
+## Basic
+  - nixos-rebuild switch: build the new configuration, make it the default configuration for booting, and try to realise the configuration in the running system (e.g., by restarting system services).
+  - nixos-rebuild test: build the configuration and switch the running system to it, but without making it the boot default. So if (say) the configuration locks up your machine, you can just reboot to get back to a working configuration. 
+  - nixos-rebuild boot: build the configuration and make it the boot default, but not switch to it now (so it will only take effect after the next reboot). 
+  - nixos-rebuild switch -p test: causes the new configuration (and previous ones created using -p test) to show up in the GRUB submenu “NixOS - Profile 'test'”. This can be useful to separate test configurations from “stable” configurations. 
+  - nixos-rebuild build: build the configuration but nothing more. This is useful to see whether everything compiles cleanly. 
+  - nixos-rebuild switch --upgrade: upgrade the system
+  - nixos-rebuild switch -I nixpkgs=/path/to/my/nixpkgs : rebuild using a custom nixpkgs tree.
+
+## Doc
+  - https://nixos.org/manual/nixos/stable/
+
+## Packages
+  - add a package to your system globally in configuration.nix
+      environment.systemPackages = [ pkgs.thunderbird ];
+  - search for available packages:
+      nix-env -qaP '*' --description
+  - customize packages (new version, not overlay-like)
+      environment.systemPackages = [ (pkgs.emacs.override { gtk = pkgs.gtk3; }) ];
+  - change a system package by a modified version of it (overlay-like)
+     nixpkgs.config.packageOverrides = pkgs:
+       { emacs = pkgs.emacs.override { gtk = pkgs.gtk3; };
+     };
+
+## Building
+ - To access the nixos components through nix rpl load <nixpkgs/nixos>. All
+ nixos components are stored under config.<option>. For example, the linux
+ kernel can be found under `config.system.build.kernel`. see
+ https://nixos.org/manual/nixos/stable/index.html#sec-building-parts for more
+ details.
+ - To open a shell to build the nixos kernel use
+    nix-shell '<nixpkgs/nixos>' -A config.system.build.kernel
+
+## Kernel
+ - kernel files:
+   - pkgs/top-level/all-packages.nix
+      - linuxKernel
+      - lunuxPackagesFor
+      - linuxManualConfig
+      - linuxPackages_custom
+      - linuxPackages
+   - pkgs/top-level/linux-kernels.nix
+   - pkgs/os-specific/linux/kernel/manual-config.nix
+   - pkgs/os-specific/linux/kernel/generic.nix (buildLinux)
+ - nixos forces a number of kernel modules to be present.
+   - basic: nixos/modules/system/boot/systemd.nix
+   - initrd: to show the initrd needed modules use
+      nixos-option boot.initrd.availableKernelModules (or nix repl '<nixpkgs/nixos>')
+ - to build a kernel with a custom configuration file:
+ - to build a kernel using the default nixos config (defconfig) but enable or
+   disable some configs see "Booting a kernel from a custom source" at https://nixos.wiki/wiki/Linux_kernel
+```
+    { pkgs, ... }:
+    
+    {
+      boot.kernelPackages = let
+          linux_sgx_pkg = { fetchurl, buildLinux, ... } @ args:
+    
+            buildLinux (args // rec {
+              version = "5.4.0-rc3";
+    
+              src = fetchurl {
+                url = "https://github.com/jsakkine-intel/linux-sgx/archive/v23.tar.gz";
+                sha256 = "11rwlwv7s071ia889dk1dgrxprxiwgi7djhg47vi56dj81jgib20";
+              };
+              kernelPatches = [];
+    
+              extraConfig = ''
+                INTEL_SGX y
+              '';
+    
+              extraMeta.branch = "5.4";
+            } // (args.argsOverride or {}));
+          linux_sgx = pkgs.callPackage linux_sgx_pkg{};
+        in 
+          pkgs.recurseIntoAttrs (pkgs.linuxPackagesFor linux_sgx);
+    }
+```
+
+
+## QEMU
+  - to boot with nographic, you need to enable a serial console service, and a
+    kernel console to see  boot logs if desired:
+      # start tty0 on serial console
+      systemd.services."serial-getty@ttyS0" = {
+        enable = true;
+        wantedBy = [ "getty.target" ]; # to start at boot
+        serviceConfig.Restart = "always"; # restart when session is closed
+      };
+      # enable kernel console
+      boot.kernelParams = [
+        "console=ttyS0,115200"
+        "console=tty1"
+      ];
+  - but it's better if you just enable sshd on nixos because of the screen size
+    limit on a serial connection.
+

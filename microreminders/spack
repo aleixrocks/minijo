@@ -20,9 +20,20 @@ BASIC
  - packages are installed by default at $spack/opt where $spack is the
    directory of the cloned git repo. It can be changed using the install_tree
    setting in the yaml file.
+ - by default, spack builds stuff in a tmpfs. Be aware that you can run out of
+   memory quickly if building something big like gcc. You can change the build
+   directory if that happens, see below.
  - careful! use a clean environment to build spack packages. A dirty PATH of
    LD_LIBRARY_PATH might interfer with the spack paths. Consider using
    nix-shell --pure
+ - spack uncompresses and builds packages in /tmp by default. This might
+   consume system memory fast, to use another directory, set $TMPDIR to the
+   desired location.
+ - spack info <package> : print info about the package, including versions and
+   variants
+ - spack locate <package> : print the package.py path for <package>
+ - spack edit <package>: edit the <package> package.py
+ - A package "stage" means the location where a package is uncompressed and built.
 
 COMPILERS
  - it is not enough for a compiler to be in the env. Spack need to be told
@@ -78,3 +89,21 @@ COMPILER FLAGS
  - spack accepts cppflags, cflags, cxxflags, fflags, ldflags, and ldlibs
    parameters:
      spack install zlib@1.2.8 cppflags=-O3
+
+DEBUG PACKAGING
+ - spack install --verbose <package> : install and show more info
+ - spack cd <package> : go to package build folder (also try --help so see other interesting destinations)
+ - spack build-env mpileaks@1.1%intel bash : open a shell with the variables used to build the package
+
+
+SET CUSTOM INSTALL AND BUILD DIRECTORIES
+ - use a custom config.yaml file in a "./config" directory:
+     
+     config:
+       install_tree: /home/aleix/bsc/projects/spack/install
+       build_stage:
+        - /home/aleix/bsc/projects/spack/build
+
+   and then run: spack -C ./config install gcc
+ - it should also be possible to set TMPDIR instead, but I could not make it work
+

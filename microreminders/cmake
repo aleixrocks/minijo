@@ -1,0 +1,15 @@
+BASIC
+ - general use:
+     mkdir build
+     cd build
+     cmake ..
+     cmake --build .
+
+SEARCH PATH
+ - to specify the paths to search for a package use CMAKE_PREFIX_PATH:
+     cmake -DCMAKE_PREFIX_PATH="<path1>;<path2>;<path3>" ..
+   the paths are the root paths of the package, cmake will append /lib or /include as needed.
+ - to debug where cmake searches for packages use CMAKE_FIND_DEBUG_MODE=ON
+     cmake -DCMAKE_FIND_DEBUG_MODE=ON
+ - be aware that this variable can be overriden by at CMakeLists.txt
+     set(CMAKE_PREFIX_PATH <path>)

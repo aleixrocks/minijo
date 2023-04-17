@@ -7,11 +7,14 @@ BASIC
  - echo 1 > tracing_on -> enables tracing
  - echo 0 > tracing_on -> disables tracing
  - cat trace | head -10 -> display the trace of all cpus
+ - echo > trace -> clear the trace buffer
  - cat per_cpu/cpu0/trace -> display the trace for cpu0
  - echo "hello world" > trace_maker -> set marker on trace from userland at the
    time of writting
  - echo 50 > buffer_size_kb -> set buffer size per cpu
  - sysrq-z -> trigger ftrace dump
+ - echo 1000 > buffer_size_kb or per_cpu/cpu0/buffer_size_kb -> set the number
+   of entries, where an entry is a 1024 byte segment.
 
 BOOT TIME TRACING
  - compile with CONFIG_BOOTTIME_TRACING=y
