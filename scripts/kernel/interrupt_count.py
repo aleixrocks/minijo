@@ -25,6 +25,15 @@ def count_interrupts_per_core(df):
 	ncores = len(df.columns) - 1
 	return df.iloc[:, :ncores].sum()
 
+def count_interrupts_per_type(df):
+	ncores = len(df.columns) - 1
+	tmp = df.iloc[:, :ncores].sum(axis=1)
+	tmp = tmp.to_frame()
+	tmp.columns = ["Count"]
+	tmp["Count"] = tmp["Count"].astype(int)
+	tmp["Description"] = df["Description"]
+	return tmp
+
 def sub_intr(before, after):
 	ncores = len(before.columns) - 1
 	df = after.iloc[:, :ncores] - before.iloc[:, :ncores]
@@ -32,22 +41,29 @@ def sub_intr(before, after):
 	return df
 
 
+# configure argument parser
 parser = argparse.ArgumentParser(description="Hardware interrupts helper command.")
 parser.add_argument("cmd", nargs='*', default=None, help='Run command and return the interrupts fired while executing it.')
-parser.add_argument('-c', '--count', action="store_true", help='Only show per core interrupt count.')
-parser.add_argument('-t', '--type', action="store_true", help='Only show per-core interrupts by type.')
+parser.add_argument('-i', '--intr', action="store_true", help='Only show per-core interrupts by type.')
+parser.add_argument('-c', '--core', action="store_true", help='Only show per-core interrupt count.')
+parser.add_argument('-t', '--type', action="store_true", help='Only show per-core interrupts by type count.')
 args = parser.parse_args()
 
 
-# by default show both count and type
-show_count = True
-show_type  = True
-if not args.count and not args.type:
-	pass
-elif args.count:
-	show_type = False
+# set visibilty defaults
+show_intr = False
+show_core = False
+show_type = False
+if not args.core and not args.type and not args.intr:
+	show_core = True
+	show_type = True
+	show_intr = True
+elif args.core:
+	show_core = True
 elif args.type:
-	show_count = False
+	show_type = True
+elif args.intr:
+	show_intr = True
 
 
 # read interrupts based on user arguments
@@ -61,9 +77,13 @@ else:
 	df = sub_intr(intr_before, intr_after)
 
 # display interrupts
-if show_type:
+if show_intr:
 	print(df.to_string())
-if show_count:
+if show_type:
+	intr_per_type = count_interrupts_per_type(df)
+	print("Interrupt count per type")
+	print(intr_per_type.to_string())
+if show_core:
 	intr_per_core = count_interrupts_per_core(df)
 	print("Interrupt count per core")
 	print(intr_per_core.to_string())
