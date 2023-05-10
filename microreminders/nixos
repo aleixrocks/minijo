@@ -95,3 +95,19 @@
   - but it's better if you just enable sshd on nixos because of the screen size
     limit on a serial connection.
 
+## install
+ - from a nix system with flakes
+     sudo mount /dev/disk/by-label/nixos ./mnt
+     sudo mount /dev/disk/by-label/store ./mnt/nix
+     nixos-install --flake .#xeon08 --root ./mnt
+
+## kexex
+ - NOTE: I was unable to install nixos from kexec. I had to modify the
+   configuration to remove netboot-minimal.nix, but after doing so, I kept seeing
+   the error "error: getting status of '/nix/store/*-source': No such file or
+   directory"
+ - nix build .#nixosConfigurations.xeon08.config.system.build.toplevel : build the system itself
+ - nix build .#nixosConfigurations.xeon08.config.system.build.kexecTree -v
+ - sudo PATH=/home/Computational/arocanon/.nix-profile/bin:$PATH ./result/kexec-boot
+ - nix-install -f .#xeon08 : installs the system on /mnt. You need to mount his
+   manually first.

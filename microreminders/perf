@@ -33,10 +33,15 @@ BASIC
 COMPILE AND INSTALL
  - clone kernel src repo; cd src
  - make -C tools/perf O=$PWD/../build/perf # do not build into the root of the kernel build dir!
- - make -C tools/perf O=../build/perf/build prefix=../build/perf/install install
- - make -C tools/perf O=../build/perf/build prefix=../build/perf/install install_man
+ - make -C tools/perf O=../build/perf/build prefix=`readlink -f ../build/perf/install` install
+ - make -C tools/perf O=../build/perf/build prefix=`readlink -f ../build/perf/install` install-man
 
 PREPRATION
+ - setup permissions
+    echo 0 | sudo tee /proc/sys/kernel/kptr_restrict
+    echo -1 | sudo tee /proc/sys/kernel/perf_event_paranoid
+    sudo  mount -o rw -t tracefs nodev /sys/kernel/tracing
+    sudo chown -R arocanon /sys/kernel/tracing
  - To get complete stack traces
      - compile applications with -fno-omit-frame-pointer or
        use perf record -g dwarf

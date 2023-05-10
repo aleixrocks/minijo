@@ -182,6 +182,43 @@ DERIVATIONS
  - nix show-derivation <path.drv> : pretty print derivation
  - nix-store -r <path.drv> : build/realise derivation
 
+FLAKES
+ - nix flake metadata github:edolstra/dwarffs : fetch flake metadata
+ - nix flake show github:edolstra/dwarffs : see flake outputs
+ - nix build github:edolstra/dwarffs : build the <system> output by default
+   (<system> is something as "x86_64-linux")
+ - nix build github:edolstra/dwarffs#checks.aarch64-linux.build : build a particular output
+ - these two are equivalent, the first uses the "flake registry" to figure out the url
+    $ nix shell nixpkgs#cowsay --command cowsay Hi!
+    $ nix shell github:NixOS/nixpkgs#cowsay --command cowsay Hi!
+ - change the flake registry:
+    $ nix registry add nixpkgs ~/my-nixpkgs
+    $ nix registry add nixpkgs github:NixOS/nixpkgs/5272327b81ed355bbed5659b8d303cf2979b6953
+ - working with flakes:
+    - git init
+    - nix flake init : create a basic flake.nix file.
+    - git add flake.nix : Note that any file that is not tracked by Git is
+      invisible during Nix evaluation, in order to ensure hermetic evaluation.
+      Thus, you need to make flake.nix visible to Git.
+    - nix build : build the package
+    - nix shell --command hello : run it!
+    - nix develop : get an interactive development environment
+  -  nix flake lock --update-input nixpkgs : update nixpkgs commit in flakes.lock
+  - nix flake check : check something
+  - nix flake show templates : show flake.nix templates
+  - nix flake init -t templates#simpleContainer : create initial flake.nix from template
+  - nix build /path/to/my-flake#nixosConfigurations.container.config.system.build.toplevel : 
+    build nixos config. Note that system.build.toplevel is an internal NixOS
+    option that evaluates to the “system” derivation that commands like
+    nixos-rebuild, nixos-install and nixos-container build and activate. The
+    symlink /run/current-system points to the output of this derivation.
+  - nixos-version : returns the commit hash where the flake is
+  - nix repl on flakes:
+     cat > ./nixos-config.nix <<EOF
+     (builtins.getFlake (toString ./.)).nixosConfigurations
+     EOF
+     nix repl ./nixos-config.nix
+
 GARBAGE COLLECTOR
  - /nix/var/nix/gcroots : contains simlinks to garbage collector roots
    (gcroots). These packages nor their dependencies will never be deleted.
