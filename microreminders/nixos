@@ -31,6 +31,10 @@
  - To open a shell to build the nixos kernel use
     nix-shell '<nixpkgs/nixos>' -A config.system.build.kernel
 
+## Inspect
+ - nix profile diff-closures --profile /nix/var/nix/profiles/system : show
+   differences between installed system versions
+
 ## Kernel
  - kernel files:
    - pkgs/top-level/all-packages.nix
@@ -49,7 +53,7 @@
  - to build a kernel with a custom configuration file:
  - to build a kernel using the default nixos config (defconfig) but enable or
    disable some configs see "Booting a kernel from a custom source" at https://nixos.wiki/wiki/Linux_kernel
-```
+   ```
     { pkgs, ... }:
     
     {
@@ -75,7 +79,11 @@
         in 
           pkgs.recurseIntoAttrs (pkgs.linuxPackagesFor linux_sgx);
     }
-```
+   ```
+ - view the source of a kernel package
+    ```
+    nix develop .#nixosConfigurations.xeon08.config.boot.kernelPackages.lttng-modules
+    ```
 
 
 ## QEMU

@@ -21,13 +21,60 @@ PREPROCESSOR
    the NUM is no longer directly stringified in the body of A, so it is fully
    expanded.
 
+   Note that this also happens with ## used as a comma removal, e.g:
+
+     #define A(a, ...)   
+        macro(a, ##__VA_ARGS__)
+
+   Here, nothing passed as variadic arguments will be expanded because of ##
+
    see preescan for more info:
       https://gcc.gnu.org/onlinedocs/cpp/Argument-Prescan.html#Argument-Prescan
  - it is possible to wrap multiple arguments separted by commas in pharentesis:
      #define fgen(a, b) void func a { return func2 b; }
      fgen((int a, int c, char * b), (a, c, b)
        ==> void func (int a, int c, char *b) { return func2(a, c, b); }
+ - you can call macros that are passed as arguments:
+    #define macro(m, args) m args
+    #define sum(a, b) a + b
+    macro(sum, (a,b))
+ - you can unpack parenthesis like this
+    #define unpack(...) __VA_ARGS__
+    unpack((1,2,3)) -> result 1,2,3 (no pharentesis)
+ - you can return a comma in a macro, that is user later to separate arguments
+   in another macro call:
+    #define vaargs(...) ,##__VA_ARGS__
+    #define sum(a,b, ...) # whatever
+    #define megasum(...) sum(1,2 vaargs(__VA_ARGS__)) # sum will be called as sum(1,2) if nothing is passed to megasum, instead of sum(1,2,)
 
+
+WEAK and STRONG SYMBOLS
+ - There are WEAK/STRONG DEFINITIONS and WEAK/STRONG REFERENCES. A definition
+   is a function defined as:
+     __attribute__((weak)) int foo(void) { return 1; }
+   A reference is when a symbols is called with particular DECLARATION.
+     __attribute__((weak)) int foo(void);
+     int main() { foo(); }
+ - A weak DEFINITION means: use this symbol unless another strong definition is
+   also present, in which case use the other symbol. Normally two same-named
+   symbols result in a multiply-defined link error, but when all but one
+   definitions are weak, no multiply-defined error is produced.
+ - A weak (unresolved) REFERENCE means: don't consider this symbol when
+   deciding whether to pull an object which defines this symbol out of archive
+   library or not (an object may still be pulled in if it satisfies a different
+   strong undefined symbol). Normally if the symbol is unresolved after all
+   objects are selected, the linker will report unresolved symbol error. But if
+   the unresolved symbol is weak, the error is suppressed.
+ - At satic link time, if an achive object (.a file aka static library) is
+   passed to the linker, the linker might decide to not include all .o inside
+   the achive file. If no other code references any symbol defined inside a .o
+   file, the .o file will not be included. If there is at least one reference
+   of a symbol inside the .o, the whole .o file is pulled in. However, if a
+   reference is marked as weak, it will not be considered when importing a .o
+   inside an archive file.
+ - Also, note that this only happens in archive files passed at static link
+   time. If an object file is passed directly, the linker will pull it in
+   allways. e.g. ld foo.o (foo.o will always be included)
 
 INLINE ASSEMBLY
  - asm("assembly code") and __asm__("assembly code") are both equivalent

@@ -116,6 +116,10 @@ BASIC
 
 
 NIX SHELL
+ - the new command is "nix shell". You can use it has "nix shell -f . gdb" to
+   open a gdb reading default.nix from the current directory.
+ - on "nix shell" you can set the prompt with
+     export PS1="\[\033[1;32m\][nix shell:\w]\$\[\033[0m\] "
  - nix-shell opens a shell and provides the specified packages to build a
    derivation. It can also be used as a virtual shell where some packages have
    been made available into PATH.
@@ -181,6 +185,10 @@ CHANNELS
 DERIVATIONS
  - nix show-derivation <path.drv> : pretty print derivation
  - nix-store -r <path.drv> : build/realise derivation
+
+DIFF
+ -  nix-diff --environment <store_path> <store_path> : show differences between
+    derivations, this is not an standard tool
 
 FLAKES
  - nix flake metadata github:edolstra/dwarffs : fetch flake metadata
@@ -286,8 +294,13 @@ GET URL AND SHA OF A GITHUB PACKAGE
      https://github.com/PROJECT/REPO/archive/COMMITID.tar.gz
    e.g.
      https://github.com/nixos/nixpkgs/archive/481f9b246d200205d8bafab48f3bd1aeb62d775b.tar.gz
+   or in gitlab
+     https://pm.bsc.es/gitlab/ompss-kernel/linux/-/archive/bc11660676d3d68ce2459b9fb5d5e654e3f413be/linux-bc11660676d3d68ce2459b9fb5d5e654e3f413be.tar.gz
+     https://pm.bsc.es/gitlab/ompss-kernel/linux/-/archive/bc11660676d3d68ce2459b9fb5d5e654e3f413be.tar.gz
+   but make sure that the http page is public! If it needsa autentication, you won't be able to download it.
  - you can easily calculate the sha256 as:
      nix-prefetch-url --unpack  <url>
+     nix-prefetch-git <url> <commit hash>
 
 WHICH SHA IS MY CURRENT NIXPKGS ON?
  - use the sha after the dot stored in:
@@ -298,6 +311,12 @@ WHERE IS DEFINED THE NIX SOURCE OF A FUNCTION?
  - type in nix repl:
      nix-repl> glibc.overrideAttrs
      «lambda @ /nix/store/86242z3mxd6lqxyrhdl6vv78rzww6k3z-nixpkgs/nixpkgs/lib/customisation.nix:85:73»
+
+WHY IS NIX BUILD TRIGGERING A REBUILD? WHAT HAS CHANGED?
+ - nix-diff <derivation or store path> <derivation or store path>
+
+GET THE DERIVATION OF A STORE PATH
+ - nix-store --query --deriver <store path>
 
 PYTHON DOCUMENTATION
  - doc/languages-frameworks/python.section.md

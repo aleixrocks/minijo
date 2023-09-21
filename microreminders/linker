@@ -4,3 +4,53 @@ BASIC
  - ld -T linker.ld a.elf : link using linker script
  - objdump -h a.o : show sections of the output file
  - objdump -t a.o : show symbols of the output file (also nm works)
+
+
+SYMBOL LOOKUP
+ - doc:
+    - "How to write shared libraries" https://akkadia.org/drepper/dsohowto.pdf
+    - "dynamic linker doc by oracle" (much of this is outdated and does not
+      apply to the gnu linker, but still is an interesting source to check)
+      https://docs.oracle.com/cd/E19120-01/open.solaris/819-0690/6n33n7f7i/index.html
+ - When a binary is run, a flat list of libraries to search symbols is created
+   by the dynamic linker (ld.so) When the main binary or any of its dependent
+   shared libraries call an UND function (as reported by readelf -Ws), this
+   list is walked in search of some object (the executable or any of the shared
+   libraries) that contain a definition for such symbol. This is named lookup
+   or relocation.
+ - The list iself sometimes called the "link-map".
+ - To create the list, the dynamic loader  starts doing a breadth-first
+   search (first the main binary, then the direct binary dependencies, then the
+   dependencies of the first binary dependency, then the depencencies of the
+   second binary dependencies, etc...). If using LD_PRELOAD, the specified
+   libraries sit in between the main executable and the executable direct
+   dependencies. This is called the global scope.
+ - The list can be inspected by running "ldd": ldd <binary>
+ - It can also be inspected at runtime how symbols are searched using LD_DEBUG=all
+ - If loading a library using dlopen, the dlopened library and all its
+   dependencies sit at the end of the global scope. By default, symbol lookups
+   happening in the global scope do not search for symbols in the dlopened
+   libraries. However, symbol lookups originating inside the dlopened libraries
+   start first on the global scope and then continue through the dlopened
+   library and its dependencies.
+ - the ld option `-Bsymbolic` makes a shared library to look for symbol
+   resolutions in its own library before looking at the global scope (looks
+   like a way for a shared library to state that it does not want its own
+   defined symbols overriden by other libraries)
+ - `-rdynamic` foces all symbols in an executable to be added into the dynamic
+   symbol table. By default, only the symbols in an executable that are also
+   defined in linked shared libraries at link time are added to the dynamic
+   symbol table (see "export-dynamic" in `man ld`) Also, only the symbols in the
+   dynamic symbol table are relocated at runtime by the dynamic linker.
+   Therefore, this option forces all symbols in the main binary to be exported
+   in the dynamic symbol table. This is only useful for `dlopen`ed libraries. If
+   a `dlopen`ed library contains a symbol reference defined in the executable,
+   but the executable did not export such symbol becuse none of the build-time
+   linked libraries used such symbol, with `-rdynamic` we can force such symbol
+   to be exported anyways at build-time.
+ - The `-z interpose` flag is implemented in the static linker but not in the
+   dynamic linker. That's why it does not work.
+ - dlopen with RTLD_DEEPBIND flag: the symbols of the dlopened library and its
+   dependencies are searched first, before the rest of the global scope is
+   searched (the global scope are the main executable and its normal
+   dependencies)
