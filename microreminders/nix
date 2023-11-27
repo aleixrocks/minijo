@@ -183,14 +183,19 @@ CHANNELS
  - nix-channel --update : update list of expressions/(descriptions of packages)
 
 DERIVATIONS
- - nix show-derivation <path.drv> : pretty print derivation
  - nix-store -r <path.drv> : build/realise derivation
+ - nix show-derivation <path.drv> : pretty print derivation
+    - nix show-derivation -f <path to .nix>
+    - nix show-derivation clang.cc | jq -r '.[].env.buildInputs' :  only show field env.buildInputs
+    - nix show-derivation numactl clang.cc | jq -r '.[].env | {name, buildInputs}' : show both name and buildInputs
 
 DIFF
  -  nix-diff --environment <store_path> <store_path> : show differences between
     derivations, this is not an standard tool
 
 FLAKES
+ - doc:
+    - nix flake --help 
  - nix flake metadata github:edolstra/dwarffs : fetch flake metadata
  - nix flake show github:edolstra/dwarffs : see flake outputs
  - nix build github:edolstra/dwarffs : build the <system> output by default
@@ -211,7 +216,7 @@ FLAKES
     - nix build : build the package
     - nix shell --command hello : run it!
     - nix develop : get an interactive development environment
-  -  nix flake lock --update-input nixpkgs : update nixpkgs commit in flakes.lock
+  - nix flake lock --update-input nixpkgs : update nixpkgs commit in flakes.lock
   - nix flake check : check something
   - nix flake show templates : show flake.nix templates
   - nix flake init -t templates#simpleContainer : create initial flake.nix from template
@@ -226,6 +231,25 @@ FLAKES
      (builtins.getFlake (toString ./.)).nixosConfigurations
      EOF
      nix repl ./nixos-config.nix
+  - url-like syntax: this "github:NixOS/nixpkgs" is the same as:
+     inputs.nixpkgs = {
+       type = "github";
+       owner = "NixOS";
+       repo = "nixpkgs";
+     };
+  - path-like syntax: This points to a local git repo with a flake.nix.
+    defaults to master branch, it ignores uncommited changes:
+      git+file:///home/aleix/bsc/projects/bscpkgs
+    branch test with commit ref only
+      git+file:///home/aleix/bsc/projects/bscpkgs?ref=test
+    branch test with commit rev
+      git+file:///home/aleix/bsc/projects/bscpkgs?ref=test&rev=805b30d130b63807e2755eb4e776a8e61320cffd#
+  - multiple inputs in a flake might have different versions of nixpkgs. To unificate them use "follow":
+      inputs {
+        bscpkgs.url = "git+https://pm.bsc.es/gitlab/rarias/bscpkgs.git";
+        nixpkgs.follows = "bscpkgs/nixpkgs";
+      }
+      
 
 GARBAGE COLLECTOR
  - /nix/var/nix/gcroots : contains simlinks to garbage collector roots
@@ -283,6 +307,12 @@ UTILITIES
    "out" is in the system). Useful on nix repl to figure out where something is
    installed, like stdenv.cc.cc.outPath
 
+DEBUG
+ - cmake: 
+    - set makeFlags=["VERBOSE=1"]; on the derivation
+    - export makeFlags="VERBOSE=1"; on a nix develop shell
+    - export makeFlags="VERBOSE=1 -j1"; to ease finding the failing command and error
+
 GET THE SOURCE OF A PACKAGE
  - nix-shell -A hello : opens a shell with stdenv and build dependencies
    loaded.
@@ -298,9 +328,13 @@ GET URL AND SHA OF A GITHUB PACKAGE
      https://pm.bsc.es/gitlab/ompss-kernel/linux/-/archive/bc11660676d3d68ce2459b9fb5d5e654e3f413be/linux-bc11660676d3d68ce2459b9fb5d5e654e3f413be.tar.gz
      https://pm.bsc.es/gitlab/ompss-kernel/linux/-/archive/bc11660676d3d68ce2459b9fb5d5e654e3f413be.tar.gz
    but make sure that the http page is public! If it needsa autentication, you won't be able to download it.
- - you can easily calculate the sha256 as:
+ - you can easily calculate the hash as:
      nix-prefetch-url --unpack  <url>
      nix-prefetch-git <url> <commit hash>
+   or change the derivation for
+     hash = lib.fakeHash;
+   and recompute or
+     hash = "";
 
 WHICH SHA IS MY CURRENT NIXPKGS ON?
  - use the sha after the dot stored in:
@@ -770,6 +804,13 @@ NIX LANGUAGE
     - builtins.isAttrs <symbol> : returns true if symbol is a set
     - builtins.attrNames : returns names of set
     - builtins.toString <symbol> : convert to string
+
+NIX FETCHERS
+ - builtins.fetchGit. The url takes a fancy from:
+    change this: git@bscpm03.bsc.es:llvm-ompss/llvm-mono.git
+    to this:     ssh://git@bscpm03.bsc.es/llvm-ompss/llvm-mono.git
+
+
 
 TROUBLESHOOTING
  - if you have locale issues:

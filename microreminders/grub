@@ -31,6 +31,9 @@ ENVIRONMENT
  - GRUB_TERMINAL="console serial" -> set the terminals where grub is displayed.
    console shows to the standard console (the monitor) serial shows grub on the
    serial port as configured by GRUB_SERIAL_COMMAND
+ - Default grub boot entry:
+    - GRUB_DEFAULT='Ubuntu'
+    - GRUB_DEFAULT='Advanced options for Ubuntu>Ubuntu, with Linux 5.4.0-45-generic'
 
 
 SERIAL CONSOLE TYPICAL CONFIGURATION
@@ -68,6 +71,13 @@ CUSTOM GRUB ENTRY
      	echo	'Loading initial ramdisk ...'                                                                                                                         
      	initrd	/initrd-4.10.5-bsc+                                                                                                                                   
      }     
+ - Another example
+     # search for a partition named "nixos" and store it in the variable nixos
+     # then, load the grub config file in ($nixos)/boot/grub/grub.cfg
+     menuentry "NixOS" {
+         search --set=nixos --label nixos
+         configfile "($nixos)/boot/grub/grub.cfg"
+     }
 
 CHECK WHICH BOOTLOADER IS IN USE
  - assuming that the botloader is installed in /dev/sda:

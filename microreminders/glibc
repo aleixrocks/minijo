@@ -17,9 +17,50 @@ ENTRY POINT
  - The loader entry point is _start.
  - _start is defined in glibc source code under sysdeps/x86_64/dl-machine.h
  - _start first calls _dl_start, which returns the user entry-point. The user
-   entry point is the binary _start symbol.
-
- - then it calls _dl_init, which does lots of things I don't understand yet.
+   entry point is the executable _start symbol.
+     - _dl_start calls dl_start_final 
+     - dl_start_final initializes GL(dl_rtld_map) and calls _dl_sysdep_start
+     - dl_sysdep_start (systedp/unix/sysv/linux/dl-sysdep.c) does a few
+       OS-specific things (like stack-related setups) and calls "dl_main"
+       (elf/rtld.c) which does all the real work of the dynamic linker, and
+       then unwinds the frame and run the user entry point on the same stack
+       that it entered on (froma comment in _dl_start_final)
+     - dl_main (elf/rtld.c)
+        - creates a link_map for the executable itself named "main_map"
+        - sets up vdso (system supplied DSO)
+        - loads auditing DSOs (see LD_AUDIT)
+        - calls _dl_audit_activity_map and LIBC_PROBE(init_start) to signal the
+          the initial map is about to be constructed
+        - reads LD_PRELOAD and /etc/ld.so.preload 
+        - calls _dl_map_object_deps to load and sort the libraries specified
+          by DT_NEEDED entries of the main binary and LD_PRELOAD libraries.
+          i.e. it builds the main_map->l_searchlist list.
+           - _dl_map_object_deps reads the DT_NEEDED entries of MAP (the main binary) and
+             adds it to main_map->l_searchlist
+           - _dl_map_object_deps itself only creates a Breadth first list of depencendies
+             in the variable l_initfini. The actual sorting of shared libraries regarding
+             their dependencies is made by _dl_sort_maps function in elf/dl-sort-maps.c.
+           - _dl_map_object_deps writes the dependencies (DT_NEEDED) of each
+             link_map (dso) into the link_map->l_initfini, this includes the
+             main_map (the executable).
+           - The list of dependencies in breath first order is stored in
+             main_map->l_search_list. This is the lockup scope! (i.e. the
+             symbol resolution order list)
+           - The SORTED list of dependencies is written into
+             main_map->l_initfini, which has the main_map as the first entry.
+             This is the order in which constructors are called!
+	- marks all objects in main_map->l_searchlist (which also implies
+	  l_initfini) as being in the global scope.
+	- it checks if all libraries are available in the needed version
+	- inits TLS (but I don't get the details, maybe is not completely init here)
+	- next dl_main relocats all loaded shared objects but the dynamic
+	  loader (I don't know why). When this happens, it calls
+	  dl_audit_activity_nsid signaling that all objects have been added. It
+	  also calls LIBC_PROBE(init_complete).
+	- seems to finish TLS initialization here
+	- performs early libc initialization by calling _dl_call_libc_early_init
+ - then it calls _dl_init (elf/dl-init.c) which calls the constructors of all
+   dso, following the order in main_map->l_initfini.
  - when it returns, it calls the _dl_start returned address (__libc_start_main).
  - This, is the user-binary _start address.
  - _start quickly jumps to __libc_start_main and it's expected to do not return.
@@ -56,7 +97,6 @@ DESTRUCTORS
 
  LINK MAP
   - struct link_map, defined in include/link.h represents a DSO.
-
 
 
 TLS
