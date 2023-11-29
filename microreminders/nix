@@ -335,6 +335,14 @@ GET URL AND SHA OF A GITHUB PACKAGE
      hash = lib.fakeHash;
    and recompute or
      hash = "";
+ - builtins.fetchGit needs an url, a ref and a rev.
+    - url: needs to be changed from github provided
+       git@github.com:bsc-pm/llvm.git 
+       ssh://git@github.com/bsc-pm/llvm.git
+    - ref: if a branch can be specified direclty, such as "master" but if it is
+      a tag, it needs to be like:
+       "refs/tags/<tag>"
+    - commit: just a commit
 
 WHICH SHA IS MY CURRENT NIXPKGS ON?
  - use the sha after the dot stored in:
@@ -402,6 +410,25 @@ NIX PORTABLE
              collectBinds
   - build x86 static nix-portabl
       nix build #packages.x86_64-linux.nix-portable
+
+RUNCOMMAND
+ - runCommand is a mkDerivation wrapper. It generates a derivation, and it must
+   create a $out output. For instance, we can use runCommand to create a src
+   for a derivation
+
+     src = runCommand "${pname}-src" {} ''
+       mkdir -p "$out"
+       cp -r ${monorepoSrc}/cmake "$out"
+       cp -r ${monorepoSrc}/${pname} "$out"
+     '';
+
+Fixed-output Derivations (fdo)
+ - An fdo is a special kind of derivation whose output hash only considers the
+   derivation name and the src. It is useful for derivations such as fetchurl,
+   in which you only care about the output itself (you don't care if the url of
+   the targz has changed or the version of curl used to download it, you only
+   care about the .tar.gz having matching an expected hash). Read more here:
+     https://nixos.org/manual/nix/stable/language/advanced-attributes.html?highlight=outputHash#adv-attr-outputHash
 
 
 INSTALLING NIX
