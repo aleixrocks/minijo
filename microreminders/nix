@@ -201,6 +201,9 @@ FLAKES
  - nix build github:edolstra/dwarffs : build the <system> output by default
    (<system> is something as "x86_64-linux")
  - nix build github:edolstra/dwarffs#checks.aarch64-linux.build : build a particular output
+ - Build the "c-nosv_attach-bug" packages from branch "asan-fix" of non-github repo
+   and force fetching the git submodules of such repo.
+    $ nix build git+https://gitlab.bsc.es/arocanon/nixdev?submodules=1&ref=asan-fix#c-nosv-attach-bug
  - these two are equivalent, the first uses the "flake registry" to figure out the url
     $ nix shell nixpkgs#cowsay --command cowsay Hi!
     $ nix shell github:NixOS/nixpkgs#cowsay --command cowsay Hi!
@@ -833,10 +836,69 @@ NIX LANGUAGE
     - builtins.toString <symbol> : convert to string
 
 NIX FETCHERS
- - builtins.fetchGit. The url takes a fancy from:
-    change this: git@bscpm03.bsc.es:llvm-ompss/llvm-mono.git
-    to this:     ssh://git@bscpm03.bsc.es/llvm-ompss/llvm-mono.git
+ - urls:
+    - github to nix:
+        change this: git@bscpm03.bsc.es:llvm-ompss/llvm-mono.git
+        to this:     ssh://git@bscpm03.bsc.es/llvm-ompss/llvm-mono.git
+    - local repo: It seems that they must be an absolute path.
+        fetchgit {
+         url = "file:///home/aleix/nixdev/pkgs/blis/src";
+         rev = "refs/tags/0.9.0";
+         hash = "sha256-1aHIdt5wCDrT1hBPnaUVThwjwDkJQ0G0+tao2iFXYpM=";
+        }
+        builtins.fetchGit {
+         url = pkgs/blis/src;
+         rev = "refs/tags/0.9.0";
+         hash = "sha256-1aHIdt5wCDrT1hBPnaUVThwjwDkJQ0G0+tao2iFXYpM=";
+        }
+ - builtins.fetchGit. This is a builtins, the doc is under the nix reference
+   manual. This fetches the git repo at evaluation time. You don't need to
+   specify a commit or a branch here, it will fetch the default one.  This
+   means that everytime you evaluate this derivation, it will check for a new
+   version.
+   This only needs a "url", but it optionally you can
+   specify a "rev" (commit), a ref (branch or tag name). Note that there is no
+   hash here, because this is not a fod.
+   Instead, you can directly specify a local git directory:
+     builtins.fetchGit ./work-dir
+     builtins.fetchGit {
+       url = "/home/aleix/repo";
+       ref = "patata-branch";
+     }
+     builtins.fetchGit {
+       url = repo; # note, this is a path, not a string!
+       ref = "patata-branch";
+     }
+   AFAIK, the "url = repo" doesn't cause "repo" to be copied to the nix store
+   first (prior to evaluating builtins.fetchGit) because builtins.fetchGit is
+   not a derivation, and path is not a string interpolation. Of course, the
+   result of evaluating builtins.fetchGit returns a nix store path with the
+   repo checked out.
+   Also, I think that it is not possible to set a relative path in "url", not
+   even a "path" data type as in fetchGit (it fails at build time). Setting a
+   string interpolated path does not work either. 
+ - fetchgit: This is a package, the doc is under nixpkgs manual. This creates a
+   "fod" derivation. And the git repo is fetched at build time. Once it has
+   been fetched once, it will not be fetched again as long as there is a store
+   path whose name and "hash" combined match the store path (even if the url or
+   the "rev" changes!). 
+   This needs and "url" and a "rev" (commit, tag or branch) and a hash. The
+   hash can be empty at first, and nix will fail and output the expected one.
 
+PATHS
+ - This path
+     this-is-a-path = pkgs/blis/src;
+   evaluates to: /home/Computational/arocanon/bsc/projects/nixdev/pkgs/blis/src
+   this is not copied to the nix store
+ - This path
+     this-is-a-path-interpolated = "${pkgs/blis/src}";
+   evaluates to: "/nix/store/gp6n56k7fkbg7p0304612q2hz631qdyp-src". The dollar
+   (string interpolation) causes the directory to be copied into the Nix store
+   and result in the string. More about string interpolation here: https://nixos.org/manual/nix/stable/language/string-interpolation.html
+ - When a path is present inside a derivation (such as pkgs/blis/src), it is
+   always copied into the nix store first, prior to creating the derivation.
+   https://nixos.org/manual/nix/stable/language/derivations.html
+  
 
 
 TROUBLESHOOTING
