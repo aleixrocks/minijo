@@ -3,6 +3,7 @@ DEFINITIONS
     - LKMM: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/tools/memory-model/Documentation/explanation.txt
     - memory barriers: https://www.kernel.org/doc/Documentation/memory-barriers.txt
     - atomics and specially atomic_mb__{after,before}: https://www.kernel.org/doc/Documentation/atomic_t.txt
+ - c/c++ simulator: http://svr-pes20-cppmem.cl.cam.ac.uk/cppmem/help.html
  - LKMM: Linux Kernel Memory Model. Explains what each kernel API related to
    ordering does and defines a model in code to run simulations.
  - A memory model for an ISA is the specification of all legal multithreaded

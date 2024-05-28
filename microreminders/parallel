@@ -1,0 +1,17 @@
+BASICS
+ - gnu parallel runs multiple commands in parallel. By default, the number 
+
+DEBUG
+ - Show which commands would be run:
+     parallel --dryrun echo ::: A 
+
+VARIABLES
+ - {#}: Job ID
+ - {##}: Total number of jobs
+ - {%}: Job slot number (between 1 and number of jobs to run in parallel)
+ - {n}: where n is an integer; replace with the corresponding input source
+    $ parallel echo {1} {2} ::: foo 1 ::: bar 2
+    foo bar
+    foo 2
+    1 bar
+    1 2

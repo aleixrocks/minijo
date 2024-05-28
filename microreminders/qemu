@@ -98,3 +98,39 @@ DTS
  - qemu-system-riscv64 -machine virt,dumpdtb=qemu-riscv64-virt.dtb : dump qemu generated dtb
  - dtc qemu-riscv64-virt.dtb > qemu-riscv64-virt.dts : convert back dtb to dts
 
+MEANING OF COMMAND LINE OPTIONS
+ - doc: https://stackoverflow.com/a/58434837/1725759
+ - "-kernel" is the "load a Linux kernel" option. It will load and boot the
+   kernel in whatever way seems best for the architecture being used. For
+   instance, for the x86 PC machine it will just provide the file to the guest
+   BIOS and rely on the guest BIOS to do the actual loading of the file into
+   RAM. On Arm, loading a Linux kernel means that we follow the rules the
+   kernel lays down for how to boot it
+ - "-device" loader is the "generic loader", which behaves the same on any
+   architecture. It just loads an ELF image into guest RAM, and doesn't do
+   anything to change the CPU reset behaviour. This is a good choice if you
+   have a completely bare-metal image which includes the exception vector table
+   and want to have it start in the same way the hardware would out of reset.
+ - "-bios" is the "load a bios image, in whatever way seems good for this
+   machine model" option. Again, this is a "do what I mean" kind of option
+   whose specifics vary from machine model to machine model and from
+   architecture to architecture; some machines don't support it at all. Some
+   machines (eg x86 PC) will always load a bios, using a default binary if the
+   user didn't specify. Some will load a bios if the user asks, but not
+   otherwise (the arm virt board is like this). Generally a bios image is
+   expected to be a "bare metal raw binary" image which will get loaded into
+   some flash or ROM memory which corresponds to wherever the hardware starts
+   execution when it comes out of reset. On at least some machines, including
+   'virt', you can instead provide the contents of the flash/ROM devices using
+   a command line like "-drive if=pflash,...". This is an example of a common
+   pattern in QEMU where you can either use a short "do what I mean" option
+   that is convenient but has a lot of magic under the hood, or a longer
+   "orthogonal" option which lets you specify lots of sub-options and get
+   exactly the behaviour you want. Note that BIOS images should not be ELF
+   files, they're expected to just be the raw data to put into the ROMs.
+
+RISV
+ - When using "-kernel", qemu loads the image at address 0x84000000. If using
+   u-boot, you might need to set the address manually:
+     > setenv kernel_start 0x84000000
+     > booti ${kernel_start} - ${fdtcontroladdr}

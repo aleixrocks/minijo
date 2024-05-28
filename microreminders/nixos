@@ -35,6 +35,15 @@
  - nix profile diff-closures --profile /nix/var/nix/profiles/system : show
    differences between installed system versions
 
+## Check differences between two versions
+ - Using nvd:
+   - nvd diff /nix/var/nix/profiles/system-{33,34}-link
+ - The manual way:
+   - list generations
+     ```$ ls -ld /nix/var/nix/profiles/system* /run/current-system /run/booted-system```
+   - Show the differences between two versions
+     ``` $ nix-diff $(nix-store -qd system-1-link system-2-link)```
+
 ## Kernel
  - kernel files:
    - pkgs/top-level/all-packages.nix

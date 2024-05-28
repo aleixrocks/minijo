@@ -252,7 +252,16 @@ FLAKES
         bscpkgs.url = "git+https://pm.bsc.es/gitlab/rarias/bscpkgs.git";
         nixpkgs.follows = "bscpkgs/nixpkgs";
       }
-      
+  - set nix develop prompt in flake:
+      # add this with inputs
+      nixConfig.bash-prompt = "\[nix-develop\]$ ";
+
+NIX RUN
+ - It tries to run "pname" under the bin directory. It the name differs, it can
+   also be specififed in meta.mainProgram.
+ - How the flake repository is fetched can be specified in several ways:
+    - using ssh to fetch a git repo:
+       nix run git+ssh://git@gitlab-internal.bsc.es/arocanon/eupilot-fcs.git#tst-nested-omph?ref=mybranch
 
 GARBAGE COLLECTOR
  - /nix/var/nix/gcroots : contains simlinks to garbage collector roots
@@ -268,9 +277,9 @@ GARBAGE COLLECTOR
  - clean up all
     - steps: 
        nix-channel --update
-       nix-env -u --always
+       #nix-env -u --always 
        rm /nix/var/nix/gcroots/auto/*
-       nix-collect-garbage -d
+       nix-collect-garbage -d # deletes old nix profile generations
     - First, we download a new version of the nixpkgs channel, which holds the
       description of all the software. Then we upgrade our installed packages
       with nix-env -u. That will bring us into a fresh new generation with all
@@ -432,6 +441,10 @@ Fixed-output Derivations (fdo)
    the targz has changed or the version of curl used to download it, you only
    care about the .tar.gz having matching an expected hash). Read more here:
      https://nixos.org/manual/nix/stable/language/advanced-attributes.html?highlight=outputHash#adv-attr-outputHash
+
+RUN PREBUILT BINARIES ON NIXOS
+ - you might need to set the dynamic linker path properly:
+    nix run nixpkgs#patchelf -- --set-interpreter "$(nix eval nixpkgs#stdenv.cc.bintools.dynamicLinker --raw)"  path/to/your/binary
 
 
 INSTALLING NIX
@@ -635,6 +648,9 @@ UNDERSTANDING NIXPKGS REPOSITORY
         
     - envHooks: similar to setuphook. see fore more
       https://nixos.org/guides/nix-pills/basic-dependencies-and-hooks.html
+    - __noChroot = true; : It turns off the sandbox for this derivation. Note
+      that all users also need to have sandbox = relaxed set in their nix.conf
+      or nixConfig.sandbox = "relaxed" in their flake.nix.
 
  - How to recompile the whole system with some compilation option. Create a new
    stdenv with a modified mkDerivation that appends the extra compilation
@@ -882,7 +898,7 @@ NIX FETCHERS
    been fetched once, it will not be fetched again as long as there is a store
    path whose name and "hash" combined match the store path (even if the url or
    the "rev" changes!). 
-   This needs and "url" and a "rev" (commit, tag or branch) and a hash. The
+   This needs a "url" and a "rev" (commit, tag or branch) and a hash. The
    hash can be empty at first, and nix will fail and output the expected one.
 
 PATHS
@@ -899,7 +915,12 @@ PATHS
    always copied into the nix store first, prior to creating the derivation.
    https://nixos.org/manual/nix/stable/language/derivations.html
   
-
+ADD CFLAGS TO CROSS COMPILER SYSTEM WIDE
+ - each wrapper has its own flag. For instance, riscv has the flag:
+    NIX_CFLAGS_COMPILE_riscv64_unknown_linux_gnu
+ - note that using "stdenv = prev.withCFlags [ "-fno-omit-frame-pointer" ]
+   prev.stdenv;" will add the flag on the host stdenv! not the cross-compiler
+   stdenv. 
 
 TROUBLESHOOTING
  - if you have locale issues:

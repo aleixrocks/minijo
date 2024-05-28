@@ -117,8 +117,11 @@ PERF SAMPLING/RECORD
    99 Hertz, until ctrl-c
  - Show saved data with perf record command, see below
  - Record per dynamic shared object (DSO)
-      perf record -a -F999 --call-graph fp ./<application>                                                                                                                
+      perf record -a -F999 --call-graph fp <cmd>
       perf report --sort comm,dso
+ - Record callstacks per event. All events are recorded (-c 1)
+      perf record -c 1 -g -e 'syscalls:sys_enter_sched_setaffinity' <cmd>
+
 
 PERF REPORT
  - perf report -> run on the same dir where perf.data is to show the data

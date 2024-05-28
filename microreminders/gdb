@@ -146,6 +146,8 @@ MULTI-THREAD DEBUGGING
 MULTI-PROCESS DEBUGGING
  - by default, gdb only follows the parent on fork, the child runs freely
    outside the scope of gdb
+     - set follow-fork-mode child -> debug the child process, the parent runs
+       unchecked.
      - set detach-on-fork off -> keep forks under the control of gdb, suspended
  - by default, on continue, next or step, only threads of the current process
    are allowed to run.

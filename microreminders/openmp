@@ -4,3 +4,18 @@
  - There is not an implicit barrier after a work sharing construct,
    alhough it can be specified by using the nowait clause.
  - There is an implicit barrier after single construct
+
+ENV VARS
+ - doc
+    - openmp spec: https://www.openmp.org/spec-html/5.0/openmpch6.html#openmpse60.html
+    - llvm: https://openmp.llvm.org/design/Runtimes.html
+ - OMP_DISPLAY_ENV=[1|verbose]. use "verbose" if you want to display
+   implementation-specific variables, such as KMP_BLOCKTIME.
+ - OMP_DISPLAY_AFFINITY=1 : display where each thread is bound.
+ - OMP_POLICY=[active|passive]. Whether threads spin (active) or block
+   (passive) when they get out of work to do. The default is
+   implementation-specific.
+     - in LLVM, the default is passive, but if it is not set by the user
+       explicitly, the passive meaning changes to "active" and threads will
+       spin for KMP_BLOCKTIME.
+ - KMP_BLOCKTIME=[10us]: Amount of time spent busy-waiting before blocking.
