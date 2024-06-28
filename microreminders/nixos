@@ -94,6 +94,25 @@
     nix develop .#nixosConfigurations.xeon08.config.boot.kernelPackages.lttng-modules
     ```
 
+## VM
+ - From a flake repository
+   - src: https://gist.github.com/FlakM/0535b8aa7efec56906c5ab5e32580adf
+   - You can specify vm arguments in your flake
+     ```
+       virtualisation.vmVariant = {
+         # following configuration is added only when building VM with build-vm
+         virtualisation = {
+           memorySize = 2048; # Use 2048MiB memory.
+           cores = 3;
+           graphics = false;
+         };
+       };
+     ```
+   - Commands
+     - nixos-rebuild build-vm --flake .#
+     - QEMU_KERNEL_PARAMS=console=ttyS0 ./result/bin/run-*-vm -nographic; reset
+     - sudo poweroff # to shutdown the machine
+ 
 
 ## QEMU
   - to boot with nographic, you need to enable a serial console service, and a

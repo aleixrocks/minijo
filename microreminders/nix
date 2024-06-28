@@ -252,9 +252,10 @@ FLAKES
         bscpkgs.url = "git+https://pm.bsc.es/gitlab/rarias/bscpkgs.git";
         nixpkgs.follows = "bscpkgs/nixpkgs";
       }
-  - set nix develop prompt in flake:
+  - set nix develop prompt in flake.nix (in the same level as inputs and outputs):
       # add this with inputs
       nixConfig.bash-prompt = "\[nix-develop\]$ ";
+      nixConfig.bash-prompt = "\\e[1;32m[nix-develop]$\\e[0m "; # with colors
 
 NIX RUN
  - It tries to run "pname" under the bin directory. It the name differs, it can

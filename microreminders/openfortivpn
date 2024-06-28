@@ -1,0 +1,6 @@
+Single Sign On (SSO)
+  NixOS
+    - nix profile install nixpkgs#appimage-run
+    - appimage-run Downloads/openfortivpn-webview-1.2.0.AppImage myupclink.upc.edu
+    - copy SVPNCOOKIE= line
+    - sudo openfortivpn --cookie=$SVPNCOOKIE myupclink.upc.edu

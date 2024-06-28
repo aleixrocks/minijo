@@ -41,6 +41,7 @@ Variables
 
 UTILS
  - make V=1 -> show exactly the commands used.
+ - $(info VAR is $(VAR)): print variable outside any rule
  - $(addprefix prefix,names…) -> add prefix to names: $(addprefix src/,foo bar)
  - To ignore errors in a command line, write - at the beginning of the command:
      clean:
