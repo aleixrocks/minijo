@@ -50,6 +50,12 @@ PREPRATION
 PERF STAT
  - perf stat is used to count number of occurrences of events. It's value
    is exact (if there are enough CPU counters). But it only report counts.
+   If you see a percentage like:
+           38.277.984      cache-misses:u            #    7,780 % of all cache refs      (72,92%)
+   It means the the counter was multiplexed and was counted for 72.92% of the
+   time the program was running. You can pin counters with :D to avoid them
+   from multiplexing, like:
+     perf stat -e cycles:D -e instructions:D -e cache-misses -e cache-references -e  L1-dcache-load-misses -e L1-dcache-loads ...
  - perf stat <command> -> execute command and report statistics. By default,
    all threads of <command> will be monitored regardless of the cpu where they
    are executing.

@@ -14,6 +14,15 @@ BASIC
  - docker stop "name": stop the currently running container. It looks like the containers remains in a "zombie" state, the "name" is still registered.
  - docker rm "name": completely remove the container (free the name)
 
+ WORKFLOW
+  - docker run -dit --network host --name milkv docker.io/library/milkv_kernel : start container
+  - docker exec -it milkv bash : spawn a new bash and enter the container. ctrl-D to exit.
+  - Notes:
+    - A docker container runs until its main process exits. If 
+    - The main process is the one specified in CMD, like: CMD ["bash"]
+    - If you run "docker attach milkv" you attach to the interactive main process (possibly bash). If you exit that bash, the container ends because it is the main process.
+    - If you run "docker exec milkv bash" you fork a new bash, with is safe to exit without stopping the container.
+
 LIST
  - docker image ls : list downloaded images
  - docker ps --all : list containers (spawned by the image). The --all show also stopped containers.
@@ -52,3 +61,38 @@ RUN COMMANDS BATCH MODE
   echo Changing owner from \$(id -u):\$(id -g) to $(id -u):$(id -u)
   chown -R $(id -u):$(id -u) /dmnt/.ssh
   COMMANDS
+
+EXAMPLE DOCKERFILE
+
+# Use an official Ubuntu base image
+FROM ubuntu:latest
+
+# Set environment variables (optional)
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y \
+    git
+
+# Set a working directory
+WORKDIR /app
+
+# Clone repositories
+RUN git clone https://github.com/sophgo/bootloader-riscv.git && \
+    git clone https://github.com/sophgo/linux-riscv.git
+
+# Install required packages
+RUN apt-get install -y \
+    rpm \
+    wget
+
+# Copy scripts into the container (assuming they are in the same directory as the Dockerfile)
+COPY run.sh /app/run.sh
+RUN chmod +x /app/run.sh
+
+# Run scripts
+#RUN /app/run.sh
+
+# Define the default command
+CMD ["bash"]
+

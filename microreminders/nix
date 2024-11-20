@@ -241,12 +241,15 @@ FLAKES
        repo = "nixpkgs";
      };
   - path-like syntax: This points to a local git repo with a flake.nix.
-    defaults to master branch, it ignores uncommited changes:
+    defaults to master branch. If rev or ref are set, it ignores uncommited changes:
       git+file:///home/aleix/bsc/projects/bscpkgs
     branch test with commit ref only
       git+file:///home/aleix/bsc/projects/bscpkgs?ref=test
     branch test with commit rev
       git+file:///home/aleix/bsc/projects/bscpkgs?ref=test&rev=805b30d130b63807e2755eb4e776a8e61320cffd#
+  - when used as flake input, you need to run "nix flake lock --update-input
+    <input>" to pick up new changes, even if used as git+file with uncommited
+    changes.
   - multiple inputs in a flake might have different versions of nixpkgs. To unificate them use "follow":
       inputs {
         bscpkgs.url = "git+https://pm.bsc.es/gitlab/rarias/bscpkgs.git";
@@ -254,8 +257,19 @@ FLAKES
       }
   - set nix develop prompt in flake.nix (in the same level as inputs and outputs):
       # add this with inputs
-      nixConfig.bash-prompt = "\[nix-develop\]$ ";
-      nixConfig.bash-prompt = "\\e[1;32m[nix-develop]$\\e[0m "; # with colors
+      nixConfig.bash-prompt = "[nix-develop]$ ";
+      nixConfig.bash-prompt = "\\[\\e[1;32m\\][nix-develop]$\\[\\e[0m\\] ";
+  - Developing with nix flakes:
+     - sometimes, you might need to test a change in one of your flake inputs,
+       but do not want to commit the change yet. To do so, you can set the input
+       path to one a local copy of the repository, like this:
+         bscpkgs.url = "git+file:///home/Computational/arocanon/bsc/projects/bscpkgs"
+       (Note that no ref or rev are set! otherwise it won't pick up uncommited changes).
+       And then run "nix flake lock --update-input bscpkgs" every time you want
+       to test new commited or uncommited changes.
+     - Otherwise, you can build with
+        nix build --override-input 'eupilot/bscpkgs' /home/Computational/arocanon/bsc/projects/bscpkgs/ .#nixosConfigurations.milkv.pkgs.nodes
+       for the same effect, and you don't need to update your input like before.
 
 NIX RUN
  - It tries to run "pname" under the bin directory. It the name differs, it can
@@ -394,7 +408,6 @@ OVERRIDE A PYTHON PACKAGE USING OVERLAYS
           '';
       };
     };
-
 
 NIX PORTABLE
  - patch nix portable to create a full isolation:
@@ -922,6 +935,12 @@ ADD CFLAGS TO CROSS COMPILER SYSTEM WIDE
  - note that using "stdenv = prev.withCFlags [ "-fno-omit-frame-pointer" ]
    prev.stdenv;" will add the flag on the host stdenv! not the cross-compiler
    stdenv. 
+
+CHECK NIX ADDED COMPILER FLAGS
+ - Inside nix develop run:
+    NIX_DEBUG=1 gcc (or clang)
+ - But the best way to be sure is to add "-v" to NIX_COMPILE_CFLAGS and
+   manually inspect the build output.
 
 TROUBLESHOOTING
  - if you have locale issues:
